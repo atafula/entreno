@@ -1459,6 +1459,31 @@ def diseno_hoja_de_estilos_sin_valores_sueltos(pg):
     assert re.search(r"\.btn:active[^{]*\{[^}]*scale\(\.97\)", css), "feedback al pulsar: escala 0.97"
     assert "font-display:swap" in open(os.path.join(ROOT, "fonts", "fonts.css")).read().replace(" ", "")
 
+# ---------- Fase 2: Hoy ----------
+@test
+def hoy_punto_de_estado_late_mientras_falta_y_se_para_al_cumplir(pg):
+    seed(pg, sessions=[], walks=[])
+    an = lambda: pg.evaluate("getComputedStyle(document.getElementById('status-dot')).animationName")
+    assert an() == "pulse", f"sin actividad hoy el punto late: {an()}"
+    pg.evaluate("db.walks.push({id: 'wx', date: localDate(), seconds: 1200, meters: 1500, ts: Date.now()}); render()")
+    assert an() == "none", f"al cumplir se queda fijo: {an()}"
+
+@test
+def hoy_la_racha_anima_el_numero_al_subir(pg):
+    seed(pg, sessions=[], walks=[])
+    assert "tick" not in (pg.get_attribute("#streak-n", "class") or ""), "al cargar no hay animación de cambio"
+    pg.evaluate("db.walks.push({id: 'wx', date: localDate(), seconds: 1200, meters: 1500, ts: Date.now()}); render()")
+    assert pg.inner_text("#streak-n") == "1"
+    assert "tick" in (pg.get_attribute("#streak-n", "class") or ""), "el número entra animado al cambiar"
+
+@test
+def hoy_la_semana_es_un_boton_accesible_que_abre_el_calendario(pg):
+    seed(pg)
+    assert pg.get_attribute("#week", "role") == "button" and pg.get_attribute("#week", "tabindex") == "0"
+    assert "calendario" in pg.get_attribute("#week", "aria-label").lower()
+    pg.focus("#week"); pg.keyboard.press("Enter"); pg.wait_for_timeout(450)
+    assert pg.is_visible("#cal-sheet"), "Enter sobre la semana abre el calendario"
+
 @test
 def diseno_respeta_reduced_motion(pg):
     pg.emulate_media(reduced_motion="reduce"); seed(pg); tab(pg, "rutinas"); pg.wait_for_timeout(100)

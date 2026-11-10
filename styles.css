@@ -141,7 +141,9 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline: non
 .status-dot { width: 12px; height: 12px; margin-top: 10px; flex: none; border-radius: 50%; background: var(--fire); }
 .hero .sub { font-variant-numeric: tabular-nums; }
 .hero.done h2 { color: var(--acid-text); }
+.hero:not(.done) .status-dot { animation: pulse 1.6s ease-in-out infinite; }
 .hero.done .status-dot { background: var(--acid); }
+.tick { display: inline-block; animation: tick var(--d-slow) var(--ease-spring); }
 .week { display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--s2); margin-top: var(--s5); cursor: pointer; }
 .day { text-align: center; font-size: var(--t-sm); font-weight: 700; color: var(--muted); }
 .day i {
@@ -521,6 +523,7 @@ html.theming, html.theming *, html.theming *::before, html.theming *::after {
 @keyframes pop { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: none; } }
 @keyframes checkpop { 0% { transform: scale(.8); } 60% { transform: scale(1.12); } 100% { transform: none; } }
 @keyframes bump { 0% { transform: none; } 40% { transform: scale(1.14); } 100% { transform: none; } }
+@keyframes tick { from { opacity: 0; transform: translateY(40%); } to { opacity: 1; transform: none; } }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .65; } }
 @keyframes flicker { 0%, 100% { transform: none; } 30% { transform: scale(1.08, 1.14) rotate(-3deg); } 65% { transform: scale(.96, 1.04) rotate(3deg); } }
 @keyframes shake { 0%, 100% { transform: none; } 20% { transform: translateX(-7px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(3px); } }

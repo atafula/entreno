@@ -167,6 +167,13 @@ function celebrate(msg, sub) {
   clearTimeout(celT);
   celT = setTimeout(() => c.classList.remove('show'), 2100);
 }
+// Un número que cambia entra con un pequeño salto (el texto ya es el definitivo: solo se anima transform y opacity)
+function tick(el) {
+  if (!el) return;
+  el.classList.remove('tick');
+  void el.offsetWidth;
+  el.classList.add('tick');
+}
 // Sacudida para los errores: el botón tiembla y avisa
 function shake(el) {
   if (!el) return;
@@ -214,6 +221,7 @@ function streakInfo(days, rest = restAllowance(), today = new Date()) {
 function renderStreak() {
   const n = streakInfo(activeDays()).n;
   $('streak-n').textContent = n;
+  if (lastStreak !== null && n !== lastStreak) tick($('streak-n'));
   $('streak').classList.toggle('hot', n > 0);
   if (lastStreak !== null && n > lastStreak) {
     $('streak').classList.remove('bump');
@@ -880,6 +888,7 @@ function setCal(open) {
 }
 const shiftMonth = k => { const [y, m] = calMonth.split('-').map(Number); const d = calView === 'anio' ? new Date(y + k, m - 1, 1) : new Date(y, m - 1 + k, 1); calMonth = localDate(d).slice(0, 7); calSel = null; renderCal(); };
 $('week').onclick = () => setCal(true);
+$('week').onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setCal(true); } };
 $('cal-close').onclick = () => setCal(false);
 $('cal-prev').onclick = () => shiftMonth(-1);
 $('cal-next').onclick = () => shiftMonth(1);
