@@ -47,6 +47,12 @@ def db(pg): return pg.evaluate("JSON.parse(localStorage['entreno-v1'])")
 def abrir_rutina(pg, id): pg.click(f'[data-open-routine="{id}"]'); pg.wait_for_timeout(100)
 def empezar(pg, id): pg.click(f'#routines-list [data-start-routine="{id}"]')
 def editar_rutina(pg, id): pg.click(f'#routines-list [data-edit-routine="{id}"]')
+EXTRAS = ["Curl", "Remo", "Fondos", "Elevaciones", "Sentadilla", "Press"]  # búsquedas distintas, nombres distintos
+def anadir_del_selector(pg, buscar):
+    """Entreno o entreno libre: «+ Añadir ejercicio» abre el mismo selector que el editor de rutinas."""
+    pg.click("#wk-add-ex"); pg.wait_for_selector("#picker-sheet.show")
+    pg.fill("#picker-search", buscar); pg.wait_for_timeout(150)
+    pg.locator("#picker-list [data-name]").first.click(); pg.wait_for_timeout(200)
 
 # ---------- Hoy ----------
 @test
@@ -955,17 +961,52 @@ def caminata_terminada_tras_reanudar_se_guarda(pg):
 
 # ---------- 2. Añadir / quitar ejercicios en el entreno y entreno libre ----------
 @test
+def entreno_anadir_ejercicio_abre_el_selector_no_un_campo_de_texto(pg):
+    seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
+    assert pg.locator("#wk-new-ex").count() == 0, "ya no hay campo de texto libre"
+    pg.click("#wk-add-ex"); pg.wait_for_selector("#picker-sheet.show")
+    assert pg.is_visible("#picker-search"), "el buscador del selector se ve"
+    assert pg.locator("#picker-list [data-name]").count() > 0, "el selector trae el catálogo"
+    pg.click("#picker-close"); pg.wait_for_timeout(200)
+    assert not pg.is_visible("#picker-sheet.show"), "se cierra con la X"
+
+@test
+def entreno_anadir_desde_el_selector_trae_foto_y_no_duplica(pg):
+    seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
+    n = pg.locator("#wk-in .exblock").count()
+    anadir_del_selector(pg, "Dominadas")
+    assert pg.locator("#wk-in .exblock").count() == n + 1, "añade el ejercicio elegido"
+    anadir_del_selector(pg, "Dominadas")
+    assert pg.locator("#wk-in .exblock").count() == n + 1, "no lo añade dos veces"
+    assert pg.locator("#wk-in .exblock").last.locator(".exn").inner_text().lower().startswith("dominadas"), "nombre en español"
+
+@test
 def entreno_se_puede_anadir_un_ejercicio(pg):
     seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
     n = pg.locator("#wk-in .exblock").count()
-    pg.click("#wk-add-ex"); assert pg.locator("#wk-in .exblock").count() == n, "sin nombre no añade"
-    pg.fill("#wk-new-ex", "Dominadas"); pg.click("#wk-add-ex")
+    anadir_del_selector(pg, "Dominadas")
     assert pg.locator("#wk-in .exblock").count() == n + 1
     assert pg.locator("#wk-in .exblock").last.locator(".wrow:not(.whead)").count() == 3 and "dominadas" in pg.locator("#wk-in .exblock").last.inner_text().lower()
     pg.locator("#wk-in .exblock").last.locator('input[data-f="reps"]').first.fill("8")
     pg.locator("#wk-in .exblock").last.locator(".chk").first.click()
     pg.click("#wk-finish"); pg.click("#finish-save"); pg.wait_for_timeout(300)
-    assert any(x["exercise"] == "Dominadas" for x in db(pg)["sessions"][-1]["sets"])
+    assert any(x["exercise"].lower().startswith("dominadas") for x in db(pg)["sessions"][-1]["sets"])
+
+@test
+def texto_no_se_selecciona_como_en_una_web_salvo_en_campos(pg):
+    seed(pg); tab(pg, "rutinas")
+    sel = lambda s: pg.evaluate("s => getComputedStyle(document.querySelector(s)).userSelect", s)
+    assert sel("body") == "none", "el texto de la app no se puede seleccionar"
+    assert sel("#routines-list") == "none", "tampoco en las listas"
+    empezar(pg, "a")
+    pg.locator("#wk-in .exblock").first.locator(".exn").wait_for()
+    assert sel("#wk-in .exn") == "none", "los nombres del entreno no se seleccionan"
+
+@test
+def campos_de_texto_sí_se_pueden_editar_y_seleccionar(pg):
+    seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
+    assert pg.evaluate("getComputedStyle(document.querySelector('#wk-in input[data-f=\"kg\"]')).userSelect") == "text", "los kilos se escriben y seleccionan"
+    assert pg.evaluate("getComputedStyle(document.querySelector('#picker-search')).userSelect") == "text", "el buscador sí"
 
 @test
 def entreno_se_puede_quitar_un_ejercicio_con_doble_toque(pg):
@@ -1083,11 +1124,11 @@ def entreno_no_se_puede_arrastrar_la_ultima_serie(pg):
 def entreno_libre_empieza_vacio_y_se_guarda(pg):
     seed(pg); tab(pg, "rutinas")
     pg.click("#free-workout"); assert pg.is_visible("#workout") and pg.locator("#wk-in .exblock").count() == 0
-    pg.fill("#wk-new-ex", "Press militar"); pg.click("#wk-add-ex")
+    anadir_del_selector(pg, "Dominadas")
     pg.locator('#workout input[data-f="reps"]').first.fill("6"); pg.locator("#workout .chk").first.click()
     pg.click("#wk-finish"); pg.click("#finish-save"); pg.wait_for_timeout(300)
     s = db(pg)["sessions"][-1]
-    assert s["routine"] == "Entreno libre" and s["sets"][0]["exercise"] == "Press militar"
+    assert s["routine"] == "Entreno libre" and s["sets"][0]["exercise"].lower().startswith("dominadas")
 
 # ---------- 3. Racha con días de descanso ----------
 def off(pg, k): return pg.evaluate("k => { const d = new Date(); d.setDate(d.getDate() + k); return localDate(d); }", k)
@@ -1486,10 +1527,27 @@ def rutina_editor_colapso_se_anima_con_el_contenido(pg):
     pg.mouse.up(); pg.wait_for_timeout(200)
 
 @test
+def rutina_editor_al_soltar_las_series_se_despliegan_animadas(pg):
+    _rutina_abc(pg); tab(pg, "rutinas"); editar_rutina(pg, "r1")
+    bloque = pg.locator("#routine-exercises .exblock").nth(0)
+    r = bloque.locator(".exhead").bounding_box(); x, y = r["x"] + 8, r["y"] + r["height"] / 2
+    pg.mouse.move(x, y); pg.mouse.down(); pg.wait_for_timeout(700); pg.mouse.up()
+    # justo al soltar, el cuerpo arranca cerrado y va creciendo (no aparece de golpe)
+    mid = pg.evaluate("""() => new Promise(res => setTimeout(() => {
+        const el = document.querySelector('#routine-exercises .exblock .exbody');
+        res(el.getBoundingClientRect().height);
+    }, 60))""")
+    pg.wait_for_timeout(500)
+    full = pg.locator("#routine-exercises .exblock").nth(0).locator(".exbody").evaluate("el => el.getBoundingClientRect().height")
+    assert full > 20, f"las series vuelven a verse: {full}"
+    assert 2 < mid < full - 2, f"al volver a desplegar hay animación: a 60 ms mide {mid} de {full}"
+    assert pg.locator("#routine-exercises .exblock.is-collapsed").count() == 0, "todas abiertas al final"
+
+@test
 def entreno_descanso_sigue_abajo_al_bajar(pg):
     seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
-    for n in range(6):
-        pg.fill("#wk-new-ex", f"Extra {n}"); pg.click("#wk-add-ex")
+    for q in EXTRAS:
+        anadir_del_selector(pg, q)
     row = pg.locator("#wk-in .exblock").first.locator(".wrow:not(.whead)").nth(1)  # la 1, no el calentamiento W
     row.locator('input[data-f="kg"]').fill("60"); row.locator('input[data-f="reps"]').fill("10")
     row.locator('[data-act="done"]').click(); pg.wait_for_timeout(500)
@@ -1502,8 +1560,8 @@ def entreno_descanso_sigue_abajo_al_bajar(pg):
 @test
 def entreno_al_bajar_siguen_a_la_vista_el_nombre_el_tiempo_y_el_volumen(pg):
     seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
-    for n in range(6):
-        pg.fill("#wk-new-ex", f"Extra {n}"); pg.click("#wk-add-ex")
+    for q in EXTRAS:
+        anadir_del_selector(pg, q)
     pg.evaluate("document.getElementById('workout').scrollTop = 99999"); pg.wait_for_timeout(200)
     assert pg.evaluate("document.getElementById('workout').scrollTop") > 600, "debe haber bastante contenido para bajar"
     vh = pg.evaluate("innerHeight")

@@ -77,7 +77,7 @@ function wkRender() {
     </div>
     </div>
     ${wk.exercises.length ? wk.exercises.map(wkExHtml).join('') : '<p class="wk-empty">Añade tu primer ejercicio.</p>'}
-    <div class="wk-add"><input id="wk-new-ex" placeholder="Añadir ejercicio (ej. Dominadas)" autocomplete="off" aria-label="Nombre del ejercicio"><button type="button" class="btn ghost small" id="wk-add-ex">+ Añadir ejercicio</button></div>
+    <div class="wk-add"><button type="button" class="btn ghost small" id="wk-add-ex">+ Añadir ejercicio</button></div>
     `;
   wkTick();
 }
@@ -175,6 +175,14 @@ function startWorkout(routineId) {
   wkOpen(true);
   $('workout').scrollTop = 0;
   vibrate(20);
+}
+
+function addWkExercise(name, image, ejId) {
+  if (!wk) return;
+  if (wk.exercises.some(x => x.name.toLowerCase() === name.toLowerCase())) return toast('Ese ejercicio ya está en el entreno');
+  wk.exercises.push({ name, image: image || '', ejId: ejId || '', prev: lastSets(name), rest: restOf(name), sets: [0, 1, 2].map(() => ({ ...blankSet(), done: false })) });
+  vibrate(10); saveLive(); wkRender();
+  [...$('wk-in').querySelectorAll('.exblock')].pop()?.scrollIntoView({ block: 'center' });
 }
 
 function finishWorkout() {
@@ -334,13 +342,9 @@ function bindWorkout() {
       return openFinish();
     }
     if (id === 'wk-add-ex') {
-      const name = $('wk-new-ex').value.trim();
-      if (!name) { shake($('wk-add-ex')); return toast('Pon el nombre del ejercicio'); }
-      if (wk.exercises.some(x => x.name.toLowerCase() === name.toLowerCase())) { shake($('wk-add-ex')); return toast('Ese ejercicio ya está en el entreno'); }
-      wk.exercises.push({ name, prev: lastSets(name), rest: restOf(name), sets: [0, 1, 2].map(() => ({ ...blankSet(), done: false })) });
-      vibrate(10); saveLive(); wkRender();
-      [...$('wk-in').querySelectorAll('.exblock')].pop()?.scrollIntoView({ block: 'center' });
-      return;
+      // Mismo selector de pantalla entera que el editor de rutinas: foto, nombre en español y catálogo al día
+      if (typeof openPicker !== 'function') return toast('El catálogo aún no está listo');
+      return openPicker(({ name, image, id: ejId }) => addWkExercise(name, image, ejId));
     }
     if (id === 'rest-skip') { wk.rest = null; saveLive(); $('rest').hidden = true; $('wk-in').classList.remove('resting'); return; }
     if (id === 'rest-minus' || id === 'rest-plus') {

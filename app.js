@@ -437,7 +437,8 @@ function bindExDrag(box, getExs, rerender) {
     if (!d) return;
     const cur = d; d = null;
     if (cur.centers) moveEx(getExs(), cur.from, destino(cur));
-    rerender();                                    // al soltar, se repinta con las series visibles
+    expandirAlSoltar = true;                       // al soltar, las series se despliegan con animación
+    rerender();
   };
   box.addEventListener('pointerup', fin);
   box.addEventListener('pointercancel', fin);
@@ -491,7 +492,18 @@ function renderEditor() {
   $('routine-save').textContent = draft.id ? 'Guardar cambios' : 'Guardar rutina';
   const del = $('routine-delete'); clearTimeout(del._t); del.classList.remove('armed'); del.textContent = 'Borrar rutina'; del.hidden = !draft.id;
   $('routine-name').value = draft.name;
-  $('routine-exercises').innerHTML = draft.exercises.map((ex, i) => exBlockHtml(ex, i, 'draft')).join('');
+  const box = $('routine-exercises');
+  box.innerHTML = draft.exercises.map((ex, i) => exBlockHtml(ex, i, 'draft')).join('');
+  if (expandirAlSoltar) { expandirAlSoltar = false; expandirConAnimacion(box); }
+}
+
+// Tras soltar un arrastre, las series se despliegan con la misma transición que el colapso
+let expandirAlSoltar = false;
+function expandirConAnimacion(box) {
+  const blocks = [...box.querySelectorAll('.exblock')];
+  blocks.forEach(b => b.classList.add('is-collapsed'));
+  void box.offsetHeight;                           // fija el estado cerrado antes de abrirlo
+  requestAnimationFrame(() => blocks.forEach(b => b.classList.remove('is-collapsed')));
 }
 
 // ----- Sesión (registrar entreno) -----
