@@ -1484,6 +1484,25 @@ def hoy_la_semana_es_un_boton_accesible_que_abre_el_calendario(pg):
     pg.focus("#week"); pg.keyboard.press("Enter"); pg.wait_for_timeout(450)
     assert pg.is_visible("#cal-sheet"), "Enter sobre la semana abre el calendario"
 
+# ---------- Fase 3: Rutinas ----------
+@test
+def rutinas_estado_vacio_con_titulo_icono_y_siguiente_paso(pg):
+    seed(pg, routines=[], sessions=[]); tab(pg, "rutinas")
+    e = pg.locator("#routines-list .empty")
+    assert e.count() == 1 and e.locator("svg").count() == 1, "el estado vacío lleva icono"
+    assert e.locator("b").inner_text().strip() == "Aún no tienes rutinas"
+    assert "Crear rutina" in e.inner_text() and "Entreno libre" in e.inner_text(), e.inner_text()
+
+@test
+def rutinas_la_tarjeta_dice_cuando_fue_la_ultima_vez(pg):
+    seed(pg); pg.evaluate("db.sessions.push({id: 'hoy1', date: localDate(), routine: 'PULL', sets: [{exercise: 'Remo', reps: 10, kg: 30, w: false}]}); render()")
+    tab(pg, "rutinas")
+    pull = pg.locator('#routines-list .routine', has=pg.locator('[data-open-routine="b"]')).locator(".rtitle small").inner_text()
+    assert "Hoy" in pull, f"la rutina hecha hoy lo dice: {pull}"
+    pg.evaluate("db.routines.push({id: 'z', name: 'NUEVA', exercises: []}); render()")
+    z = pg.locator('#routines-list .routine', has=pg.locator('[data-open-routine="z"]')).locator(".rtitle small").inner_text()
+    assert "Sin estrenar" in z, z
+
 @test
 def diseno_respeta_reduced_motion(pg):
     pg.emulate_media(reduced_motion="reduce"); seed(pg); tab(pg, "rutinas"); pg.wait_for_timeout(100)

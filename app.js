@@ -418,13 +418,30 @@ function lastSets(name) {          // lo que hiciste la última vez en este ejer
   return [];
 }
 const plural = (n, a, b) => `${n} ${n === 1 ? a : b}`;
+// Fecha para leer: Hoy, Ayer, Hace 3 días o 8 nov (con el año si no es el actual)
+const MES_CORTO = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+function whenText(iso) {
+  const [y, m, d] = String(iso).split('-').map(Number);
+  if (!y || !m || !d) return String(iso || '');
+  const days = Math.round((new Date(localDate() + 'T12:00:00') - new Date(y, m - 1, d, 12)) / 864e5);
+  if (days === 0) return 'Hoy';
+  if (days === 1) return 'Ayer';
+  if (days > 1 && days < 7) return `Hace ${days} días`;
+  return `${d} ${MES_CORTO[m - 1]}${y === new Date().getFullYear() ? '' : ' ' + y}`;
+}
+const EMPTY_ICO = {
+  rutinas: '<svg viewBox="0 0 24 24" class="ico" aria-hidden="true"><path d="M3 9v6M6 6v12M18 6v12M21 9v6M6 12h12"/></svg>',
+  historial: '<svg viewBox="0 0 24 24" class="ico" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>'
+};
+const emptyHtml = (ico, title, text) => `<div class="empty">${EMPTY_ICO[ico]}<b>${title}</b>${text}</div>`;
 function renderRoutines() {
   $('routines-list').innerHTML = db.routines.map(r => {
     const sets = r.exercises.reduce((n, e) => n + e.sets.length, 0);
+    const last = db.sessions.filter(s => String(s.routine).toLowerCase() === String(r.name).toLowerCase()).map(s => s.date).sort().pop();
     return `
     <div class="card routine">
       <button type="button" class="rhead" data-open-routine="${r.id}" aria-label="Abrir ${esc(r.name)}">
-        <span class="rtitle"><b>${esc(r.name)}</b><small>${plural(r.exercises.length, 'ejercicio', 'ejercicios')} · ${plural(sets, 'serie', 'series')}</small></span>
+        <span class="rtitle"><b>${esc(r.name)}</b><small>${plural(r.exercises.length, 'ejercicio', 'ejercicios')} · ${plural(sets, 'serie', 'series')} · ${last ? whenText(last) : 'Sin estrenar'}</small></span>
         <svg viewBox="0 0 24 24" class="ico chev"><path d="M9 5l7 7-7 7"/></svg>
       </button>
       <div class="ractions">
@@ -432,7 +449,7 @@ function renderRoutines() {
         <button type="button" class="btn" data-edit-routine="${r.id}">Editar</button>
       </div>
     </div>`;
-  }).join('') || '<div class="empty">Sin rutinas.<br>Crea la primera y empieza.</div>';
+  }).join('') || emptyHtml('rutinas', 'Aún no tienes rutinas', 'Pulsa «Crear rutina» para montar la primera, o empieza un «Entreno libre» y añade ejercicios sobre la marcha.');
 }
 
 const openEntries = new Set();           // entrenos con el detalle desplegado (solo en pantalla)
