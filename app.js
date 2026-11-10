@@ -174,6 +174,22 @@ function tick(el) {
   void el.offsetWidth;
   el.classList.add('tick');
 }
+// Contador que sube hasta su valor: fmt(n) da el texto de cada paso y el último siempre es el exacto
+function countUp(el, to, fmt = n => String(Math.round(n))) {
+  if (!el) return;
+  const end = fmt(to);
+  if (!(to > 0) || (reduceMQ && reduceMQ.matches)) { el.textContent = end; return; }
+  const t0 = performance.now(), dur = 320;
+  let last = '';
+  el.textContent = last = fmt(0);
+  const step = now => {
+    if (!el.isConnected) return;
+    const p = Math.min(1, (now - t0) / dur), txt = p >= 1 ? end : fmt(to * (1 - Math.pow(1 - p, 3)));
+    if (txt !== last) el.textContent = last = txt;
+    if (p < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
 // Sacudida para los errores: el botón tiembla y avisa
 function shake(el) {
   if (!el) return;
@@ -461,7 +477,7 @@ function sessionHtml(s) {
   const work = s.sets.length, open = openEntries.has(s.id);
   const stat = (k, v) => `<div><small>${k}</small><b>${v}</b></div>`;
   const rest = Math.max(0, groups.length - 3);
-  return `<div class="entry-head"><span class="tag">${esc(s.routine)}</span><small>${s.date}</small>${menuBtn('session', s.id)}</div>${entryMenu('session', s.id)}
+  return `<div class="entry-head"><span class="tag">${esc(s.routine)}</span><small title="${esc(s.date)}">${whenText(s.date)}</small>${menuBtn('session', s.id)}</div>${entryMenu('session', s.id)}
     <div class="hstats">${s.seconds ? stat('Tiempo', durText(s.seconds)) : ''}${vol ? stat('Volumen', `${vol.toLocaleString('es-ES')} kg`) : ''}${stat('Series', work)}</div>
     <div class="hsums"${open ? ' hidden' : ''}>${groups.slice(0, 3).map(g => { const n = g.sets.length; return `<div class="hsum"><b>${n}</b> ${n === 1 ? 'serie' : 'series'} · ${esc(g.name)}</div>`; }).join('')}</div>
     <div class="hdetail"${open ? '' : ' hidden'}>${groups.map(g => { let n = 0; return `<div class="hex"><b>${esc(g.name)}</b>${g.sets.map((x, j) =>
@@ -564,7 +580,7 @@ function renderHistory() {
     [db.walks.length, 'caminatas'],
     [km.toFixed(1), 'km']
   ];
-  $('stats').innerHTML = stats.map((s, i) => `<div class="stat" style="--i:${i}"><b>${s[0]}</b><span>${s[1]}</span></div>`).join('');
+  $('stats').innerHTML = stats.map((s, i) => `<div class="stat"><b data-v="${s[0]}">${s[0]}</b><span>${s[1]}</span></div>`).join('');
 
   const items = [
     ...db.sessions.map(s => ({
@@ -575,15 +591,15 @@ function renderHistory() {
     ...db.walks.map(w => ({
       date: w.date,
       editing: !!editingEntry && editingEntry.kind === 'walk' && editingEntry.id === w.id,
-      html: editingEntry && editingEntry.kind === 'walk' && editingEntry.id === w.id ? entryEditorHtml('walk', w) : `<div class="entry-head"><span class="tag walk-tag">Caminata</span><small>${w.date}</small>${menuBtn('walk', w.id)}</div>${entryMenu('walk', w.id)}
+      html: editingEntry && editingEntry.kind === 'walk' && editingEntry.id === w.id ? entryEditorHtml('walk', w) : `<div class="entry-head"><span class="tag walk-tag">Caminata</span><small title="${esc(w.date)}">${whenText(w.date)}</small>${menuBtn('walk', w.id)}</div>${entryMenu('walk', w.id)}
         <ul><li><span>${Math.round(w.seconds / 60)} min</span><em>${(w.meters / 1000).toFixed(2)} km</em></li></ul>`
     }))
   ].sort((a, b) => b.date.localeCompare(a.date));
 
-  $('stats').hidden = !!editingEntry;                                  // al editar solo se ve la entrada
+  $('stats').hidden = !!editingEntry || !items.length;                 // al editar solo se ve la entrada; sin datos, ni tres ceros
   const shown = editingEntry ? items.filter(i => i.editing) : items;
   $('history-list').innerHTML = shown.map(i => `<div class="card entry">${i.html}</div>`).join('')
-    || '<div class="empty">Nada registrado.<br>¿Qué estás esperando?</div>';
+    || emptyHtml('historial', 'Todavía no hay nada aquí', 'Empieza un entreno desde «Rutinas» o una caminata desde «Hoy» y aparecerá en esta lista.');
 }
 
 // ---------- Tabs ----------
@@ -602,6 +618,8 @@ tabs.forEach(btn => {
     document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.id === btn.dataset.tab));
     tabs.forEach(n => n.classList.toggle('active', n === btn));
     moveIndicator();
+    if (btn.dataset.tab === 'tab-historial')
+      document.querySelectorAll('#stats .stat b').forEach(b => { const v = b.dataset.v, dec = (v.split('.')[1] || '').length; countUp(b, parseFloat(v), n => n.toFixed(dec)); });
     vibrate(8);
   };
 });

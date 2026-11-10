@@ -1531,6 +1531,57 @@ def entreno_check_de_serie_con_animacion_y_etiqueta(pg):
     assert chk.evaluate("e => getComputedStyle(e).animationName") == "checkpop"
     assert chk.get_attribute("aria-pressed") == "true"
 
+# ---------- Fase 5: Historial ----------
+_OBS = """sel => { window.__vals = []; const e = document.querySelector(sel);
+  new MutationObserver(() => window.__vals.push(document.querySelector(sel)?.textContent)).observe(e.parentNode, {childList: true, characterData: true, subtree: true}); }"""
+
+@test
+def historial_fechas_faciles_de_leer(pg):
+    seed(pg, sessions=[]); pg.evaluate("""() => { const d = new Date(); d.setDate(d.getDate() - 1); const ayer = localDate(d);
+        db.sessions.push({id: 'h1', date: localDate(), routine: 'PUSH', sets: [{exercise: 'Press', reps: 5, kg: 10, w: false}]},
+                         {id: 'h2', date: ayer, routine: 'PULL', sets: [{exercise: 'Remo', reps: 5, kg: 10, w: false}]},
+                         {id: 'h3', date: '2024-03-05', routine: 'PIERNA', sets: [{exercise: 'Sentadilla', reps: 5, kg: 10, w: false}]}); render(); }""")
+    tab(pg, "historial")
+    fechas = pg.locator("#history-list .entry-head small").all_inner_texts()
+    assert fechas == ["Hoy", "Ayer", "5 mar 2024"], fechas
+    assert pg.locator("#history-list .entry-head small").first.get_attribute("title") == pg.evaluate("localDate()"), "la fecha exacta sigue disponible"
+
+@test
+def historial_estado_vacio_con_titulo_icono_y_siguiente_paso(pg):
+    seed(pg, sessions=[], walks=[]); tab(pg, "historial")
+    e = pg.locator("#history-list .empty")
+    assert e.count() == 1 and e.locator("svg").count() == 1
+    assert e.locator("b").inner_text().strip() == "Todavía no hay nada aquí"
+    assert "Rutinas" in e.inner_text() and "Hoy" in e.inner_text(), e.inner_text()
+    assert not pg.is_visible("#stats"), "sin datos no se enseñan tres ceros"
+
+@test
+def historial_los_contadores_cuentan_al_entrar(pg):
+    seed(pg, sessions=[]); pg.evaluate("for (let i = 0; i < 24; i++) db.sessions.push({id: 'c' + i, date: '2026-10-' + String(i + 1).padStart(2, '0'), routine: 'PUSH', sets: [{exercise: 'Press', reps: 5, kg: 10, w: false}]}); render()")
+    pg.evaluate(_OBS, "#stats .stat b"); tab(pg, "historial"); pg.wait_for_timeout(800)
+    vals = pg.evaluate("window.__vals")
+    assert pg.inner_text("#stats .stat b") == "24", pg.inner_text("#stats .stat b")
+    assert len(set(vals)) >= 4 and vals[-1] == "24", f"el número sube hasta el valor final: {vals}"
+    nums = [int(v) for v in vals]; assert nums == sorted(nums), f"siempre hacia arriba: {vals}"
+
+@test
+def historial_sin_cuenta_con_reduced_motion(pg):
+    pg.emulate_media(reduced_motion="reduce")
+    seed(pg, sessions=[]); pg.evaluate("for (let i = 0; i < 24; i++) db.sessions.push({id: 'c' + i, date: '2026-10-' + String(i + 1).padStart(2, '0'), routine: 'PUSH', sets: [{exercise: 'Press', reps: 5, kg: 10, w: false}]}); render()")
+    pg.evaluate(_OBS, "#stats .stat b"); tab(pg, "historial"); pg.wait_for_timeout(500)
+    assert pg.inner_text("#stats .stat b") == "24" and len(set(pg.evaluate("window.__vals"))) <= 1, pg.evaluate("window.__vals")
+
+@test
+def resumen_los_numeros_cuentan_hasta_el_total(pg):
+    seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
+    f = pg.locator("#wk-in .exblock").first.locator(".wrow:not(.whead)").nth(1)
+    f.locator('input[data-f="kg"]').fill("50"); f.locator('input[data-f="reps"]').fill("10"); f.locator('[data-act="done"]').click(); pg.wait_for_timeout(150)
+    pg.evaluate(_OBS, "#summary-vol")
+    pg.click("#wk-finish"); pg.click("#finish-save"); pg.wait_for_selector("#summary-sheet.show", timeout=5000); pg.wait_for_timeout(800)
+    vals = pg.evaluate("window.__vals")
+    assert pg.inner_text("#summary-vol") == "500 kg", pg.inner_text("#summary-vol")
+    assert len(set(vals)) >= 4 and vals[-1] == "500 kg", f"el volumen sube hasta el total: {vals}"
+
 @test
 def diseno_respeta_reduced_motion(pg):
     pg.emulate_media(reduced_motion="reduce"); seed(pg); tab(pg, "rutinas"); pg.wait_for_timeout(100)
@@ -1763,6 +1814,7 @@ def resumen_suma_todas_las_series_y_mejor_serie_por_ejercicio(pg):
         f.locator('[data-act="done"]').click(); pg.wait_for_timeout(120)
     pg.click("#wk-finish"); pg.click("#finish-save"); pg.wait_for_selector("#summary-sheet.show", timeout=5000)
     assert "Series" in pg.inner_text("#summary-sheet")
+    pg.wait_for_timeout(600)   # los números cuentan hasta el total
     assert pg.inner_text("#summary-sheet .sum-series").strip() == "3", "cuenta las series hechas"
     assert "60 kg × 8" in pg.inner_text("#summary-list .sum-ex"), "la mejor serie es la de más kg"
     assert pg.inner_text("#summary-sheet .sum-vol").replace(" ", "").startswith("1540"), "1540 kg = 400 + 480 + 660"

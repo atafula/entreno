@@ -241,8 +241,8 @@ function showSummary(session, prs) {
   });
   $('summary-sub').textContent = `${session.routine}${prs ? ` · ${prs} ${prs === 1 ? 'récord' : 'récords'}` : ''}`;
   $('summary-time').textContent = clockLong(session.seconds);
-  $('summary-vol').textContent = `${Math.round(vol)} kg`;
-  $('summary-series').textContent = String(sets.length);
+  countUp($('summary-vol'), Math.round(vol), n => `${Math.round(n)} kg`);
+  countUp($('summary-series'), sets.length);
   $('summary-list').innerHTML = byEx.map(e => `<div class="sum-ex"><b>${esc(e.name)}</b><span>${e.n} ${e.n === 1 ? 'serie' : 'series'} · mejor ${e.best.kg} kg × ${e.best.reps}</span></div>`).join('');
   $('summary-sheet').classList.add('show'); $('summary-sheet').setAttribute('aria-hidden', 'false');
   $('scrim').classList.add('show');
