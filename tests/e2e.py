@@ -1418,8 +1418,52 @@ def tema_oscuro_por_defecto(pg):
 def tema_claro_colores_papel(pg):
     seed(pg); _tema(pg, "light")
     assert pg.evaluate("document.documentElement.dataset.theme") == "light"
-    assert _rgb(pg, "body", "backgroundColor") == "rgb(243, 239, 230)", _rgb(pg, "body", "backgroundColor")
-    assert _rgb(pg, ".card", "backgroundColor") == "rgb(255, 253, 248)", _rgb(pg, ".card", "backgroundColor")
+    assert _rgb(pg, "body", "backgroundColor") == "rgb(238, 242, 249)", _rgb(pg, "body", "backgroundColor")
+    assert _rgb(pg, ".card", "backgroundColor") == "rgb(255, 255, 255)", _rgb(pg, ".card", "backgroundColor")
+
+def _hue(c):
+    import colorsys
+    r, g, b = [x / 255 for x in _rgb_t(c)]
+    return colorsys.rgb_to_hsv(r, g, b)[0] * 360
+
+def _rgb_t(c):
+    import re
+    return tuple(int(x) for x in re.findall(r"\d+", c)[:3])
+
+@test
+def azul_oscuro_fondo_azul_noche_y_acento_azul(pg):
+    seed(pg)
+    assert _var(pg, "--bg").lower() == "#0a1220", _var(pg, "--bg")
+    for n in ["--bg", "--surface", "--surface-2", "--surface-3"]:
+        h = _hue("rgb(%d,%d,%d)" % tuple(int(_var(pg, n).lstrip("#")[i:i + 2], 16) for i in (0, 2, 4)))
+        assert 205 <= h <= 235, f"{n} es azul, no marrón: tono {h:.0f}"
+    assert _var(pg, "--fire").lower() == "#3169e6", _var(pg, "--fire")
+    assert _var(pg, "--on-fire").lower() == "#ffffff"
+    pg.click('[data-tab="tab-rutinas"]') if False else tab(pg, "rutinas")
+    b = _rgb(pg, "[data-start-routine]", "backgroundColor")
+    assert 210 <= _hue(b) <= 230, f"el botón Comenzar es azul: {b}"
+
+@test
+def azul_fondo_liso_sin_degradado_ni_difuminado(pg):
+    seed(pg)
+    for sel in ["body", "html"]:
+        img = pg.evaluate("s => getComputedStyle(document.querySelector(s)).backgroundImage", sel)
+        assert img == "none", f"{sel}: el fondo es liso, sin degradado: {img}"
+    assert pg.evaluate("getComputedStyle(document.body, '::before').backgroundImage") in ("none", ""), "sin brillo detrás"
+
+@test
+def azul_claro_fondo_azulado_y_acento_azul(pg):
+    seed(pg); _tema(pg, "light")
+    assert _var(pg, "--fire").lower() == "#2563eb", _var(pg, "--fire")
+    assert _var(pg, "--fire-text").lower() == "#1d4ed8"
+    assert _contraste(_rgb(pg, "body", "color"), _rgb(pg, "body", "backgroundColor")) >= 7
+
+@test
+def azul_barra_de_estado_y_manifest_azul_noche(pg):
+    seed(pg)
+    assert pg.get_attribute('meta[name="theme-color"]', "content").lower() == "#0a1220"
+    m = json.loads(open(os.path.join(ROOT, "manifest.webmanifest")).read())
+    assert m["background_color"].lower() == "#0a1220" and m["theme_color"].lower() == "#0a1220", m
 
 @test
 def diseno_tokens_de_espaciado_radios_texto_y_movimiento(pg):
@@ -1630,7 +1674,7 @@ def ajustes_opciones_con_estado_accesible(pg):
     pg.click('[data-tema="light"]'); pg.wait_for_timeout(100)
     assert pg.get_attribute('[data-tema="light"]', "aria-pressed") == "true" and pg.get_attribute('[data-tema="dark"]', "aria-pressed") == "false"
     assert pg.evaluate("document.documentElement.dataset.theme") == "light"
-    assert pg.get_attribute('meta[name="theme-color"]', "content").lower() == "#f3efe6", "la barra de estado sigue al tema"
+    assert pg.get_attribute('meta[name="theme-color"]', "content").lower() == "#eef2f9", "la barra de estado sigue al tema"
 
 @test
 def diseno_respeta_reduced_motion(pg):

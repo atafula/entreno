@@ -22,49 +22,49 @@
   --snap: var(--ease-out); --spring: var(--ease-spring);
 
   /* Color — OSCURO cálido (predeterminado): superficies en capas, sin negro ni blanco puros */
-  --bg: #17150f; --surface: #201d16; --surface-2: #2b271e; --surface-3: #383327;
-  --line: #2f2a20; --line-2: #4a4434;
-  --text: #ece7da; --text-2: #cfc8b6; --muted: #a59e8a;
-  --fire: #ee6a40; --fire-2: #f58f66; --fire-text: #f5845c; --on-fire: #1a0d06;
-  --acid: #3aa56f; --acid-text: #5fd49a; --on-acid: #06150d;
-  --warn: #e8b02f; --warn-text: #e8b02f;
-  --scrim: rgba(8, 7, 4, .62);
-  --shadow-1: inset 0 0 0 1px var(--line);
-  --shadow-2: inset 0 0 0 1px var(--line-2), 0 14px 34px -12px rgba(0, 0, 0, .7);
-  --shadow-3: 0 -1px 0 var(--line-2), 0 -18px 44px -14px rgba(0, 0, 0, .75);
+  --bg: #0a1220; --surface: #111b2e; --surface-2: #192740; --surface-3: #233453;
+  --line: #1d2b45; --line-2: #31466b;
+  --text: #eef3fc; --text-2: #c5d1e6; --muted: #8a99b5;
+  --fire: #3169e6; --fire-2: #6c9cff; --fire-text: #8fb2ff; --on-fire: #ffffff;
+  --acid: #2ea77a; --acid-text: #5fd9a8; --on-acid: #03150d;
+  --warn: #e8b02f; --warn-text: #f0c14d;
+  --scrim: rgba(3, 7, 16, .66);
+  --shadow-1: inset 0 0 0 1px var(--line), inset 0 1px 0 rgba(255, 255, 255, .04);
+  --shadow-2: inset 0 0 0 1px var(--line-2), 0 14px 34px -12px rgba(0, 0, 0, .75);
+  --shadow-3: 0 -1px 0 var(--line-2), 0 -18px 44px -14px rgba(0, 0, 0, .8);
   color-scheme: dark;
 }
 :root[data-theme="light"] {
-  --bg: #f3efe6; --surface: #fffdf8; --surface-2: #ebe5d6; --surface-3: #ddd6c3;
-  --line: #e3dcca; --line-2: #cfc7b3;
-  --text: #1c1b18; --text-2: #3b3830; --muted: #625d4e;
-  --fire: #e0562b; --fire-2: #f08a5d; --fire-text: #b03a14; --on-fire: #1f0d05;
-  --acid: #2f9e6b; --acid-text: #1b6b46; --on-acid: #04140c;
+  --bg: #eef2f9; --surface: #ffffff; --surface-2: #e3e9f4; --surface-3: #d2dbea;
+  --line: #d9e0ee; --line-2: #bcc8de;
+  --text: #0f1729; --text-2: #2c3750; --muted: #55627d;
+  --fire: #2563eb; --fire-2: #5b8def; --fire-text: #1d4ed8; --on-fire: #ffffff;
+  --acid: #1f9a6c; --acid-text: #146947; --on-acid: #03140c;
   --warn: #c98a00; --warn-text: #7d5600;
-  --scrim: rgba(28, 24, 12, .46);
-  --shadow-1: 0 1px 0 var(--line), 0 10px 26px -16px rgba(70, 50, 10, .32);
-  --shadow-2: 0 0 0 1px var(--line), 0 14px 34px -12px rgba(70, 50, 10, .35);
-  --shadow-3: 0 -14px 40px -14px rgba(70, 50, 10, .35);
+  --scrim: rgba(10, 18, 36, .46);
+  --shadow-1: 0 1px 0 var(--line), 0 10px 26px -16px rgba(20, 40, 90, .28);
+  --shadow-2: 0 0 0 1px var(--line), 0 14px 34px -12px rgba(20, 40, 90, .30);
+  --shadow-3: 0 -14px 40px -14px rgba(20, 40, 90, .30);
   color-scheme: light;
 }
 @media (prefers-color-scheme: light) {
   :root[data-theme="auto"] {
-    --bg: #f3efe6; --surface: #fffdf8; --surface-2: #ebe5d6; --surface-3: #ddd6c3;
-    --line: #e3dcca; --line-2: #cfc7b3;
-    --text: #1c1b18; --text-2: #3b3830; --muted: #625d4e;
-    --fire: #e0562b; --fire-2: #f08a5d; --fire-text: #b03a14; --on-fire: #1f0d05;
-    --acid: #2f9e6b; --acid-text: #1b6b46; --on-acid: #04140c;
+    --bg: #eef2f9; --surface: #ffffff; --surface-2: #e3e9f4; --surface-3: #d2dbea;
+    --line: #d9e0ee; --line-2: #bcc8de;
+    --text: #0f1729; --text-2: #2c3750; --muted: #55627d;
+    --fire: #2563eb; --fire-2: #5b8def; --fire-text: #1d4ed8; --on-fire: #ffffff;
+    --acid: #1f9a6c; --acid-text: #146947; --on-acid: #03140c;
     --warn: #c98a00; --warn-text: #7d5600;
-    --scrim: rgba(28, 24, 12, .46);
-    --shadow-1: 0 1px 0 var(--line), 0 10px 26px -16px rgba(70, 50, 10, .32);
-    --shadow-2: 0 0 0 1px var(--line), 0 14px 34px -12px rgba(70, 50, 10, .35);
-    --shadow-3: 0 -14px 40px -14px rgba(70, 50, 10, .35);
+    --scrim: rgba(10, 18, 36, .46);
+    --shadow-1: 0 1px 0 var(--line), 0 10px 26px -16px rgba(20, 40, 90, .28);
+    --shadow-2: 0 0 0 1px var(--line), 0 14px 34px -12px rgba(20, 40, 90, .30);
+    --shadow-3: 0 -14px 40px -14px rgba(20, 40, 90, .30);
     color-scheme: light;
   }
 }
 /* Derivados: se recalculan solos en cada tema */
 :root {
-  --done-bg: color-mix(in srgb, var(--acid) 15%, var(--bg));
+  --done-bg: color-mix(in srgb, var(--acid) 34%, var(--bg));
   --done-field: color-mix(in srgb, var(--acid) 10%, var(--surface-2));
   --warn-bg: color-mix(in srgb, var(--warn) 20%, var(--surface-2));
   --fire-soft: color-mix(in srgb, var(--fire) 16%, var(--surface));
