@@ -1365,6 +1365,26 @@ def ejercicios_todos_los_pasos_en_espanol(pg):
     assert not malos, f"{len(malos)} pasos en inglés, p. ej.: {malos[:3]}"
 
 @test
+def ejercicios_nombres_en_espanol_de_gimnasio(pg):
+    cat = json.loads(open(os.path.join(ROOT, "ejercicios_local.json"), encoding="utf-8").read())
+    tr = json.loads(open(os.path.join(ROOT, "traducciones.json"), encoding="utf-8").read())
+    faltan = [e["name"] for e in cat if e["name"] not in tr]
+    assert not faltan, f"sin traducción: {faltan[:5]}"
+    esperado = {
+        "Pull Up": "Dominadas", "Chin Up": "Dominadas supinas", "Push Up": "Flexiones", "Sit Up": "Abdominales",
+        "Chest Fly (Machine)": "Aperturas de pecho (máquina)", "Chest Fly (Dumbbell)": "Aperturas de pecho (con mancuernas)",
+        "Incline Chest Fly (Dumbbell)": "Aperturas inclinadas (con mancuernas)", "Clean": "Cargada", "Snatch": "Arrancada",
+        "Lat Pulldown (Machine)": "Jalón dorsal (máquina)", "Deadlift (Barbell)": "Peso muerto (con barra)",
+        "Squat (Barbell)": "Sentadilla (con barra)", "Lunge": "Zancada", "Plank": "Plancha", "Dead Bug": "Dead bug",
+        "Jumping Jack": "Jumping jack", "Dragon Flag": "Bandera del dragón", "Dead Hang": "Colgado en barra (dead hang)",
+        "Ab Wheel": "Rueda abdominal", "Clamshell": "Clamshell (apertura de concha)",
+    }
+    mal = {k: tr[k] for k, v in esperado.items() if tr.get(k) != v}
+    assert not mal, f"términos mal traducidos: {mal}"
+    feos = [(k, v) for k, v in tr.items() if k in {e["name"] for e in cat} and (v.endswith(".") or not v[:1].isupper() and not v[:1].isdigit() or "Mosca" in v or "molusco" in v or "Limpio" == v)]
+    assert not feos, f"nombres con mayúscula o punto raros: {feos[:5]}"
+
+@test
 def entreno_descanso_sigue_abajo_al_bajar(pg):
     seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
     for n in range(6):
