@@ -365,10 +365,8 @@ function exBlockHtml(ex, ei, kind) {
     ? `<button type="button" class="btn ghost small" data-act="addset" data-ex="${ei}">+ Añadir serie</button>`
     : `<button type="button" class="btn ghost small" data-act="addset" data-ex="${ei}">+ SERIE</button>
        <button type="button" class="btn ghost small" data-act="lastset" data-ex="${ei}"${ex.sets.length < 2 ? ' disabled' : ''}>− SERIE</button>`;
-  const resumen = kind === 'draft' ? `<p class="excol-n">${plural(ex.sets.length, 'serie', 'series')}</p>` : '';
   return `<div class="exblock">
     <div class="exhead">${exImg}${head}</div>
-    ${resumen}
     <div class="shead"><span>Serie</span><span>KG</span><span>Reps</span><span>${kind === 'draft' ? '' : '✓'}</span></div>
     ${setRowsHtml(ex, ei, kind)}
     <div class="setbtns">${btns}</div>
@@ -396,7 +394,8 @@ function bindExDrag(box, getExs, rerender) {
       timer = null;
       const blocks = [...box.querySelectorAll('.exblock')];
       document.activeElement?.blur?.();
-      block.classList.add('is-collapsed', 'moving');
+      blocks.forEach(b => b.classList.add('is-collapsed'));   // se compactan todos los ejercicios
+      block.classList.add('moving');
       d = { from: blocks.indexOf(block), y: start.y, dy: 0, block, centers: blocks.map(b => b.offsetTop + b.offsetHeight / 2) };
       vibrate(8);
     }, HOLD_MS);

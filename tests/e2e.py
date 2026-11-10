@@ -1446,6 +1446,9 @@ def rutina_editor_mantener_cierra_series_y_permite_mover(pg):
     pg.mouse.move(x, y); pg.mouse.down(); pg.wait_for_timeout(700)
     assert "is-collapsed" in bloques.nth(0).get_attribute("class"), "al mantener, las series se cierran"
     assert bloques.nth(0).locator(".srow").first.is_hidden(), "las series quedan ocultas mientras se mueve"
+    assert "is-collapsed" in bloques.nth(1).get_attribute("class"), "al mantener, se compactan todos los ejercicios"
+    assert bloques.nth(0).evaluate("el => getComputedStyle(el).boxShadow") == "none", "sin borde azul al mover"
+    assert pg.locator("#routine-exercises .excol-n").count() == 0, "sin texto de series al compactar"
     b0 = bloques.nth(0).bounding_box(); b1 = bloques.nth(1).bounding_box()
     dy = (b1["y"] + b1["height"] / 2) - (b0["y"] + b0["height"] / 2) + 12
     for i in range(1, 13): pg.mouse.move(x, y + dy * i / 12)
