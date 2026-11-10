@@ -450,16 +450,37 @@ const EMPTY_ICO = {
   historial: '<svg viewBox="0 0 24 24" class="ico" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>'
 };
 const emptyHtml = (ico, title, text) => `<div class="empty">${EMPTY_ICO[ico]}<b>${title}</b>${text}</div>`;
+// Grupos musculares de una rutina: la parte principal de cada ejercicio, sin repetir y en orden de aparición
+const GRUPO = {
+  'Abdominals': 'Abdomen', 'Abductors': 'Abductor', 'Adductors': 'Aductor', 'Biceps': 'Bíceps', 'Calves': 'Gemelo',
+  'Cardio': 'Cardio', 'Chest': 'Pecho', 'Forearms': 'Antebrazo', 'Full Body': 'Cuerpo completo', 'Glutes': 'Glúteo',
+  'Hamstrings': 'Isquiotibial', 'Lats': 'Espalda', 'Lower Back': 'Lumbar', 'Neck': 'Cuello', 'Quadriceps': 'Cuádriceps',
+  'Shoulders': 'Hombro', 'Traps': 'Trapecio', 'Triceps': 'Tríceps', 'Upper Back': 'Espalda alta',
+};
+function gruposRutina(r) {
+  // ejCache lo declara ejercicios.js, que carga después: al arrancar aún no existe
+  if (typeof ejCache === 'undefined' || !ejCache) return [];
+  const partes = [];
+  r.exercises.forEach(ex => {
+    const cat = ex.ejId && ejCache.find(c => c.id === ex.ejId);
+    const g = cat && GRUPO[cat.body_part];
+    if (g && !partes.includes(g)) partes.push(g);
+  });
+  return partes.slice(0, 4);
+}
+
 function renderRoutines() {
   $('routines-list').innerHTML = db.routines.map(r => {
     const sets = r.exercises.reduce((n, e) => n + e.sets.length, 0);
     const last = db.sessions.filter(s => String(s.routine).toLowerCase() === String(r.name).toLowerCase()).map(s => s.date).sort().pop();
+    const grupos = gruposRutina(r);
     return `
     <div class="card routine">
       <button type="button" class="rhead" data-open-routine="${r.id}" aria-label="Abrir ${esc(r.name)}">
         <span class="rtitle"><b>${esc(r.name)}</b><small>${plural(r.exercises.length, 'ejercicio', 'ejercicios')} · ${plural(sets, 'serie', 'series')} · ${last ? whenText(last) : 'Sin estrenar'}</small></span>
         <svg viewBox="0 0 24 24" class="ico chev"><path d="M9 5l7 7-7 7"/></svg>
       </button>
+      ${grupos.length ? `<div class="rtags">${grupos.map(g => `<span>${esc(g)}</span>`).join('')}</div>` : ''}
       <div class="ractions">
         <button type="button" class="btn primary" data-start-routine="${r.id}">Comenzar</button>
         <button type="button" class="btn" data-edit-routine="${r.id}">Editar</button>
@@ -1013,6 +1034,8 @@ newPhrase(false);
 renderEditor();
 updateGoalLabel();
 render();
+// el catálogo (ejercicios.js) carga después de este script: los grupos musculares se pintan al terminar
+window.addEventListener('load', () => loadEjercicios().then(() => renderRoutines()).catch(() => { /* sin catálogo: las rutinas se ven sin grupos */ }));
 (function resumeWalk() {
   try {
     const w = JSON.parse(lsGet(WALK_KEY) || 'null');

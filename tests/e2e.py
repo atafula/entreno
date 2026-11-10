@@ -1407,6 +1407,20 @@ def ejercicios_catalogo_viejo_en_el_movil_se_actualiza(pg):
     assert pasos["vacios"] == 0, f"ningún ejercicio sin pasos: {pasos['vacios']}"
 
 @test
+def rutinas_muestran_los_grupos_musculares_de_cada_rutina(pg):
+    seed(pg)
+    pg.evaluate("""() => { const s = () => [{w: false, kg: '', reps: ''}];
+        db.routines = [{id: 'rp', name: 'Empuje', exercises: [
+            {name: 'Aperturas', ejId: 'chest-fly-machine', image: '', sets: s()},
+            {name: 'Press militar', ejId: 'shoulder-press-dumbbell', image: '', sets: s()},
+            {name: 'Fondos', ejId: 'seated-triceps-press', image: '', sets: s()},
+            {name: 'Aperturas 2', ejId: 'chest-fly-machine', image: '', sets: s()}]}];
+        render(); }""")
+    tab(pg, "rutinas"); pg.wait_for_selector("#routines-list .routine .rtags span", timeout=3000)
+    grupos = pg.locator("#routines-list .routine .rtags span").all_inner_texts()
+    assert grupos == ["Pecho", "Hombro", "Tríceps"], f"sin repetir y en orden de aparición: {grupos}"
+
+@test
 def entreno_descanso_sigue_abajo_al_bajar(pg):
     seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
     for n in range(6):
