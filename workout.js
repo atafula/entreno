@@ -78,8 +78,9 @@ function wkRender() {
       <div><small>Series</small><b id="wk-sets">0</b></div>
     </div>
     </div>
-    ${wk.exercises.length ? `<nav class="wk-nav"><button type="button" class="btn ghost small" id="wk-prev" ${wk.cur <= 0 ? 'disabled' : ''}>‹ Anterior</button><span id="wk-pos">${wk.cur + 1} / ${wk.exercises.length}</span><button type="button" class="btn ghost small" id="wk-next" ${wk.cur >= wk.exercises.length - 1 ? 'disabled' : ''}>Siguiente ›</button></nav>` : ''}
+    ${wk.exercises.length ? `<div class="wk-prog" role="progressbar" aria-label="Progreso del entreno" aria-valuemin="1" aria-valuemax="${wk.exercises.length}" aria-valuenow="${wk.cur + 1}"><i style="transform:scaleX(${(wk.cur + 1) / wk.exercises.length})"></i></div>` : ''}
     ${wk.exercises.length ? wk.exercises.map((ex, i) => wkExHtml(ex, i, wk.cur)).join('') : '<p class="wk-empty">Añade tu primer ejercicio.</p>'}
+    ${wk.exercises.length ? `<nav class="wk-nav"><button type="button" class="btn ghost small" id="wk-prev" ${wk.cur <= 0 ? 'disabled' : ''}>‹ Anterior</button><span id="wk-pos">${wk.cur + 1} / ${wk.exercises.length}</span><button type="button" class="btn ghost small" id="wk-next" ${wk.cur >= wk.exercises.length - 1 ? 'disabled' : ''}>Siguiente ›</button></nav>` : ''}
     <div class="wk-add"><button type="button" class="btn ghost small" id="wk-add-ex">+ Añadir ejercicio</button></div>
     `;
   wkTick();

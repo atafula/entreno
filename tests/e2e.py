@@ -1043,6 +1043,34 @@ def entreno_el_ejercicio_actual_sobrevive_a_recargar(pg):
     assert _visibles(pg) == [todos[1]], "al recargar sigue en el segundo"
 
 @test
+def entreno_navegacion_va_debajo_del_ejercicio(pg):
+    seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
+    nav = pg.locator(".wk-nav").bounding_box()
+    blk = pg.locator("#wk-in .exblock:not([hidden])").first.bounding_box()
+    assert nav["y"] >= blk["y"] + blk["height"] - 2, f"los botones van debajo del ejercicio: nav {nav['y']} bloque {blk['y'] + blk['height']}"
+
+@test
+def entreno_barra_de_progreso_arriba(pg):
+    seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
+    n = len(_todos(pg))
+    bar = pg.locator('#wk-in .wk-prog[role="progressbar"]')
+    assert bar.count() == 1, "hay una barra de progreso"
+    assert bar.get_attribute("aria-valuemax") == str(n) and bar.get_attribute("aria-valuenow") == "1"
+    pg.click("#wk-next"); pg.wait_for_timeout(400)
+    assert bar.get_attribute("aria-valuenow") == "2"
+    ratio = pg.locator("#wk-in .wk-prog i").evaluate("el => el.getBoundingClientRect().width / el.parentElement.getBoundingClientRect().width")
+    assert abs(ratio - 2 / n) < 0.02, f"la barra llega al {ratio:.2f} y debe llegar al {2 / n:.2f}"
+    assert bar.bounding_box()["y"] < pg.locator("#wk-in .exblock:not([hidden])").first.bounding_box()["y"], "la barra va arriba, antes del ejercicio"
+
+@test
+def entreno_botones_de_navegacion_sutiles(pg):
+    seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
+    bg, bw, sh = pg.evaluate("(() => { const s = getComputedStyle(document.getElementById('wk-next')); return [s.backgroundColor, s.borderTopWidth, s.boxShadow]; })()")
+    assert bg in ("rgba(0, 0, 0, 0)", "transparent"), f"sin fondo: {bg}"
+    assert bw == "0px", f"sin borde: {bw}"
+    assert sh == "none", f"sin sombra: {sh}"
+
+@test
 def picker_no_ofrece_ejercicios_sin_foto(pg):
     seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
     pg.click("#wk-add-ex"); pg.wait_for_selector("#picker-sheet.show"); pg.wait_for_timeout(200)
