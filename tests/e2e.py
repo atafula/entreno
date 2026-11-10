@@ -1445,7 +1445,6 @@ def rutina_editor_mantener_cierra_series_y_permite_mover(pg):
     assert bloques.nth(0).locator(".srow").count() >= 1, "una pulsación corta no cierra las series"
     pg.mouse.move(x, y); pg.mouse.down(); pg.wait_for_timeout(700)
     assert "is-collapsed" in bloques.nth(0).get_attribute("class"), "al mantener, las series se cierran"
-    assert bloques.nth(0).locator(".srow").first.is_hidden(), "las series quedan ocultas mientras se mueve"
     assert "is-collapsed" in bloques.nth(1).get_attribute("class"), "al mantener, se compactan todos los ejercicios"
     assert bloques.nth(0).evaluate("el => getComputedStyle(el).boxShadow") == "none", "sin borde azul al mover"
     assert pg.locator("#routine-exercises .excol-n").count() == 0, "sin texto de series al compactar"
@@ -1459,6 +1458,32 @@ def rutina_editor_mantener_cierra_series_y_permite_mover(pg):
     pg.click("#routine-save"); pg.wait_for_timeout(300)
     orden = pg.evaluate("db.routines.find(r => r.id === 'r1').exercises.map(e => e.name)")
     assert orden == ["B", "A", "C"], f"el orden se guarda: {orden}"
+
+@test
+def picker_ejercicios_es_pagina_entera_y_el_buscador_no_se_tapa(pg):
+    seed(pg)
+    tab(pg, "rutinas"); pg.click("#new-routine"); pg.wait_for_timeout(200)
+    pg.click("#add-exercise"); pg.wait_for_selector("#picker-sheet.show", timeout=2000); pg.wait_for_timeout(450)
+    vh = pg.evaluate("innerHeight")
+    caja = pg.locator("#picker-sheet").bounding_box()
+    assert caja["y"] <= 1 and abs(caja["y"] + caja["height"] - vh) <= 2, f"el buscador ocupa toda la pantalla: {caja} vh={vh}"
+    # con el teclado abierto la pantalla se encoge: el buscador debe seguir visible arriba
+    pg.set_viewport_size({"width": 390, "height": 420}); pg.wait_for_timeout(300)
+    b = pg.locator("#picker-search").bounding_box()
+    assert b["y"] >= 0 and b["y"] + b["height"] <= 420, f"el buscador queda tapado por el teclado: {b}"
+    pg.set_viewport_size({"width": 390, "height": 844})
+
+@test
+def rutina_editor_colapso_se_anima_con_el_contenido(pg):
+    _rutina_abc(pg); tab(pg, "rutinas"); editar_rutina(pg, "r1")
+    bloque = pg.locator("#routine-exercises .exblock").nth(0)
+    r = bloque.locator(".exhead").bounding_box(); x, y = r["x"] + 8, r["y"] + r["height"] / 2
+    pg.mouse.move(x, y); pg.mouse.down(); pg.wait_for_timeout(700)
+    assert bloque.locator(".exbody").evaluate("el => getComputedStyle(el).transitionProperty").find("grid-template-rows") >= 0, "el colapso tiene transición de altura"
+    assert bloque.locator(".exbody").evaluate("el => getComputedStyle(el).gridTemplateRows") == "0px", "el cuerpo se cierra hasta 0"
+    assert bloque.locator(".exbody-in").evaluate("el => getComputedStyle(el).opacity") == "0", "las series se desvanecen"
+    assert bloque.locator(".srow").count() >= 1, "las series siguen en el DOM, solo se cierran"
+    pg.mouse.up(); pg.wait_for_timeout(200)
 
 @test
 def entreno_descanso_sigue_abajo_al_bajar(pg):

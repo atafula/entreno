@@ -31,7 +31,7 @@ App web instalable en iPhone para registrar entrenos, rutinas y caminatas. Estil
 
 ## Diseño
 
-Todo sale de los tokens de `:root` en `styles.css`: espaciado en escala de 4 px (`--s1`…`--s10`), radios (`--r-*`), texto (`--t-*`, en rem), sombras (`--shadow-*`), color y movimiento (`--d-*`, `--ease-*`). No añadas colores ni medidas sueltas fuera de ese bloque: hay tests que lo comprueban, junto con el contraste AA en los dos temas, las áreas táctiles de 44 px y `prefers-reduced-motion`. Las animaciones solo tocan `transform` y `opacity`.
+Todo sale de los tokens de `:root` en `styles.css`: espaciado en escala de 4 px (`--s1`…`--s10`), radios (`--r-*`), texto (`--t-*`, en rem), sombras (`--shadow-*`), color y movimiento (`--d-*`, `--ease-*`). No añadas colores ni medidas sueltas fuera de ese bloque: hay tests que lo comprueban, junto con el contraste AA en los dos temas, las áreas táctiles de 44 px y `prefers-reduced-motion`. Las animaciones tocan `transform` y `opacity`; la única excepción es el colapso de las series, que anima la altura con `grid-template-rows`.
 
 ## Tests
 

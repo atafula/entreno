@@ -237,7 +237,10 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; }
 .rtitle { flex: 1; min-width: 0; }
 .rtitle b { display: block; font: 600 var(--t-xl)/1.1 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rtitle small { display: block; margin-top: var(--s1); color: var(--muted); font: 600 var(--t-sm)/1.2 var(--ui); }
-.exblock.is-collapsed .shead, .exblock.is-collapsed .srow, .exblock.is-collapsed .setbtns { display: none; }
+.exbody { display: grid; grid-template-rows: 1fr; transition: grid-template-rows var(--d-base) var(--ease-out); }
+.exbody-in { min-height: 0; transition: opacity var(--d-base) var(--ease-out), transform var(--d-base) var(--ease-out); }
+.exblock.is-collapsed .exbody { grid-template-rows: 0fr; }
+.exblock.is-collapsed .exbody-in { overflow: hidden; opacity: 0; transform: translateY(-6px); }
 .exhead { -webkit-touch-callout: none; }
 .exblock { transition: transform var(--d-fast) var(--ease-out); }
 .exblock.moving { position: relative; z-index: 2; box-shadow: none; transition: none; }
@@ -342,6 +345,11 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; }
 }
 .sheet.show { transform: none; visibility: visible; transition: transform var(--d-slow) var(--ease-spring), visibility 0s; }
 .sheet.dragging { transition: none; }
+/* Selector de ejercicios: pantalla entera; solo se desplaza la lista, así el buscador queda arriba con el teclado */
+.sheet-page { top: 0; bottom: 0; max-height: none; height: 100vh; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; border-radius: 0; padding: env(safe-area-inset-top) var(--s5) 0; }
+.sheet-page > * { flex: none; }
+.sheet-page .picker-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-bottom: calc(var(--s6) + env(safe-area-inset-bottom)); }
+
 .sheet:focus-visible { outline: none; }
 .sheet-head { touch-action: none; }
 .sheet-head { position: sticky; top: 0; z-index: 1; display: flex; justify-content: space-between; align-items: center; gap: var(--s3); margin: 0 calc(var(--s5) * -1) var(--s2); padding: var(--s6) var(--s5) var(--s3); background: var(--bg); }

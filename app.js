@@ -367,9 +367,11 @@ function exBlockHtml(ex, ei, kind) {
        <button type="button" class="btn ghost small" data-act="lastset" data-ex="${ei}"${ex.sets.length < 2 ? ' disabled' : ''}>− SERIE</button>`;
   return `<div class="exblock">
     <div class="exhead">${exImg}${head}</div>
-    <div class="shead"><span>Serie</span><span>KG</span><span>Reps</span><span>${kind === 'draft' ? '' : '✓'}</span></div>
-    ${setRowsHtml(ex, ei, kind)}
-    <div class="setbtns">${btns}</div>
+    <div class="exbody"><div class="exbody-in">
+      <div class="shead"><span>Serie</span><span>KG</span><span>Reps</span><span>${kind === 'draft' ? '' : '✓'}</span></div>
+      ${setRowsHtml(ex, ei, kind)}
+      <div class="setbtns">${btns}</div>
+    </div></div>
   </div>`;
 }
 // Los inputs actualizan el estado sin repintar (así no pierdes el teclado); los botones sí repintan
@@ -403,8 +405,7 @@ function bindExDrag(box, getExs, rerender) {
       document.activeElement?.blur?.();
       blocks.forEach(b => b.classList.add('is-collapsed'));   // se compactan todos los ejercicios
       block.classList.add('moving');
-      const centers = blocks.map(b => b.offsetTop + b.offsetHeight / 2);
-      d = { from: blocks.indexOf(block), y: start.y, dy: 0, block, blocks, centers, slot: blocks.length > 1 ? Math.abs(centers[1] - centers[0]) : block.offsetHeight };
+      d = { from: blocks.indexOf(block), y: start.y, dy: 0, block, blocks, centers: null, slot: 0 };
       vibrate(8);
     }, HOLD_MS);
   });
@@ -412,6 +413,10 @@ function bindExDrag(box, getExs, rerender) {
     if (!d) {
       if (start && Math.hypot(e.clientX - start.x, e.clientY - start.y) > 8) { cancel(); start = null; }
       return;
+    }
+    if (!d.centers) {   // se miden al empezar a mover, cuando el colapso ya ha terminado de animarse
+      d.centers = d.blocks.map(b => b.offsetTop + b.offsetHeight / 2);
+      d.slot = d.blocks.length > 1 ? Math.abs(d.centers[1] - d.centers[0]) : d.block.offsetHeight;
     }
     d.dy = e.clientY - d.y;
     d.block.style.transform = `translateY(${d.dy}px)`;
@@ -431,7 +436,7 @@ function bindExDrag(box, getExs, rerender) {
     cancel(); start = null;
     if (!d) return;
     const cur = d; d = null;
-    moveEx(getExs(), cur.from, destino(cur));
+    if (cur.centers) moveEx(getExs(), cur.from, destino(cur));
     rerender();                                    // al soltar, se repinta con las series visibles
   };
   box.addEventListener('pointerup', fin);
