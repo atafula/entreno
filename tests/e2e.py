@@ -1420,6 +1420,46 @@ def rutinas_muestran_los_grupos_musculares_de_cada_rutina(pg):
     grupos = pg.locator("#routines-list .routine .rtags span").all_inner_texts()
     assert grupos == ["Pecho", "Hombro", "Tríceps"], f"sin repetir y en orden de aparición: {grupos}"
 
+def _rutina_abc(pg):
+    s = lambda: [{"w": False, "kg": "", "reps": ""}]
+    seed(pg, routines=[{"id": "r1", "name": "Rutina", "exercises": [
+        {"name": "A", "ejId": "", "image": "", "sets": s()},
+        {"name": "B", "ejId": "", "image": "", "sets": s()},
+        {"name": "C", "ejId": "", "image": "", "sets": s()}]}])
+
+def _nombres_editor(pg):
+    return pg.locator("#routine-exercises .exname").evaluate_all("els => els.map(e => e.value)")
+
+@test
+def rutina_editor_sin_flechas_y_orden_arrastrado_se_guarda(pg):
+    _rutina_abc(pg); tab(pg, "rutinas"); editar_rutina(pg, "r1")
+    assert pg.locator('#routine-exercises [data-act="upex"], #routine-exercises [data-act="downex"]').count() == 0, "no quiere flechas para mover ejercicios"
+    bloques = pg.locator("#routine-exercises .exblock")
+    h = bloques.nth(2).locator(".exhandle").bounding_box()
+    b1 = bloques.nth(1).bounding_box(); b2 = bloques.nth(2).bounding_box()
+    x, y = h["x"] + h["width"] / 2, h["y"] + h["height"] / 2
+    pg.mouse.move(x, y); pg.mouse.down()
+    dy = b1["y"] - b2["y"]
+    for i in range(1, 13): pg.mouse.move(x, y + (dy - 6) * i / 12)
+    pg.mouse.up(); pg.wait_for_timeout(300)
+    assert _nombres_editor(pg) == ["A", "C", "B"], f"arrastrar el asa sube el ejercicio: {_nombres_editor(pg)}"
+    pg.click("#routine-save"); pg.wait_for_timeout(300)
+    orden = pg.evaluate("db.routines.find(r => r.id === 'r1').exercises.map(e => e.name)")
+    assert orden == ["A", "C", "B"], f"el orden se guarda: {orden}"
+
+@test
+def rutina_editor_arrastrar_asa_reordena(pg):
+    _rutina_abc(pg); tab(pg, "rutinas"); editar_rutina(pg, "r1")
+    bloques = pg.locator("#routine-exercises .exblock")
+    h = bloques.nth(0).locator(".exhandle").bounding_box()
+    b1 = bloques.nth(1).bounding_box()
+    x, y = h["x"] + h["width"] / 2, h["y"] + h["height"] / 2
+    pg.mouse.move(x, y); pg.mouse.down()
+    dy = b1["y"] - bloques.nth(0).bounding_box()["y"]
+    for i in range(1, 13): pg.mouse.move(x, y + (dy + 6) * i / 12)
+    pg.mouse.up(); pg.wait_for_timeout(300)
+    assert _nombres_editor(pg) == ["B", "A", "C"], f"arrastrar el asa baja el ejercicio: {_nombres_editor(pg)}"
+
 @test
 def entreno_descanso_sigue_abajo_al_bajar(pg):
     seed(pg); tab(pg, "rutinas"); empezar(pg, "a")

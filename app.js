@@ -358,7 +358,8 @@ function exBlockHtml(ex, ei, kind) {
       : `<img src="${ex.image}" alt="" class="ex-img" loading="lazy">`
     : '';
   const head = kind === 'draft'
-    ? `<input class="exname" placeholder="Ejercicio (ej. Press banca)" value="${esc(ex.name)}" data-f="name" data-ex="${ei}" aria-label="Nombre del ejercicio">
+    ? `<button type="button" class="exhandle" data-ex="${ei}" aria-label="Arrastrar para reordenar ejercicio"><svg viewBox="0 0 24 24" class="ico"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg></button>
+       <input class="exname" placeholder="Ejercicio (ej. Press banca)" value="${esc(ex.name)}" data-f="name" data-ex="${ei}" aria-label="Nombre del ejercicio">
        <button type="button" class="sx" data-act="delex" data-ex="${ei}" aria-label="Quitar ejercicio"><svg viewBox="0 0 24 24" class="ico"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></button>`
     : `<h4 class="exn">${esc(ex.name)}</h4>`;
   const btns = kind === 'draft'
@@ -373,6 +374,42 @@ function exBlockHtml(ex, ei, kind) {
   </div>`;
 }
 // Los inputs actualizan el estado sin repintar (así no pierdes el teclado); los botones sí repintan
+// Cambia de sitio un ejercicio de la rutina (flechas o arrastrar)
+function moveEx(exs, from, to) {
+  if (to < 0 || to >= exs.length || from === to) return false;
+  const [x] = exs.splice(from, 1);
+  exs.splice(to, 0, x);
+  return true;
+}
+// Arrastrar el asa: el bloque sigue al dedo y al soltar se coloca en su nuevo sitio
+function bindExDrag(box, getExs, rerender) {
+  let d = null;
+  box.addEventListener('pointerdown', e => {
+    const h = e.target.closest('.exhandle');
+    if (!h) return;
+    e.preventDefault();
+    const blocks = [...box.querySelectorAll('.exblock')], block = h.closest('.exblock');
+    const step = blocks.length > 1 ? blocks[1].offsetTop - blocks[0].offsetTop : block.offsetHeight;
+    d = { from: +h.dataset.ex, y: e.clientY, dy: 0, block, step, n: blocks.length };
+    h.setPointerCapture(e.pointerId);
+    block.classList.add('moving');
+  });
+  box.addEventListener('pointermove', e => {
+    if (!d) return;
+    d.dy = e.clientY - d.y;
+    d.block.style.transform = `translateY(${d.dy}px)`;
+  });
+  const fin = () => {
+    if (!d) return;
+    const cur = d; d = null;
+    cur.block.classList.remove('moving');
+    cur.block.style.transform = '';
+    const to = Math.max(0, Math.min(cur.n - 1, cur.from + Math.round(cur.dy / cur.step)));
+    if (moveEx(getExs(), cur.from, to)) rerender();
+  };
+  box.addEventListener('pointerup', fin);
+  box.addEventListener('pointercancel', fin);
+}
 function bindSets(box, getExs, rerender) {
   box.addEventListener('input', e => {
     const t = e.target, f = t.dataset.f;
@@ -647,6 +684,7 @@ tabs.forEach(btn => {
 
 // ---------- Rutinas ----------
 bindSets($('routine-exercises'), () => draft.exercises, renderEditor);
+bindExDrag($('routine-exercises'), () => draft.exercises, renderEditor);
 $('routine-name').addEventListener('input', e => { draft.name = e.target.value; });
 $('add-exercise').onclick = () => {
   if (typeof openPicker === 'function') {
