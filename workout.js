@@ -63,6 +63,7 @@ function wkExHtml(ex, ei, cur) {
 
 // Solo al navegar entre ejercicios: dirección y fracción previa de la barra. wkRender lo consume y lo borra,
 // así que repintar por otro motivo (añadir serie, marcar…) no anima nada.
+let wkBusy = false;  // hay una transición entre ejercicios en curso
 let wkNav = null;   // { dir: 'next' | 'prev', from: fracción anterior de la barra }
 function wkRender() {
   if (!wk) return;
@@ -370,11 +371,23 @@ function bindWorkout() {
       return openPicker(({ name, image, id: ejId }) => addWkExercise(name, image, ejId));
     }
     if (id === 'wk-prev' || id === 'wk-next') {
-      const antes = wk.cur;
-      wk.cur = Math.min(Math.max(0, wk.cur + (id === 'wk-next' ? 1 : -1)), wk.exercises.length - 1);
-      if (wk.cur !== antes) wkNav = { dir: id === 'wk-next' ? 'next' : 'prev', from: (antes + 1) / wk.exercises.length };
-      vibrate(6); saveLive(); wkRender();
-      $('wk-pos')?.scrollIntoView({ block: 'center' });
+      if (wkBusy) return;                            // una transición cada vez
+      const dir = id === 'wk-next' ? 'next' : 'prev';
+      const destino = Math.min(Math.max(0, wk.cur + (dir === 'next' ? 1 : -1)), wk.exercises.length - 1);
+      if (destino === wk.cur) return;
+      vibrate(6);
+      // Primero sale el ejercicio actual; al terminar, se cambia y entra el nuevo
+      const blk = $('wk-in').querySelector('.exblock:not([hidden])');
+      const reducir = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      wkBusy = true;
+      blk?.classList.add('leave-' + dir);
+      setTimeout(() => {
+        wkBusy = false;
+        if (!wk) return;
+        wkNav = { dir, from: (wk.cur + 1) / wk.exercises.length };
+        wk.cur = destino; saveLive(); wkRender();
+        $('workout').scrollTop = 0;
+      }, reducir ? 0 : 150);
       return;
     }
     if (id === 'rest-skip') { wk.rest = null; saveLive(); $('rest').hidden = true; $('wk-in').classList.remove('resting'); return; }

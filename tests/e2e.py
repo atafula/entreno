@@ -1027,18 +1027,18 @@ def entreno_muestra_un_ejercicio_a_la_vez(pg):
 def entreno_siguiente_y_anterior_recorren_los_ejercicios(pg):
     seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
     todos = _todos(pg)
-    pg.click("#wk-next"); assert _visibles(pg) == [todos[1]], "siguiente pasa al segundo"
-    pg.click("#wk-prev"); assert _visibles(pg) == [todos[0]], "anterior vuelve"
+    pg.click("#wk-next"); pg.wait_for_timeout(300); assert _visibles(pg) == [todos[1]], "siguiente pasa al segundo"
+    pg.click("#wk-prev"); pg.wait_for_timeout(300); assert _visibles(pg) == [todos[0]], "anterior vuelve"
     assert pg.is_disabled("#wk-prev"), "en el primero no hay anterior"
     for _ in range(len(todos)): 
-        if not pg.is_disabled("#wk-next"): pg.click("#wk-next")
+        if not pg.is_disabled("#wk-next"): pg.click("#wk-next"); pg.wait_for_timeout(300)
     assert _visibles(pg) == [todos[-1]] and pg.is_disabled("#wk-next"), "en el último no hay siguiente"
 
 @test
 def entreno_el_ejercicio_actual_sobrevive_a_recargar(pg):
     seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
     todos = _todos(pg)
-    pg.click("#wk-next"); pg.wait_for_timeout(200)
+    pg.click("#wk-next"); pg.wait_for_timeout(400)
     pg.reload(); pg.wait_for_timeout(700)
     assert _visibles(pg) == [todos[1]], "al recargar sigue en el segundo"
 
@@ -1056,7 +1056,7 @@ def entreno_barra_de_progreso_arriba(pg):
     bar = pg.locator('#wk-in .wk-prog[role="progressbar"]')
     assert bar.count() == 1, "hay una barra de progreso"
     assert bar.get_attribute("aria-valuemax") == str(n) and bar.get_attribute("aria-valuenow") == "1"
-    pg.click("#wk-next"); pg.wait_for_timeout(400)
+    pg.click("#wk-next"); pg.wait_for_timeout(900)
     assert bar.get_attribute("aria-valuenow") == "2"
     ratio = pg.locator("#wk-in .wk-prog i").evaluate("el => el.getBoundingClientRect().width / el.parentElement.getBoundingClientRect().width")
     assert abs(ratio - 2 / n) < 0.02, f"la barra llega al {ratio:.2f} y debe llegar al {2 / n:.2f}"
@@ -1075,30 +1075,56 @@ def entreno_barra_de_progreso_se_anima_al_cambiar(pg):
     seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
     n = len(_todos(pg)); pg.wait_for_timeout(500)
     pg.evaluate("window.__r = []")
-    pg.evaluate("""() => { const t0 = performance.now(); const f = () => { const i = document.querySelector('#wk-in .wk-prog i'); if (i) window.__r.push(i.getBoundingClientRect().width / i.parentElement.getBoundingClientRect().width); if (performance.now() - t0 < 500) requestAnimationFrame(f); }; requestAnimationFrame(f); }""")
-    pg.click("#wk-next"); pg.wait_for_timeout(600)
+    pg.evaluate("""() => { const t0 = performance.now(); const f = () => { const i = document.querySelector('#wk-in .wk-prog i'); if (i) window.__r.push(i.getBoundingClientRect().width / i.parentElement.getBoundingClientRect().width); if (performance.now() - t0 < 1100) requestAnimationFrame(f); }; requestAnimationFrame(f); }""")
+    pg.click("#wk-next"); pg.wait_for_timeout(1200)
     r = pg.evaluate("window.__r")
     ini, fin = 1 / n, 2 / n
     assert any(ini + 0.01 < v < fin - 0.01 for v in r), f"la barra pasa por valores intermedios: {[round(v, 2) for v in r][:12]}"
     assert abs(r[-1] - fin) < 0.02, "y termina en su sitio"
+    dur = pg.locator("#wk-in .wk-prog i").evaluate("el => parseFloat(getComputedStyle(el).transitionDuration) * 1000")
+    assert dur >= 450, f"la barra va despacio, no en {dur:.0f} ms"
 
 @test
 def entreno_el_ejercicio_nuevo_entra_con_animacion_segun_la_direccion(pg):
     seed(pg); tab(pg, "rutinas"); empezar(pg, "a"); pg.wait_for_timeout(500)
     ANIM = "(() => { const b = document.querySelector('#wk-in .exblock:not([hidden])'); return b.getAnimations().map(a => a.animationName); })()"
     pg.click("#wk-next"); pg.wait_for_timeout(40)
-    assert pg.evaluate(ANIM) == ["wkin-next"], pg.evaluate(ANIM)
-    pg.wait_for_timeout(500)
+    assert pg.evaluate(ANIM) == ["wkout-next"], "primero sale el actual: " + str(pg.evaluate(ANIM))
+    pg.wait_for_timeout(200)
+    assert pg.evaluate(ANIM) == ["wkin-next"], "luego entra el nuevo: " + str(pg.evaluate(ANIM))
+    pg.wait_for_timeout(600)
     pg.click("#wk-prev"); pg.wait_for_timeout(40)
+    assert pg.evaluate(ANIM) == ["wkout-prev"], pg.evaluate(ANIM)
+    pg.wait_for_timeout(200)
     assert pg.evaluate(ANIM) == ["wkin-prev"], pg.evaluate(ANIM)
+    dur = pg.evaluate("parseFloat(getComputedStyle(document.querySelector('#wk-in .exblock:not([hidden])')).animationDuration) * 1000")
+    assert dur >= 280, f"la entrada no es brusca: {dur:.0f} ms"
 
 @test
 def entreno_repintar_sin_cambiar_de_ejercicio_no_anima(pg):
     seed(pg); tab(pg, "rutinas"); empezar(pg, "a"); pg.wait_for_timeout(500)
-    pg.click("#wk-next"); pg.wait_for_timeout(600)
+    pg.click("#wk-next"); pg.wait_for_timeout(1200)
     pg.locator("#wk-in .exblock:not([hidden]) [data-act='addset']").first.click(); pg.wait_for_timeout(40)
     assert pg.evaluate("document.querySelector('#wk-in .exblock:not([hidden])').getAnimations().length") == 0, "añadir una serie no vuelve a animar el ejercicio"
     assert pg.evaluate("document.querySelector('#wk-in .wk-prog i').getAnimations().length") == 0, "ni la barra"
+
+@test
+def entreno_en_descanso_cambiar_de_ejercicio_no_baja_la_pantalla(pg):
+    seed(pg); tab(pg, "rutinas"); empezar(pg, "a"); _mas_series(pg, 8)
+    row = pg.locator("#wk-in .exblock:not([hidden])").first.locator(".wrow:not(.whead)").nth(1)
+    row.locator('input[data-f="kg"]').fill("60"); row.locator('input[data-f="reps"]').fill("10")
+    row.locator('[data-act="done"]').click(); pg.wait_for_timeout(500)
+    assert pg.is_visible("#rest"), "hay descanso en curso"
+    pg.click("#wk-next"); pg.wait_for_timeout(900)
+    _mas_series(pg, 8)                      # los dos ejercicios son largos
+    for sentido in ("#wk-prev", "#wk-next"):
+        pg.evaluate("document.getElementById('workout').scrollTop = 99999"); pg.wait_for_timeout(300)
+        assert pg.evaluate("document.getElementById('workout').scrollTop") > 100, "la pantalla estaba abajo del todo"
+        pg.click(sentido); pg.wait_for_timeout(900)
+        st = pg.evaluate("document.getElementById('workout').scrollTop")
+        assert st < 5, f"al cambiar con {sentido} el ejercicio se ve desde arriba y la pantalla no baja: scrollTop={st}"
+    b = pg.locator("#rest").bounding_box()
+    assert abs((b["y"] + b["height"]) - pg.evaluate("innerHeight")) <= 2, "el descanso sigue pegado abajo"
 
 @test
 def picker_no_ofrece_ejercicios_sin_foto(pg):
