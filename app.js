@@ -799,10 +799,10 @@ function fadeTheme() {
 function syncThemeColor() {
   const t = document.documentElement.dataset.theme;
   const eff = t === 'auto' ? (lightMQ && lightMQ.matches ? 'light' : 'dark') : t;
-  document.querySelectorAll('meta[name="theme-color"]').forEach(m => { m.content = THEME_BG[eff] || THEME_BG.light; });
+  document.querySelectorAll('meta[name="theme-color"]').forEach(m => { m.content = THEME_BG[eff] || THEME_BG.dark; });
 }
 function applyTheme(t, animate) {
-  const v = ['light', 'dark', 'auto'].includes(t) ? t : 'light';
+  const v = ['light', 'dark', 'auto'].includes(t) ? t : 'dark';
   if (animate) fadeTheme();
   document.documentElement.dataset.theme = v;
   document.querySelectorAll('[data-tema]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.tema === v)));

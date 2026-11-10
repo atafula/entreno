@@ -32,6 +32,8 @@ def seed(pg, routines=ROUTINES, sessions=HISTORY, walks=None, fb=None, prev_uid=
             if (!sessionStorage.getItem('fake-cloud')) sessionStorage.setItem('fake-cloud', JSON.stringify(o.cloud));
             if (o.logged && !sessionStorage.getItem('fake-user-set')) { sessionStorage.setItem('fake-user', JSON.stringify({uid: o.uid, email: 'yo@ejemplo.com'})); sessionStorage.setItem('fake-user-set', '1'); }
         })(%s)""" % json.dumps(init))
+    # Los ejercicios llevan ejId desde el buscador con foto: sin él, la migración de la app los descarta
+    routines = [dict(r, exercises=[dict(e, ejId=e.get("ejId") or "t-" + e["name"]) if isinstance(e, dict) else e for e in r.get("exercises", [])]) for r in routines]
     pg.goto(URL)
     pg.evaluate("([d, u]) => { localStorage.clear(); localStorage.setItem('entreno-v1', JSON.stringify(d)); if (u) localStorage.setItem('entreno-uid', u); }",
                 [{"routines": routines, "sessions": sessions, "walks": walks or [], **(meta or {})}, prev_uid])
@@ -719,7 +721,7 @@ def icono_es_el_aro_grueso_crema_naranja(pg):
         assert cerca(p(70, c(70 - 46)), NARANJA), f"{nombre}: el arco naranja empieza arriba: {p(70, c(24))}"
         assert cerca(p(c(70 - 46), 70), ARO), f"{nombre}: el tramo sin completar es beige: {p(c(24), 70)}"
     m = json.loads(open(os.path.join(ROOT, "manifest.webmanifest")).read())
-    assert m["background_color"].lower() == "#f3efe6", m["background_color"]
+    assert m["background_color"]
 
 @test
 def copia_restaurar_acepta_copias_antiguas_de_entreno(pg):
@@ -1221,6 +1223,7 @@ def rutina_tocar_la_tarjeta_abre_el_detalle_con_ejercicios(pg):
 @test
 def rutina_botones_en_la_tarjeta_comenzar_primero_y_a_la_izquierda(pg):
     seed(pg); tab(pg, "rutinas")
+    pg.wait_for_timeout(450)   # la lista entra con una animación corta
     c, e = pg.locator('[data-start-routine="a"]').bounding_box(), pg.locator('[data-edit-routine="a"]').bounding_box()
     assert c["x"] < e["x"] and abs(c["y"] - e["y"]) < 2, (c, e)
     assert c["width"] > e["width"], "COMENZAR es el principal"
@@ -1384,13 +1387,97 @@ def entreno_solo_con_calentamiento_se_puede_terminar_sin_perderlo(pg):
 def _rgb(pg, sel, prop):
     return pg.evaluate("([s,p]) => getComputedStyle(document.querySelector(s))[p]", [sel, prop])
 
+def _lum(c):
+    c = c.strip()
+    if c.startswith("#"): r, g, b = [int(c[i:i + 2], 16) / 255 for i in (1, 3, 5)]
+    else: r, g, b = [float(x) / 255 for x in c[c.index("(") + 1:c.index(")")].replace(",", " ").split()[:3]]
+    f = lambda v: v / 12.92 if v <= .03928 else ((v + .055) / 1.055) ** 2.4
+    return .2126 * f(r) + .7152 * f(g) + .0722 * f(b)
+def _contraste(a, b):
+    x, y = sorted([_lum(a), _lum(b)]); return (y + .05) / (x + .05)
+def _tema(pg, t):
+    pg.evaluate("t => localStorage.setItem('entreno-tema', t)", t); pg.reload(); pg.wait_for_timeout(300)
+def _var(pg, n): return pg.evaluate("n => getComputedStyle(document.documentElement).getPropertyValue(n).trim()", n)
+
 @test
-def papel_tema_claro_por_defecto_y_colores_papel(pg):
+def tema_oscuro_por_defecto(pg):
     seed(pg)
     pg.evaluate("localStorage.removeItem('entreno-tema')"); pg.reload(); pg.wait_for_timeout(300)
+    assert pg.evaluate("document.documentElement.dataset.theme") == "dark", "sin tema guardado, arranca en oscuro"
+    bg = _rgb(pg, "body", "backgroundColor")
+    assert _lum(bg) < .03, f"fondo oscuro: {bg}"
+    assert bg != "rgb(0, 0, 0)" and _rgb(pg, "body", "color") != "rgb(255, 255, 255)", "ni negro ni blanco puros"
+    meta = pg.get_attribute('meta[name="theme-color"]', "content")
+    assert _contraste(meta, bg) < 1.02, f"la barra de estado tiene el color del fondo: {meta} / {bg}"
+    pg.click("#settings-btn"); pg.wait_for_timeout(300)
+    assert pg.get_attribute('[data-tema="dark"]', "aria-pressed") == "true"
+    m = json.loads(open(os.path.join(ROOT, "manifest.webmanifest")).read())
+    assert _lum(m["background_color"]) < .03, "la pantalla de arranque también es oscura"
+
+@test
+def tema_claro_colores_papel(pg):
+    seed(pg); _tema(pg, "light")
     assert pg.evaluate("document.documentElement.dataset.theme") == "light"
     assert _rgb(pg, "body", "backgroundColor") == "rgb(243, 239, 230)", _rgb(pg, "body", "backgroundColor")
     assert _rgb(pg, ".card", "backgroundColor") == "rgb(255, 253, 248)", _rgb(pg, ".card", "backgroundColor")
+
+@test
+def diseno_tokens_de_espaciado_radios_texto_y_movimiento(pg):
+    seed(pg)
+    for n, v in [("--s1", 4), ("--s2", 8), ("--s3", 12), ("--s4", 16), ("--s5", 20), ("--s6", 24), ("--s8", 32)]:
+        assert _var(pg, n) == f"{v}px", f"{n} = {_var(pg, n)!r}: escala de 4 px"
+    for n in ["--r-sm", "--r-md", "--r-lg", "--r-xl", "--r-full", "--t-xs", "--t-sm", "--t-md", "--t-base", "--t-lg", "--t-xl", "--t-2xl",
+              "--shadow-1", "--shadow-2", "--shadow-3", "--d-fast", "--d-base", "--d-slow", "--ease-out", "--ease-spring",
+              "--bg", "--surface", "--surface-2", "--surface-3", "--line", "--text", "--text-2", "--muted", "--fire", "--fire-text", "--on-fire", "--acid"]:
+        assert _var(pg, n), f"falta el token {n}"
+    for n in ["--d-fast", "--d-base", "--d-slow"]:
+        ms = float(_var(pg, n).replace("ms", "")); assert 150 <= ms <= 350, f"{n} = {ms} ms: entre 150 y 350"
+
+@test
+def diseno_contraste_aa_en_oscuro_y_claro(pg):
+    seed(pg)
+    for t in ["dark", "light"]:
+        _tema(pg, t)
+        v = lambda n: _var(pg, n)
+        pares = [("--text", "--bg"), ("--text", "--surface"), ("--text", "--surface-2"), ("--text-2", "--surface"),
+                 ("--muted", "--bg"), ("--muted", "--surface"), ("--muted", "--surface-2"),
+                 ("--fire-text", "--bg"), ("--fire-text", "--surface"), ("--fire-text", "--surface-2"),
+                 ("--on-fire", "--fire"), ("--acid-text", "--surface"), ("--acid-text", "--bg"), ("--warn-text", "--surface"), ("--on-acid", "--acid")]
+        for a, b in pares:
+            c = _contraste(v(a), v(b))
+            assert c >= 4.5, f"{t}: {a} sobre {b} = {c:.2f} (mínimo 4.5)"
+
+@test
+def diseno_hoja_de_estilos_sin_valores_sueltos(pg):
+    css = open(os.path.join(ROOT, "styles.css")).read()
+    cuerpo = css[css.index("/* ===== Base"):]
+    import re
+    sueltos = sorted(set(re.findall(r"(?<=[\s:(,])#[0-9a-fA-F]{3,8}(?=[;,\s)])", cuerpo)))
+    assert not sueltos, f"colores fuera de los tokens: {sueltos}"
+    assert cuerpo.count("!important") <= 6, f"{cuerpo.count('!important')} !important: la hoja debe ser una sola capa coherente"
+    assert "clip-path: polygon" not in cuerpo and "skewX" not in cuerpo, "restos del estilo antiguo"
+    assert re.search(r"\.btn:active[^{]*\{[^}]*scale\(\.97\)", css), "feedback al pulsar: escala 0.97"
+    assert "font-display:swap" in open(os.path.join(ROOT, "fonts", "fonts.css")).read().replace(" ", "")
+
+@test
+def diseno_respeta_reduced_motion(pg):
+    pg.emulate_media(reduced_motion="reduce"); seed(pg); tab(pg, "rutinas"); pg.wait_for_timeout(100)
+    d = pg.evaluate("[...document.querySelectorAll('.tab.active > *, .card, .btn, .sheet')].map(e => getComputedStyle(e)).map(c => Math.max(...(c.animationDuration + ',' + c.transitionDuration).split(',').map(parseFloat)))")
+    assert d and max(d) <= 0.001, f"con reduced-motion no hay animaciones: {max(d)} s"
+
+@test
+def diseno_areas_tactiles_de_44_px(pg):
+    seed(pg, sessions=SESIONES, walks=CAMINATAS)
+    js = """() => [...document.querySelectorAll('button, a, label.btn, input:not([type=file]), select')].filter(e => e.offsetParent !== null && !e.closest('.cal-year')).map(e => { const r = e.getBoundingClientRect(); return [e.tagName.toLowerCase() + (e.id ? '#' + e.id : '') + '.' + String(e.className).split(' ')[0], Math.round(r.width), Math.round(r.height)]; }).filter(x => x[1] < 44 || x[2] < 44).map(x => x.join(' '))"""
+    malos = []
+    def mira(n): malos.extend(f"{n}: {x}" for x in pg.evaluate(js))
+    mira("hoy"); tab(pg, "rutinas"); mira("rutinas")
+    tab(pg, "historial"); mira("historial")
+    pg.click("#settings-btn"); pg.wait_for_timeout(450); mira("ajustes"); pg.keyboard.press("Escape"); pg.wait_for_timeout(450)
+    tab(pg, "hoy"); pg.click("#week"); pg.wait_for_timeout(450); mira("calendario"); pg.keyboard.press("Escape"); pg.wait_for_timeout(450)
+    tab(pg, "rutinas"); empezar(pg, "a"); pg.wait_for_timeout(300); mira("entreno")
+    pg.locator(".wrow .chk").nth(1).click(); pg.wait_for_timeout(300); pg.click("#wk-finish"); pg.wait_for_timeout(450); mira("terminar")
+    assert not malos, f"áreas táctiles menores de 44 px: {sorted(set(malos))}"
 
 @test
 def papel_fuentes_serif_y_manrope_cargadas(pg):
