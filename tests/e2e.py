@@ -1452,6 +1452,7 @@ def rutina_editor_mantener_cierra_series_y_permite_mover(pg):
     b0 = bloques.nth(0).bounding_box(); b1 = bloques.nth(1).bounding_box()
     dy = (b1["y"] + b1["height"] / 2) - (b0["y"] + b0["height"] / 2) + 12
     for i in range(1, 13): pg.mouse.move(x, y + dy * i / 12)
+    assert "translateY(-" in bloques.nth(1).evaluate("el => el.style.transform"), "mientras se arrastra, el ejercicio de debajo se desplaza para dejar hueco"
     pg.mouse.up(); pg.wait_for_timeout(300)
     assert _nombres_editor(pg) == ["B", "A", "C"], f"al soltar, el ejercicio cambia de sitio: {_nombres_editor(pg)}"
     assert pg.locator("#routine-exercises .exblock").nth(1).locator(".srow").count() >= 1, "al soltar, las series vuelven a verse"

@@ -380,6 +380,13 @@ function moveEx(exs, from, to) {
   exs.splice(to, 0, x);
   return true;
 }
+// Índice del ejercicio más cercano al centro del bloque arrastrado
+function destino(d) {
+  const mid = d.centers[d.from] + d.dy;
+  let to = d.from;
+  d.centers.forEach((c, i) => { if (Math.abs(c - mid) < Math.abs(d.centers[to] - mid)) to = i; });
+  return to;
+}
 // Mantener pulsada la cabecera de un ejercicio: se cierran sus series y se puede moverlo arrastrando
 const HOLD_MS = 420;
 function bindExDrag(box, getExs, rerender) {
@@ -396,7 +403,8 @@ function bindExDrag(box, getExs, rerender) {
       document.activeElement?.blur?.();
       blocks.forEach(b => b.classList.add('is-collapsed'));   // se compactan todos los ejercicios
       block.classList.add('moving');
-      d = { from: blocks.indexOf(block), y: start.y, dy: 0, block, centers: blocks.map(b => b.offsetTop + b.offsetHeight / 2) };
+      const centers = blocks.map(b => b.offsetTop + b.offsetHeight / 2);
+      d = { from: blocks.indexOf(block), y: start.y, dy: 0, block, blocks, centers, slot: blocks.length > 1 ? Math.abs(centers[1] - centers[0]) : block.offsetHeight };
       vibrate(8);
     }, HOLD_MS);
   });
@@ -407,6 +415,15 @@ function bindExDrag(box, getExs, rerender) {
     }
     d.dy = e.clientY - d.y;
     d.block.style.transform = `translateY(${d.dy}px)`;
+    const to = destino(d);
+    // los demás se apartan para dejar hueco en el sitio al que se va a soltar
+    d.blocks.forEach((b, i) => {
+      if (i === d.from) return;
+      let sh = 0;
+      if (d.from < to && i > d.from && i <= to) sh = -d.slot;
+      else if (to < d.from && i >= to && i < d.from) sh = d.slot;
+      b.style.transform = sh ? `translateY(${sh}px)` : '';
+    });
   });
   box.addEventListener('touchmove', e => { if (d) e.preventDefault(); }, { passive: false });
   box.addEventListener('contextmenu', e => { if (e.target.closest('.exhead')) e.preventDefault(); });
@@ -414,10 +431,7 @@ function bindExDrag(box, getExs, rerender) {
     cancel(); start = null;
     if (!d) return;
     const cur = d; d = null;
-    const mid = cur.centers[cur.from] + cur.dy;   // centro del bloque arrastrado en su nueva posición
-    let to = cur.from;
-    cur.centers.forEach((c, i) => { if (Math.abs(c - mid) < Math.abs(cur.centers[to] - mid)) to = i; });
-    moveEx(getExs(), cur.from, to);
+    moveEx(getExs(), cur.from, destino(cur));
     rerender();                                    // al soltar, se repinta con las series visibles
   };
   box.addEventListener('pointerup', fin);
