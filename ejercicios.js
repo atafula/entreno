@@ -65,33 +65,51 @@ function ejIDBPutAll(db, items) {
   });
 }
 
+function ejSlim(e) {
+  return {
+    id: e.id,
+    name: e.name,
+    body_part: e.body_part || '',
+    equipment: e.equipment || '',
+    secondary_muscles: e.secondary_muscles || [],
+    thumbnail: e.thumbnail || '',
+    source: e.source || '',
+    sourceType: e.sourceType || '',
+    instructions: e.instructions || [],
+  };
+}
+function ejIDBReplaceAll(db, items) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(EJ_STORE, 'readwrite');
+    const store = tx.objectStore(EJ_STORE);
+    store.clear();
+    items.forEach(item => store.put(item));
+    tx.oncomplete = resolve;
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+// Red primero: así cada móvil recibe el catálogo nuevo (pasos, nombres). Sin red, usa la copia guardada.
 async function loadEjercicios() {
   if (ejCache) return ejCache;
   await loadTrad();
+  let idb = null;
+  try { idb = await ejOpenIDB(); } catch { /* sin IndexedDB: solo red */ }
+  let fresh = null;
   try {
-    const idb = await ejOpenIDB();
-    const cached = await ejIDBGetAll(idb);
-    if (cached.length > 0) { ejCache = cached; return ejCache; }
     const res = await fetch(EJ_URL);
-    if (!res.ok) throw new Error('fetch error');
-    const data = await res.json();
-    const slim = data.map(e => ({
-      id: e.id,
-      name: e.name,
-      body_part: e.body_part || '',
-      equipment: e.equipment || '',
-      secondary_muscles: e.secondary_muscles || [],
-      thumbnail: e.thumbnail || '',
-      source: e.source || '',
-      sourceType: e.sourceType || '',
-      instructions: e.instructions || [],
-    }));
-    await ejIDBPutAll(idb, slim);
-    ejCache = slim;
+    if (res.ok) fresh = (await res.json()).map(ejSlim);
+  } catch { /* sin red */ }
+  if (fresh) {
+    if (idb) await ejIDBReplaceAll(idb, fresh).catch(() => { /* la copia no se guarda; la app sigue */ });
+    ejCache = fresh;
     return ejCache;
-  } catch {
-    throw new Error('No se pudo cargar el catálogo');
   }
+  if (idb) {
+    const cached = await ejIDBGetAll(idb).catch(() => []);
+    if (cached.length > 0) { ejCache = cached; return ejCache; }
+  }
+  throw new Error('No se pudo cargar el catálogo');
 }
 
 function searchEjercicios(q, part) {

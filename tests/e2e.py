@@ -1385,6 +1385,28 @@ def ejercicios_nombres_en_espanol_de_gimnasio(pg):
     assert not feos, f"nombres con mayúscula o punto raros: {feos[:5]}"
 
 @test
+def ejercicios_catalogo_viejo_en_el_movil_se_actualiza(pg):
+    seed(pg)
+    # simula un móvil que guardó el catálogo antiguo: un ejercicio en inglés y otro sin pasos
+    pg.evaluate("""async () => {
+        const data = await (await fetch('ejercicios_local.json')).json();
+        const viejo = data.map(e => ({...e}));
+        viejo.find(e => e.id === 'battle-ropes').instructions = ['Hold the ends of the rope at arm length.'];
+        viejo.find(e => e.id === 'clamshell').instructions = [];
+        const db = await ejOpenIDB();
+        await new Promise((res, rej) => { const tx = db.transaction(EJ_STORE, 'readwrite');
+            const st = tx.objectStore(EJ_STORE); st.clear(); viejo.forEach(e => st.put(e));
+            tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
+        db.close();
+    }""")
+    pg.reload(); pg.wait_for_timeout(500)
+    pasos = pg.evaluate("""async () => { ejCache = null; await loadEjercicios();
+        return { br: ejCache.find(e => e.id === 'battle-ropes').instructions[0],
+                 vacios: ejCache.filter(e => !e.instructions.length).length }; }""")
+    assert pasos["br"].startswith("Sujeta"), f"el móvil debe recibir los pasos nuevos, no los viejos: {pasos['br']!r}"
+    assert pasos["vacios"] == 0, f"ningún ejercicio sin pasos: {pasos['vacios']}"
+
+@test
 def entreno_descanso_sigue_abajo_al_bajar(pg):
     seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
     for n in range(6):
