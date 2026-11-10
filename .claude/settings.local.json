@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:api.github.com)",
+      "Bash(curl -s \"https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/data/exercises.json\" --range 0-8000)",
+      "Bash(curl -s \"https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/data/exercises.json\" --range 8000-20000)",
+      "Bash(curl:*)",
+      "Bash(python3 -c \"import anthropic; print\\('ok'\\)\")",
+      "Bash(python -c \"import anthropic; print\\('ok'\\)\")",
+      "Bash(python -m pip install anthropic)",
+      "Bash(python:*)",
+      "Bash(python3 -c \"import sys,json; data=json.load\\(sys.stdin\\); ex=data[0]; print\\(list\\(ex.keys\\(\\)\\)\\)\")",
+      "Bash(python3.exe -c \"import sys,json; data=json.load\\(sys.stdin\\); ex=data[0]; print\\(list\\(ex.keys\\(\\)\\)\\)\")",
+      "Bash(python3 -c ':*)",
+      "Bash(node -e ':*)",
+      "Bash(python3 -c \"import json,sys; data=json.load\\(sys.stdin\\); print\\(data[0]['gif_url']\\)\")",
+      "Bash(node -e \"let d=''; process.stdin.on\\('data',c=>d+=c\\); process.stdin.on\\('end',\\(\\)=>console.log\\(JSON.parse\\(d\\)[0].gif_url\\)\\);\")",
+      "Skill(claude-api)"
+    ]
+  }
+}
