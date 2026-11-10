@@ -1347,6 +1347,24 @@ def rutina_borrar_no_se_pega_a_guardar(pg):
     assert d["y"] - (g["y"] + g["height"]) >= 8, (g, d)
 
 @test
+def ejercicios_todos_los_pasos_en_espanol(pg):
+    import re as _re
+    en = {"the", "and", "your", "with", "of", "to", "in", "on", "for", "keep", "hold", "pull", "back", "starting", "position",
+          "slowly", "while", "from", "toward", "towards", "feet", "hands", "arms", "legs", "knees", "body", "core", "tension",
+          "repeat", "return", "lower", "raise", "squeeze", "stand", "start", "bend", "extend", "each", "side", "floor", "use", "a", "one"}
+    es = {"el", "la", "los", "las", "y", "con", "de", "en", "para", "que", "del", "al", "un", "una", "manteniendo", "baja", "sube",
+          "repite", "posición", "inicial", "brazos", "piernas", "pies", "manos", "cuerpo", "tronco", "espalda", "lentamente", "mientras",
+          "desde", "hacia", "hasta", "por", "se", "su", "sus", "es", "sin", "o", "al"}
+    data = json.loads(open(os.path.join(ROOT, "ejercicios_local.json"), encoding="utf-8").read())
+    malos = []
+    for e in data:
+        for paso in e.get("instructions", []):
+            w = _re.findall(r"[a-záéíóúñü]+", paso.lower())
+            if sum(x in en for x in w) > sum(x in es for x in w) and sum(x in en for x in w) >= 2:
+                malos.append((e["name"], paso[:60]))
+    assert not malos, f"{len(malos)} pasos en inglés, p. ej.: {malos[:3]}"
+
+@test
 def entreno_descanso_sigue_abajo_al_bajar(pg):
     seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
     for n in range(6):
