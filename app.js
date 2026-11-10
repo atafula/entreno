@@ -179,7 +179,7 @@ function countUp(el, to, fmt = n => String(Math.round(n))) {
   if (!el) return;
   const end = fmt(to);
   if (!(to > 0) || (reduceMQ && reduceMQ.matches)) { el.textContent = end; return; }
-  const t0 = performance.now(), dur = 320;
+  const t0 = performance.now(), dur = 1100;   // despacio, para poder leer el número mientras sube
   let last = '';
   el.textContent = last = fmt(0);
   const step = now => {

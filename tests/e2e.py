@@ -1985,11 +1985,27 @@ def historial_estado_vacio_con_titulo_icono_y_siguiente_paso(pg):
 @test
 def historial_los_contadores_cuentan_al_entrar(pg):
     seed(pg, sessions=[]); pg.evaluate("for (let i = 0; i < 24; i++) db.sessions.push({id: 'c' + i, date: '2026-10-' + String(i + 1).padStart(2, '0'), routine: 'PUSH', sets: [{exercise: 'Press', reps: 5, kg: 10, w: false}]}); render()")
-    pg.evaluate(_OBS, "#stats .stat b"); tab(pg, "historial"); pg.wait_for_timeout(800)
+    pg.evaluate(_OBS, "#stats .stat b"); tab(pg, "historial"); pg.wait_for_timeout(1700)
     vals = pg.evaluate("window.__vals")
     assert pg.inner_text("#stats .stat b") == "24", pg.inner_text("#stats .stat b")
     assert len(set(vals)) >= 4 and vals[-1] == "24", f"el número sube hasta el valor final: {vals}"
     nums = [int(v) for v in vals]; assert nums == sorted(nums), f"siempre hacia arriba: {vals}"
+
+@test
+def contadores_suben_despacio_en_historial_y_resumen(pg):
+    seed(pg, sessions=[]); pg.evaluate("for (let i = 0; i < 24; i++) db.sessions.push({id: 'c' + i, date: '2026-10-' + String(i + 1).padStart(2, '0'), routine: 'PUSH', sets: [{exercise: 'Press', reps: 5, kg: 10, w: false}]}); render()")
+    tab(pg, "historial"); pg.wait_for_timeout(450)
+    assert pg.inner_text("#stats .stat b") != "24", "a los 450 ms el número aún está subiendo (no tarda ~300 ms)"
+    pg.wait_for_timeout(1300)
+    assert pg.inner_text("#stats .stat b") == "24", "y llega al total"
+    # resumen al acabar la rutina
+    pg.evaluate("localStorage.clear()"); seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
+    f = pg.locator("#wk-in .exblock:not([hidden])").first.locator(".wrow:not(.whead)").nth(1)
+    f.locator('input[data-f="kg"]').fill("50"); f.locator('input[data-f="reps"]').fill("10"); f.locator('[data-act="done"]').click(); pg.wait_for_timeout(150)
+    pg.click("#wk-finish"); pg.click("#finish-save"); pg.wait_for_selector("#summary-sheet.show", timeout=5000); pg.wait_for_timeout(450)
+    assert pg.inner_text("#summary-vol") != "500 kg", "el volumen del resumen tampoco sube tan rápido"
+    pg.wait_for_timeout(1300)
+    assert pg.inner_text("#summary-vol") == "500 kg"
 
 @test
 def historial_sin_cuenta_con_reduced_motion(pg):
@@ -2004,7 +2020,7 @@ def resumen_los_numeros_cuentan_hasta_el_total(pg):
     f = pg.locator("#wk-in .exblock").first.locator(".wrow:not(.whead)").nth(1)
     f.locator('input[data-f="kg"]').fill("50"); f.locator('input[data-f="reps"]').fill("10"); f.locator('[data-act="done"]').click(); pg.wait_for_timeout(150)
     pg.evaluate(_OBS, "#summary-vol")
-    pg.click("#wk-finish"); pg.click("#finish-save"); pg.wait_for_selector("#summary-sheet.show", timeout=5000); pg.wait_for_timeout(800)
+    pg.click("#wk-finish"); pg.click("#finish-save"); pg.wait_for_selector("#summary-sheet.show", timeout=5000); pg.wait_for_timeout(1700)
     vals = pg.evaluate("window.__vals")
     assert pg.inner_text("#summary-vol") == "500 kg", pg.inner_text("#summary-vol")
     assert len(set(vals)) >= 4 and vals[-1] == "500 kg", f"el volumen sube hasta el total: {vals}"
@@ -2292,7 +2308,7 @@ def resumen_suma_todas_las_series_y_mejor_serie_por_ejercicio(pg):
         f.locator('[data-act="done"]').click(); pg.wait_for_timeout(120)
     pg.click("#wk-finish"); pg.click("#finish-save"); pg.wait_for_selector("#summary-sheet.show", timeout=5000)
     assert "Series" in pg.inner_text("#summary-sheet")
-    pg.wait_for_timeout(600)   # los números cuentan hasta el total
+    pg.wait_for_timeout(1400)   # los números cuentan hasta el total (1,1 s)
     assert pg.inner_text("#summary-sheet .sum-series").strip() == "3", "cuenta las series hechas"
     assert "60 kg × 8" in pg.inner_text("#summary-list .sum-ex"), "la mejor serie es la de más kg"
     assert pg.inner_text("#summary-sheet .sum-vol").replace(" ", "").startswith("1540"), "1540 kg = 400 + 480 + 660"
