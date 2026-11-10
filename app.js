@@ -398,6 +398,9 @@ function bindExDrag(box, getExs, rerender) {
     const head = e.target.closest('.exhead');
     if (!head || e.target.closest('button')) return;
     const block = head.closest('.exblock');
+    // Bajar el dedo sobre el nombre no lo enfoca (en iPhone abriría el teclado y movería la pantalla al mantener).
+    // Si es un toque corto, se enfoca al soltar (ver abajo).
+    if (e.target.matches('input.exname')) e.preventDefault();
     start = { x: e.clientX, y: e.clientY };
     timer = setTimeout(() => {
       timer = null;
@@ -440,6 +443,8 @@ function bindExDrag(box, getExs, rerender) {
     expandirAlSoltar = true;                       // al soltar, las series se despliegan con animación
     rerender();
   };
+  // Toque corto sobre el nombre: se enfoca al soltar, si todavía no había empezado el mantener
+  box.addEventListener('pointerup', e => { if (timer && e.target.matches('input.exname')) e.target.focus({ preventScroll: true }); });
   box.addEventListener('pointerup', fin);
   box.addEventListener('pointercancel', fin);
 }
@@ -571,6 +576,7 @@ function renderRoutines() {
 }
 
 const openEntries = new Set();           // entrenos con el detalle desplegado (solo en pantalla)
+let histQuiet = false;                    // el próximo repintado no vuelve a animar las tarjetas (abrir detalle, menú)
 const durText = sec => { const m = Math.round(sec / 60); return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}min` : `${m}min`; };
 function sessionHtml(s) {
   const groups = [], prs = prMap[s.id] || [];
@@ -657,9 +663,9 @@ document.addEventListener('click', e => {      // tocar fuera del menú ⋯ lo c
 });
 $('history-list').addEventListener('click', e => {
   const dots = e.target.closest('[data-menu]');
-  if (dots) { menuEntry = menuEntry === dots.dataset.menu ? null : dots.dataset.menu; vibrate(6); return renderHistory(); }
+  if (dots) { menuEntry = menuEntry === dots.dataset.menu ? null : dots.dataset.menu; vibrate(6); histQuiet = true; return renderHistory(); }
   const more = e.target.closest('[data-toggle-entry]');
-  if (more) { const id = more.dataset.toggleEntry; openEntries.has(id) ? openEntries.delete(id) : openEntries.add(id); vibrate(6); return renderHistory(); }
+  if (more) { const id = more.dataset.toggleEntry; openEntries.has(id) ? openEntries.delete(id) : openEntries.add(id); vibrate(6); histQuiet = true; return renderHistory(); }
   const ed = e.target.closest('[data-edit-session], [data-edit-walk]');
   if (ed) { menuEntry = null; return startEditEntry(ed.dataset.editSession ? 'session' : 'walk', ed.dataset.editSession || ed.dataset.editWalk); }
   if (e.target.closest('#entry-cancel')) { editingEntry = null; return renderHistory(); }
@@ -675,6 +681,7 @@ $('history-list').addEventListener('click', e => {
   b.dataset.delSession ? deleteEntry('session', b.dataset.delSession) : deleteEntry('walk', b.dataset.delWalk);
 });
 function renderHistory() {
+  const quiet = histQuiet; histQuiet = false;
   prMap = computePRs();
   const km = db.walks.reduce((a, w) => a + w.meters, 0) / 1000;
   const stats = [
@@ -683,6 +690,7 @@ function renderHistory() {
     [km.toFixed(1), 'km']
   ];
   $('stats').innerHTML = stats.map((s, i) => `<div class="stat"><b data-v="${s[0]}">${s[0]}</b><span>${s[1]}</span></div>`).join('');
+  $('stats').classList.toggle('quiet', quiet);
 
   const items = [
     ...db.sessions.map(s => ({
@@ -702,6 +710,7 @@ function renderHistory() {
   const shown = editingEntry ? items.filter(i => i.editing) : items;
   $('history-list').innerHTML = shown.map(i => `<div class="card entry">${i.html}</div>`).join('')
     || emptyHtml('historial', 'Todavía no hay nada aquí', 'Empieza un entreno desde «Rutinas» o una caminata desde «Hoy» y aparecerá en esta lista.');
+  $('history-list').classList.toggle('quiet', quiet);
 }
 
 // ---------- Tabs ----------

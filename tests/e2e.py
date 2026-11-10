@@ -1544,6 +1544,38 @@ def rutina_editor_al_soltar_las_series_se_despliegan_animadas(pg):
     assert pg.locator("#routine-exercises .exblock.is-collapsed").count() == 0, "todas abiertas al final"
 
 @test
+def rutina_editor_mantener_sobre_el_nombre_no_enfoca_el_campo(pg):
+    _rutina_abc(pg); tab(pg, "rutinas"); editar_rutina(pg, "r1")
+    campo = pg.locator("#routine-exercises .exblock").nth(0).locator("input.exname")
+    b = campo.bounding_box(); x, y = b["x"] + b["width"] / 2, b["y"] + b["height"] / 2
+    pg.evaluate("window.__foco = 0; document.addEventListener('focusin', () => window.__foco++)")
+    pg.mouse.move(x, y); pg.mouse.down(); pg.wait_for_timeout(700)
+    assert pg.evaluate("window.__foco") == 0, "al bajar el dedo sobre el nombre no se enfoca (en iPhone abre el teclado y mueve la pantalla)"
+    assert pg.evaluate("document.activeElement && document.activeElement.classList.contains('exname')") is False, "al mantener no se abre el teclado"
+    assert pg.evaluate("String(getSelection())") == "", "al mantener no se selecciona el nombre"
+    pg.mouse.up(); pg.wait_for_timeout(150)
+
+@test
+def rutina_editor_tocar_el_nombre_sigue_pudiendo_editarlo(pg):
+    _rutina_abc(pg); tab(pg, "rutinas"); editar_rutina(pg, "r1")
+    campo = pg.locator("#routine-exercises .exblock").nth(0).locator("input.exname")
+    campo.click(); pg.wait_for_timeout(100)
+    assert pg.evaluate("document.activeElement && document.activeElement.classList.contains('exname')"), "un toque normal enfoca el nombre"
+
+@test
+def historial_abrir_el_detalle_no_repite_las_animaciones(pg):
+    seed(pg); tab(pg, "historial")
+    pg.wait_for_timeout(700)  # que termine la entrada inicial
+    pg.locator("#history-list [data-toggle-entry]").first.click()
+    pg.wait_for_timeout(60)
+    n = pg.evaluate("document.querySelectorAll('#history-list > *').length")
+    anim = pg.evaluate("[...document.querySelectorAll('#history-list > *')].reduce((a, el) => a + el.getAnimations().length, 0)")
+    assert n >= 1 and anim == 0, f"al desplegar el detalle no se vuelven a animar las tarjetas: {anim} animaciones"
+    pg.locator("#history-list [data-toggle-entry]").first.click(); pg.wait_for_timeout(60)
+    anim = pg.evaluate("[...document.querySelectorAll('#history-list > *')].reduce((a, el) => a + el.getAnimations().length, 0)")
+    assert anim == 0, "al plegarlo tampoco"
+
+@test
 def entreno_descanso_sigue_abajo_al_bajar(pg):
     seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
     for q in EXTRAS:

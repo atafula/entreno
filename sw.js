@@ -1,5 +1,5 @@
 // Sube la versión cuando cambies archivos para que el móvil descargue la nueva copia.
-const CACHE = 'entreno-v113';
+const CACHE = 'entreno-v114';
 const ASSETS = [
   './', 'index.html', 'styles.css', 'app.js', 'ejercicios.js', 'workout.js', 'detalle.js', 'backup.js', 'sync.js', 'manifest.webmanifest', 'traducciones.json', 'ejercicios_local.json',
   'icons/apple-touch-icon.png', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/favicon.png',
