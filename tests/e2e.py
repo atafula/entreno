@@ -1071,6 +1071,36 @@ def entreno_botones_de_navegacion_sutiles(pg):
     assert sh == "none", f"sin sombra: {sh}"
 
 @test
+def entreno_barra_de_progreso_se_anima_al_cambiar(pg):
+    seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
+    n = len(_todos(pg)); pg.wait_for_timeout(500)
+    pg.evaluate("window.__r = []")
+    pg.evaluate("""() => { const t0 = performance.now(); const f = () => { const i = document.querySelector('#wk-in .wk-prog i'); if (i) window.__r.push(i.getBoundingClientRect().width / i.parentElement.getBoundingClientRect().width); if (performance.now() - t0 < 500) requestAnimationFrame(f); }; requestAnimationFrame(f); }""")
+    pg.click("#wk-next"); pg.wait_for_timeout(600)
+    r = pg.evaluate("window.__r")
+    ini, fin = 1 / n, 2 / n
+    assert any(ini + 0.01 < v < fin - 0.01 for v in r), f"la barra pasa por valores intermedios: {[round(v, 2) for v in r][:12]}"
+    assert abs(r[-1] - fin) < 0.02, "y termina en su sitio"
+
+@test
+def entreno_el_ejercicio_nuevo_entra_con_animacion_segun_la_direccion(pg):
+    seed(pg); tab(pg, "rutinas"); empezar(pg, "a"); pg.wait_for_timeout(500)
+    ANIM = "(() => { const b = document.querySelector('#wk-in .exblock:not([hidden])'); return b.getAnimations().map(a => a.animationName); })()"
+    pg.click("#wk-next"); pg.wait_for_timeout(40)
+    assert pg.evaluate(ANIM) == ["wkin-next"], pg.evaluate(ANIM)
+    pg.wait_for_timeout(500)
+    pg.click("#wk-prev"); pg.wait_for_timeout(40)
+    assert pg.evaluate(ANIM) == ["wkin-prev"], pg.evaluate(ANIM)
+
+@test
+def entreno_repintar_sin_cambiar_de_ejercicio_no_anima(pg):
+    seed(pg); tab(pg, "rutinas"); empezar(pg, "a"); pg.wait_for_timeout(500)
+    pg.click("#wk-next"); pg.wait_for_timeout(600)
+    pg.locator("#wk-in .exblock:not([hidden]) [data-act='addset']").first.click(); pg.wait_for_timeout(40)
+    assert pg.evaluate("document.querySelector('#wk-in .exblock:not([hidden])').getAnimations().length") == 0, "añadir una serie no vuelve a animar el ejercicio"
+    assert pg.evaluate("document.querySelector('#wk-in .wk-prog i').getAnimations().length") == 0, "ni la barra"
+
+@test
 def picker_no_ofrece_ejercicios_sin_foto(pg):
     seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
     pg.click("#wk-add-ex"); pg.wait_for_selector("#picker-sheet.show"); pg.wait_for_timeout(200)

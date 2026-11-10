@@ -433,6 +433,8 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; }
 .wk-add .btn { width: 100%; }
 .wk-prog { height: 3px; border-radius: var(--r-full); background: var(--surface-2); overflow: hidden; margin: var(--s3) 0 var(--s1); }
 .wk-prog i { display: block; height: 100%; background: var(--fire); transform-origin: left center; transition: transform var(--d-base) var(--ease-out); }
+.exblock.enter-next { animation: wkin-next var(--d-base) var(--ease-out) backwards; }
+.exblock.enter-prev { animation: wkin-prev var(--d-base) var(--ease-out) backwards; }
 .wk-nav { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); margin: var(--s2) 0 0; }
 /* Botones discretos: solo texto, sin fondo ni borde; área táctil de 44 px */
 .wk-nav .btn { min-width: 0; min-height: 44px; padding: 0 var(--s2); background: transparent; border: 0; box-shadow: none; color: var(--text-2); font-weight: 600; }
@@ -544,6 +546,8 @@ html.theming, html.theming *, html.theming *::before, html.theming *::after {
   transition: background-color var(--d-slow) ease, color var(--d-slow) ease, border-color var(--d-slow) ease, fill var(--d-slow) ease, stroke var(--d-slow) ease !important; }
 
 /* ===== Animaciones (solo transform y opacity) ===== */
+@keyframes wkin-next { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
+@keyframes wkin-prev { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: none; } }
 @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 @keyframes screenin { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
 @keyframes sheetin { from { transform: translateY(100%); } to { transform: none; } }

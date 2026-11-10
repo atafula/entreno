@@ -61,8 +61,12 @@ function wkExHtml(ex, ei, cur) {
   </div>`;
 }
 
+// Solo al navegar entre ejercicios: dirección y fracción previa de la barra. wkRender lo consume y lo borra,
+// así que repintar por otro motivo (añadir serie, marcar…) no anima nada.
+let wkNav = null;   // { dir: 'next' | 'prev', from: fracción anterior de la barra }
 function wkRender() {
   if (!wk) return;
+  const nav = wkNav; wkNav = null;
   // Un ejercicio a la vez: se guarda cuál es el actual (sobrevive a recargar)
   wk.cur = Math.min(Math.max(0, wk.cur || 0), Math.max(0, wk.exercises.length - 1));
   $('wk-in').innerHTML = `
@@ -83,6 +87,7 @@ function wkRender() {
     ${wk.exercises.length ? `<nav class="wk-nav"><button type="button" class="btn ghost small" id="wk-prev" ${wk.cur <= 0 ? 'disabled' : ''}>‹ Anterior</button><span id="wk-pos">${wk.cur + 1} / ${wk.exercises.length}</span><button type="button" class="btn ghost small" id="wk-next" ${wk.cur >= wk.exercises.length - 1 ? 'disabled' : ''}>Siguiente ›</button></nav>` : ''}
     <div class="wk-add"><button type="button" class="btn ghost small" id="wk-add-ex">+ Añadir ejercicio</button></div>
     `;
+  if (nav) wkAnimarNavegacion(nav);
   wkTick();
 }
 
@@ -179,6 +184,19 @@ function startWorkout(routineId) {
   wkOpen(true);
   $('workout').scrollTop = 0;
   vibrate(20);
+}
+
+// El ejercicio nuevo entra desde el lado hacia el que se avanza; la barra crece desde donde estaba
+function wkAnimarNavegacion({ dir, from }) {
+  const blk = $('wk-in').querySelector('.exblock:not([hidden])');
+  if (blk) { blk.classList.remove('enter-next', 'enter-prev'); void blk.offsetWidth; blk.classList.add('enter-' + dir); }
+  const bar = $('wk-in').querySelector('.wk-prog i');
+  if (bar) {
+    const fin = bar.style.transform;
+    bar.style.transition = 'none'; bar.style.transform = `scaleX(${from})`;
+    void bar.offsetWidth;
+    bar.style.transition = ''; bar.style.transform = fin;
+  }
 }
 
 function addWkExercise(name, image, ejId) {
@@ -352,7 +370,9 @@ function bindWorkout() {
       return openPicker(({ name, image, id: ejId }) => addWkExercise(name, image, ejId));
     }
     if (id === 'wk-prev' || id === 'wk-next') {
+      const antes = wk.cur;
       wk.cur = Math.min(Math.max(0, wk.cur + (id === 'wk-next' ? 1 : -1)), wk.exercises.length - 1);
+      if (wk.cur !== antes) wkNav = { dir: id === 'wk-next' ? 'next' : 'prev', from: (antes + 1) / wk.exercises.length };
       vibrate(6); saveLive(); wkRender();
       $('wk-pos')?.scrollIntoView({ block: 'center' });
       return;
