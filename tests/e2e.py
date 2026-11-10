@@ -1503,6 +1503,34 @@ def rutinas_la_tarjeta_dice_cuando_fue_la_ultima_vez(pg):
     z = pg.locator('#routines-list .routine', has=pg.locator('[data-open-routine="z"]')).locator(".rtitle small").inner_text()
     assert "Sin estrenar" in z, z
 
+# ---------- Fase 4: Entreno en vivo ----------
+@test
+def entreno_barra_de_descanso_se_anima_con_transform(pg):
+    seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
+    pg.locator(".wrow .chk").nth(1).click(); pg.wait_for_timeout(1300)
+    st = pg.evaluate("(() => { const e = document.getElementById('rest-fill'), c = getComputedStyle(e); return {w: e.style.width, t: e.style.transform, prop: c.transitionProperty, origin: c.transformOrigin}; })()")
+    assert st["w"] == "" and st["t"].startswith("scaleX("), f"la barra avanza con transform, no cambiando el ancho: {st}"
+    assert st["prop"] == "transform" and st["origin"].startswith("0px"), st
+    assert pg.get_attribute("#rest", "role") == "timer"
+
+@test
+def entreno_volumen_y_series_saltan_al_cambiar(pg):
+    seed(pg); tab(pg, "rutinas"); empezar(pg, "a"); pg.wait_for_timeout(300)
+    assert "tick" not in (pg.get_attribute("#wk-sets", "class") or ""), "al abrir no salta nada"
+    pg.locator(".wrow .chk").nth(1).click(); pg.wait_for_timeout(200)
+    assert pg.inner_text("#wk-sets") == "1"
+    assert "tick" in (pg.get_attribute("#wk-sets", "class") or "") and "tick" in (pg.get_attribute("#wk-vol", "class") or ""), "series y volumen saltan al marcar una serie"
+
+@test
+def entreno_check_de_serie_con_animacion_y_etiqueta(pg):
+    seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
+    chk = pg.locator(".wrow .chk").nth(1)
+    assert chk.get_attribute("aria-label") == "Marcar serie como hecha" and chk.get_attribute("aria-pressed") == "false"
+    chk.click(); pg.wait_for_timeout(100)
+    chk = pg.locator(".wrow.done .chk").first
+    assert chk.evaluate("e => getComputedStyle(e).animationName") == "checkpop"
+    assert chk.get_attribute("aria-pressed") == "true"
+
 @test
 def diseno_respeta_reduced_motion(pg):
     pg.emulate_media(reduced_motion="reduce"); seed(pg); tab(pg, "rutinas"); pg.wait_for_timeout(100)

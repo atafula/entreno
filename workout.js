@@ -44,7 +44,7 @@ function wkExHtml(ex, ei) {
       <span class="wprev">${p.reps ? (p.kg ? `${p.kg} kg × ${p.reps}` : `${p.reps} reps`) : '—'}</span>
       <input type="text" inputmode="decimal" placeholder="${esc(p.kg || s.tkg || '0')}" value="${esc(s.kg)}" data-f="kg" data-ex="${ei}" data-set="${si}" aria-label="Kilos">
       <input type="text" inputmode="numeric" placeholder="${esc(p.reps || s.treps || '0')}" value="${esc(s.reps)}" data-f="reps" data-ex="${ei}" data-set="${si}" aria-label="Repeticiones">
-      <button type="button" class="sx chk" data-act="done" data-ex="${ei}" data-set="${si}" aria-label="Serie hecha"><svg viewBox="0 0 24 24" class="ico"><path d="M5 13l4 4L19 7"/></svg></button>
+      <button type="button" class="sx chk" data-act="done" data-ex="${ei}" data-set="${si}" aria-label="Marcar serie como hecha" aria-pressed="${s.done ? 'true' : 'false'}"><svg viewBox="0 0 24 24" class="ico"><path d="M5 13l4 4L19 7"/></svg></button>
     </div>`;
   }).join('');
   const exImg = ex.image
@@ -82,21 +82,33 @@ function wkRender() {
   wkTick();
 }
 
+let wkShown = null;                                  // último volumen y series pintados
+const restFill = p => { $('rest-fill').style.transform = `scaleX(${Math.min(1, Math.max(0, p)).toFixed(4)})`; };
 function wkTick() {
   if (!wk) return;
   const el = $('wk-time');
-  if (el) { el.textContent = clockLong(Math.floor((Date.now() - wk.start) / 1000)); $('wk-vol').textContent = wkVolume().toLocaleString('es-ES'); $('wk-sets').textContent = wkDone(); }
+  if (el) {
+    el.textContent = clockLong(Math.floor((Date.now() - wk.start) / 1000));
+    const vol = wkVolume(), sets = wkDone();
+    $('wk-vol').textContent = vol.toLocaleString('es-ES'); $('wk-sets').textContent = sets;
+    const now = Date.now(), same = wkShown && wkShown.id === wk.start;   // el número salta solo cuando cambia de verdad
+    const at = { vol: same && vol !== wkShown.vol ? now : same ? wkShown.at.vol : 0, sets: same && sets !== wkShown.sets ? now : same ? wkShown.at.sets : 0 };
+    // la pantalla se vuelve a pintar justo después de marcar una serie: el salto se mantiene en los elementos nuevos
+    if (now - at.vol < 300 && !$('wk-vol').classList.contains('tick')) tick($('wk-vol'));
+    if (now - at.sets < 300 && !$('wk-sets').classList.contains('tick')) tick($('wk-sets'));
+    wkShown = { id: wk.start, vol, sets, at };
+  }
   const box = $('rest');
   if (wk.rest) {
     const left = Math.ceil((wk.rest.end - Date.now()) / 1000);
     if (left <= 0) {
       wk.rest = null; saveLive(); beep(); vibrate([200, 100, 200, 100, 400]);
-      $('rest-time').textContent = '¡Ya!'; $('rest-fill').style.width = '100%'; box.classList.add('go');
+      $('rest-time').textContent = '¡Ya!'; restFill(1); box.classList.add('go');
       setTimeout(() => { if (!wk || wk.rest) return; box.hidden = true; box.classList.remove('go'); $('wk-in').classList.remove('resting'); }, 2200);
     } else {
       box.hidden = false; box.classList.remove('go'); $('wk-in').classList.add('resting');
       $('rest-time').textContent = clockLong(left);
-      $('rest-fill').style.width = `${Math.min(100, Math.max(0, (1 - left / wk.rest.total) * 100))}%`;
+      restFill(1 - left / wk.rest.total);
     }
   }
   renderResume();
@@ -365,6 +377,8 @@ function bindWorkout() {
     }
     vibrate(6);
     saveLive(); wkRender();
+    if (act === 'done' && ex.sets[si] && ex.sets[si].done)   // solo salta el check que se acaba de marcar
+      $('wk-in').querySelector(`[data-act="done"][data-ex="${ei}"][data-set="${si}"]`)?.classList.add('pop');
   });
   $('wk-resume').addEventListener('click', () => wkOpen(true));
 }
