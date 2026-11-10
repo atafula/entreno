@@ -1347,6 +1347,20 @@ def rutina_borrar_no_se_pega_a_guardar(pg):
     assert d["y"] - (g["y"] + g["height"]) >= 8, (g, d)
 
 @test
+def entreno_descanso_sigue_abajo_al_bajar(pg):
+    seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
+    for n in range(6):
+        pg.fill("#wk-new-ex", f"Extra {n}"); pg.click("#wk-add-ex")
+    row = pg.locator("#wk-in .exblock").first.locator(".wrow:not(.whead)").nth(1)  # la 1, no el calentamiento W
+    row.locator('input[data-f="kg"]').fill("60"); row.locator('input[data-f="reps"]').fill("10")
+    row.locator('[data-act="done"]').click(); pg.wait_for_timeout(500)
+    assert pg.is_visible("#rest"), "al completar una serie arranca el descanso"
+    pg.evaluate("document.getElementById('workout').scrollTop = 600"); pg.wait_for_timeout(400)
+    assert pg.evaluate("document.getElementById('workout').scrollTop") > 300, "debe poder bajar"
+    b = pg.locator("#rest").bounding_box(); vh = pg.evaluate("innerHeight")
+    assert abs((b["y"] + b["height"]) - vh) <= 2, f"el descanso sigue pegado abajo al bajar: bottom={b['y'] + b['height']} vh={vh}"
+
+@test
 def entreno_al_bajar_siguen_a_la_vista_el_nombre_el_tiempo_y_el_volumen(pg):
     seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
     for n in range(6):

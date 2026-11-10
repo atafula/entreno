@@ -381,7 +381,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; }
 .celebrate i:nth-of-type(12) { --x: 110px; --y: 70px; --r: -100deg; }
 
 /* ===== Pantallas completas: entreno en vivo y detalle de rutina ===== */
-.workout, .rscreen { position: fixed; inset: 0; z-index: 40; background: var(--bg); overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding-top: env(safe-area-inset-top); animation: screenin var(--d-slow) var(--ease-out) both; }
+.workout, .rscreen { position: fixed; inset: 0; z-index: 40; background: var(--bg); overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding-top: env(safe-area-inset-top); animation: screenin var(--d-slow) var(--ease-out) backwards; }
 .wk-in { max-width: var(--page); margin: 0 auto; padding: 0 var(--gutter) calc(var(--s10) + env(safe-area-inset-bottom)); }
 .wk-in.resting { padding-bottom: calc(260px + env(safe-area-inset-bottom)); }
 .wk-head { position: sticky; top: 0; z-index: 2; margin: 0 calc(var(--gutter) * -1) var(--s3); padding: 0 var(--gutter); background: var(--bg); border-bottom: 1px solid var(--line); }
