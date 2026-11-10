@@ -34,7 +34,7 @@ async function wkWake() {
   try { wkLock = await navigator.wakeLock?.request('screen'); } catch { /* opcional */ }
 }
 
-function wkExHtml(ex, ei) {
+function wkExHtml(ex, ei, cur) {
   let n = 0;
   const rows = ex.sets.map((s, si) => {
     const p = (ex.prev && ex.prev[si]) || {};
@@ -52,7 +52,7 @@ function wkExHtml(ex, ei) {
       ? `<button type="button" class="ex-img-btn" onclick="showExDetail('${ex.ejId}')" aria-label="Ver ejercicio"><img src="${ex.image}" alt="" class="ex-img" loading="lazy"></button>`
       : `<img src="${ex.image}" alt="" class="ex-img" loading="lazy">`
     : '';
-  return `<div class="exblock">
+  return `<div class="exblock"${ei === cur ? '' : ' hidden'}>
     <div class="exhead">${exImg}<h4 class="exn">${esc(ex.name)}</h4><button type="button" class="sx" data-act="delex" data-ex="${ei}" aria-label="Quitar ejercicio"><svg viewBox="0 0 24 24" class="ico"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></button></div>
     <button type="button" class="chip" data-act="rest" data-ex="${ei}">Descanso: ${restLabel(ex.rest)}</button>
     <div class="wrow whead"><span>Serie</span><span>Anterior</span><span>KG</span><span>Reps</span><span>✓</span></div>
@@ -63,6 +63,8 @@ function wkExHtml(ex, ei) {
 
 function wkRender() {
   if (!wk) return;
+  // Un ejercicio a la vez: se guarda cuál es el actual (sobrevive a recargar)
+  wk.cur = Math.min(Math.max(0, wk.cur || 0), Math.max(0, wk.exercises.length - 1));
   $('wk-in').innerHTML = `
     <div class="wk-head">
     <div class="wk-top">
@@ -76,7 +78,8 @@ function wkRender() {
       <div><small>Series</small><b id="wk-sets">0</b></div>
     </div>
     </div>
-    ${wk.exercises.length ? wk.exercises.map(wkExHtml).join('') : '<p class="wk-empty">Añade tu primer ejercicio.</p>'}
+    ${wk.exercises.length ? `<nav class="wk-nav"><button type="button" class="btn ghost small" id="wk-prev" ${wk.cur <= 0 ? 'disabled' : ''}>‹ Anterior</button><span id="wk-pos">${wk.cur + 1} / ${wk.exercises.length}</span><button type="button" class="btn ghost small" id="wk-next" ${wk.cur >= wk.exercises.length - 1 ? 'disabled' : ''}>Siguiente ›</button></nav>` : ''}
+    ${wk.exercises.length ? wk.exercises.map((ex, i) => wkExHtml(ex, i, wk.cur)).join('') : '<p class="wk-empty">Añade tu primer ejercicio.</p>'}
     <div class="wk-add"><button type="button" class="btn ghost small" id="wk-add-ex">+ Añadir ejercicio</button></div>
     `;
   wkTick();
@@ -128,7 +131,7 @@ function wkIsPR(ex, si) {
 
 function startFreeWorkout() {
   if (wk) { wkOpen(true); return toast('Ya tienes un entreno en curso.'); }
-  wk = { routineId: null, name: 'Entreno libre', start: Date.now(), rest: null, exercises: [] };
+  wk = { routineId: null, name: 'Entreno libre', start: Date.now(), rest: null, cur: 0, exercises: [] };
   saveLive();
   wkOpen(true);
   $('workout').scrollTop = 0;
@@ -164,7 +167,7 @@ function startWorkout(routineId) {
   const r = db.routines.find(x => x.id === routineId);
   if (!r) return;
   wk = {
-    routineId: r.id, name: r.name, start: Date.now(), rest: null,
+    routineId: r.id, name: r.name, start: Date.now(), rest: null, cur: 0,
     exercises: r.exercises.map(e => ({
       name: e.name, image: e.image || '', ejId: e.ejId || '', prev: lastSets(e.name), rest: restOf(e.name),
       // Las casillas empiezan vacías; lo de la vez anterior (o lo de la rutina) se ve de fondo (tkg/treps)
@@ -181,8 +184,9 @@ function addWkExercise(name, image, ejId) {
   if (!wk) return;
   if (wk.exercises.some(x => x.name.toLowerCase() === name.toLowerCase())) return toast('Ese ejercicio ya está en el entreno');
   wk.exercises.push({ name, image: image || '', ejId: ejId || '', prev: lastSets(name), rest: restOf(name), sets: [0, 1, 2].map(() => ({ ...blankSet(), done: false })) });
+  wk.cur = wk.exercises.length - 1;
   vibrate(10); saveLive(); wkRender();
-  [...$('wk-in').querySelectorAll('.exblock')].pop()?.scrollIntoView({ block: 'center' });
+  $('wk-pos')?.scrollIntoView({ block: 'center' });
 }
 
 function finishWorkout() {
@@ -345,6 +349,12 @@ function bindWorkout() {
       // Mismo selector de pantalla entera que el editor de rutinas: foto, nombre en español y catálogo al día
       if (typeof openPicker !== 'function') return toast('El catálogo aún no está listo');
       return openPicker(({ name, image, id: ejId }) => addWkExercise(name, image, ejId));
+    }
+    if (id === 'wk-prev' || id === 'wk-next') {
+      wk.cur = Math.min(Math.max(0, wk.cur + (id === 'wk-next' ? 1 : -1)), wk.exercises.length - 1);
+      vibrate(6); saveLive(); wkRender();
+      $('wk-pos')?.scrollIntoView({ block: 'center' });
+      return;
     }
     if (id === 'rest-skip') { wk.rest = null; saveLive(); $('rest').hidden = true; $('wk-in').classList.remove('resting'); return; }
     if (id === 'rest-minus' || id === 'rest-plus') {

@@ -112,10 +112,13 @@ async function loadEjercicios() {
   throw new Error('No se pudo cargar el catálogo');
 }
 
+// Ocultos del selector los ejercicios sin foto (52 del catálogo), hasta tener sus imágenes
+const tieneFoto = e => !!(e.thumbnail || (e.sourceType === 'image' && e.source));
 function searchEjercicios(q, part) {
   if (!ejCache) return [];
   const lq = q.toLowerCase().trim();
   return ejCache.filter(e =>
+    tieneFoto(e) &&
     (!part || e.body_part === part) &&
     (!lq || e.name.toLowerCase().includes(lq) || tradName(e.name).toLowerCase().includes(lq))
   ).slice(0, lq ? 50 : 200);

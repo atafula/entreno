@@ -1008,6 +1008,59 @@ def campos_de_texto_sí_se_pueden_editar_y_seleccionar(pg):
     assert pg.evaluate("getComputedStyle(document.querySelector('#wk-in input[data-f=\"kg\"]')).userSelect") == "text", "los kilos se escriben y seleccionan"
     assert pg.evaluate("getComputedStyle(document.querySelector('#picker-search')).userSelect") == "text", "el buscador sí"
 
+def _mas_series(pg, n):
+    """Añade n series al ejercicio visible, para tener contenido que desplazar."""
+    for _ in range(n): pg.locator("#wk-in .exblock:not([hidden]) [data-act='addset']").first.click()
+
+def _visibles(pg): return pg.evaluate("[...document.querySelectorAll('#wk-in .exblock')].filter(b => !b.hidden).map(b => b.querySelector('.exn').textContent)")
+def _todos(pg): return pg.evaluate("[...document.querySelectorAll('#wk-in .exblock')].map(b => b.querySelector('.exn').textContent)")
+
+@test
+def entreno_muestra_un_ejercicio_a_la_vez(pg):
+    seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
+    todos = _todos(pg)
+    assert len(todos) >= 2, "la rutina tiene varios ejercicios"
+    assert len(_visibles(pg)) == 1 and _visibles(pg)[0] == todos[0], "solo se ve el primero"
+    assert pg.inner_text("#wk-pos").replace(" ", "") == f"1/{len(todos)}", pg.inner_text("#wk-pos")
+
+@test
+def entreno_siguiente_y_anterior_recorren_los_ejercicios(pg):
+    seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
+    todos = _todos(pg)
+    pg.click("#wk-next"); assert _visibles(pg) == [todos[1]], "siguiente pasa al segundo"
+    pg.click("#wk-prev"); assert _visibles(pg) == [todos[0]], "anterior vuelve"
+    assert pg.is_disabled("#wk-prev"), "en el primero no hay anterior"
+    for _ in range(len(todos)): 
+        if not pg.is_disabled("#wk-next"): pg.click("#wk-next")
+    assert _visibles(pg) == [todos[-1]] and pg.is_disabled("#wk-next"), "en el último no hay siguiente"
+
+@test
+def entreno_el_ejercicio_actual_sobrevive_a_recargar(pg):
+    seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
+    todos = _todos(pg)
+    pg.click("#wk-next"); pg.wait_for_timeout(200)
+    pg.reload(); pg.wait_for_timeout(700)
+    assert _visibles(pg) == [todos[1]], "al recargar sigue en el segundo"
+
+@test
+def picker_no_ofrece_ejercicios_sin_foto(pg):
+    seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
+    pg.click("#wk-add-ex"); pg.wait_for_selector("#picker-sheet.show"); pg.wait_for_timeout(200)
+    sin = pg.evaluate("[...document.querySelectorAll('#picker-list .picker-item:not(.picker-custom)')].filter(b => !b.dataset.image).length")
+    assert sin == 0, f"hay {sin} ejercicios del selector sin foto"
+    pg.fill("#picker-search", "Burpee"); pg.wait_for_timeout(150)
+    assert pg.evaluate("[...document.querySelectorAll('#picker-list [data-name]')].some(b => /burpee/i.test(b.dataset.name) && !b.dataset.image)") is False, "un ejercicio sin foto no aparece al buscarlo"
+    pg.click("#picker-close")
+
+@test
+def entreno_anadir_deja_en_pantalla_el_nuevo(pg):
+    seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
+    n = len(_todos(pg))
+    anadir_del_selector(pg, "Dominadas")
+    assert len(_todos(pg)) == n + 1 and len(_visibles(pg)) == 1
+    assert _visibles(pg)[0].lower().startswith("dominadas"), "se ve el añadido"
+    assert pg.inner_text("#wk-pos").replace(" ", "") == f"{n+1}/{n+1}"
+
 @test
 def entreno_se_puede_quitar_un_ejercicio_con_doble_toque(pg):
     seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
@@ -1059,7 +1112,7 @@ def entreno_arrastrar_serie_en_diagonal_tambien_la_elimina(pg):
 
 @test
 def entreno_arrastre_vertical_sigue_haciendo_scroll_y_no_elimina(pg):
-    seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
+    seed(pg); tab(pg, "rutinas"); empezar(pg, "a"); _mas_series(pg, 10)
     SC = "[...document.querySelectorAll('#workout, #wk-in, #wk-in *')].reduce((a, e) => a + e.scrollTop, 0) + scrollY"
     n = _filas(pg); y0 = pg.evaluate(SC)
     _toque(pg, pg.locator("#wk-in .exblock").first.locator(".wrow:not(.whead)").nth(1), 20, -260)
@@ -1202,6 +1255,7 @@ def records_el_calentamiento_y_la_primera_vez_no_cuentan(pg):
     seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
     pg.fill('#workout [data-ex="0"][data-set="0"][data-f="kg"]', "99"); pg.locator(".wrow .chk").nth(0).click()
     assert pg.locator(".wrow .pr").count() == 0, "serie de calentamiento"
+    pg.click("#wk-next")
     pg.fill('#workout [data-ex="1"][data-set="0"][data-f="kg"]', "30"); pg.locator(".wrow .chk").nth(3).click()
     assert pg.locator(".wrow .pr").count() == 0, "Aperturas no tenía historial"
 
@@ -1580,7 +1634,8 @@ def entreno_descanso_sigue_abajo_al_bajar(pg):
     seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
     for q in EXTRAS:
         anadir_del_selector(pg, q)
-    row = pg.locator("#wk-in .exblock").first.locator(".wrow:not(.whead)").nth(1)  # la 1, no el calentamiento W
+    _mas_series(pg, 10)
+    row = pg.locator("#wk-in .exblock:not([hidden])").first.locator(".wrow:not(.whead)").nth(1)  # la 1, no el calentamiento W
     row.locator('input[data-f="kg"]').fill("60"); row.locator('input[data-f="reps"]').fill("10")
     row.locator('[data-act="done"]').click(); pg.wait_for_timeout(500)
     assert pg.is_visible("#rest"), "al completar una serie arranca el descanso"
@@ -1594,6 +1649,7 @@ def entreno_al_bajar_siguen_a_la_vista_el_nombre_el_tiempo_y_el_volumen(pg):
     seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
     for q in EXTRAS:
         anadir_del_selector(pg, q)
+    _mas_series(pg, 25)
     pg.evaluate("document.getElementById('workout').scrollTop = 99999"); pg.wait_for_timeout(200)
     assert pg.evaluate("document.getElementById('workout').scrollTop") > 600, "debe haber bastante contenido para bajar"
     vh = pg.evaluate("innerHeight")
