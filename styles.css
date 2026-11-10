@@ -336,6 +336,8 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; }
 }
 .sheet.show { transform: none; visibility: visible; transition: transform var(--d-slow) var(--ease-spring), visibility 0s; }
 .sheet.dragging { transition: none; }
+.sheet:focus-visible { outline: none; }
+.sheet-head { touch-action: none; }
 .sheet-head { position: sticky; top: 0; z-index: 1; display: flex; justify-content: space-between; align-items: center; gap: var(--s3); margin: 0 calc(var(--s5) * -1) var(--s2); padding: var(--s6) var(--s5) var(--s3); background: var(--bg); }
 .sheet-head::before { content: ""; position: absolute; top: var(--s2); left: 50%; width: 36px; height: 4px; margin-left: -18px; border-radius: var(--r-full); background: var(--line-2); }
 .sheet-head h3 { font-size: var(--t-xl); }

@@ -1342,7 +1342,7 @@ def historial_con_tres_ejercicios_o_menos_no_dice_mas_ejercicios(pg):
 
 @test
 def rutina_borrar_no_se_pega_a_guardar(pg):
-    seed(pg); tab(pg, "rutinas"); editar_rutina(pg, "a")
+    seed(pg); tab(pg, "rutinas"); editar_rutina(pg, "a"); pg.wait_for_timeout(450)  # fin de la animación de entrada
     g, d = pg.locator("#routine-save").bounding_box(), pg.locator("#routine-delete").bounding_box()
     assert d["y"] - (g["y"] + g["height"]) >= 8, (g, d)
 
@@ -1582,6 +1582,56 @@ def resumen_los_numeros_cuentan_hasta_el_total(pg):
     assert pg.inner_text("#summary-vol") == "500 kg", pg.inner_text("#summary-vol")
     assert len(set(vals)) >= 4 and vals[-1] == "500 kg", f"el volumen sube hasta el total: {vals}"
 
+# ---------- Fase 6: Ajustes y hojas ----------
+def _dedo(pg, sel, dy, pasos=8):
+    """Arrastre vertical con dedo real (eventos táctiles por CDP) desde el centro de sel."""
+    r = pg.locator(sel).bounding_box(); x, y = r["x"] + r["width"] / 2, r["y"] + 14
+    cdp = pg.context.new_cdp_session(pg)
+    cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [{"x": x, "y": y}]})
+    for i in range(1, pasos + 1):
+        cdp.send("Input.dispatchTouchEvent", {"type": "touchMove", "touchPoints": [{"x": x, "y": y + dy * i / pasos}]}); pg.wait_for_timeout(16)
+    cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []}); pg.wait_for_timeout(600)
+
+@test
+def hojas_se_cierran_arrastrando_la_cabecera_hacia_abajo(pg):
+    seed(pg)
+    pg.click("#settings-btn"); pg.wait_for_timeout(450)
+    _dedo(pg, "#settings-sheet .sheet-head", 30)
+    assert pg.is_visible("#settings-sheet"), "un arrastre corto no cierra"
+    assert pg.evaluate("document.getElementById('settings-sheet').style.transform") == "", "y la hoja vuelve a su sitio"
+    _dedo(pg, "#settings-sheet .sheet-head", 240)
+    assert not pg.is_visible("#settings-sheet") and "show" not in pg.get_attribute("#scrim", "class"), "arrastrar hacia abajo cierra la hoja"
+    pg.click("#week"); pg.wait_for_timeout(450); _dedo(pg, "#cal-sheet .sheet-head", 240)
+    assert not pg.is_visible("#cal-sheet"), "también el calendario"
+    pg.click("#settings-btn"); pg.wait_for_timeout(450)
+    assert pg.is_visible("#settings-sheet") and pg.evaluate("document.getElementById('settings-sheet').style.transform") == "", "se puede volver a abrir sin restos del arrastre"
+
+@test
+def hojas_escape_cierra_la_que_esta_abierta(pg):
+    seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
+    pg.locator(".wrow .chk").nth(1).click(); pg.click("#wk-finish"); pg.wait_for_timeout(450)
+    assert pg.is_visible("#finish-sheet")
+    pg.keyboard.press("Escape"); pg.wait_for_timeout(450)
+    assert not pg.is_visible("#finish-sheet") and pg.is_visible("#workout"), "Escape cierra la pregunta y el entreno sigue"
+
+@test
+def hojas_el_foco_entra_en_la_hoja_y_vuelve_al_cerrar(pg):
+    seed(pg)
+    pg.click("#settings-btn"); pg.wait_for_timeout(450)
+    assert pg.evaluate("document.getElementById('settings-sheet').contains(document.activeElement)"), "al abrir, el foco pasa a la hoja"
+    assert pg.evaluate("document.body.classList.contains('sheet-open')"), "y el fondo no se desplaza"
+    pg.click("#settings-close"); pg.wait_for_timeout(450)
+    assert pg.evaluate("document.activeElement.id") == "settings-btn", "al cerrar, el foco vuelve al botón que la abrió"
+    assert not pg.evaluate("document.body.classList.contains('sheet-open')")
+
+@test
+def ajustes_opciones_con_estado_accesible(pg):
+    seed(pg); pg.click("#settings-btn"); pg.wait_for_timeout(450)
+    pg.click('[data-tema="light"]'); pg.wait_for_timeout(100)
+    assert pg.get_attribute('[data-tema="light"]', "aria-pressed") == "true" and pg.get_attribute('[data-tema="dark"]', "aria-pressed") == "false"
+    assert pg.evaluate("document.documentElement.dataset.theme") == "light"
+    assert pg.get_attribute('meta[name="theme-color"]', "content").lower() == "#f3efe6", "la barra de estado sigue al tema"
+
 @test
 def diseno_respeta_reduced_motion(pg):
     pg.emulate_media(reduced_motion="reduce"); seed(pg); tab(pg, "rutinas"); pg.wait_for_timeout(100)
@@ -1777,6 +1827,7 @@ def resumen_aparece_al_terminar_con_datos_del_entreno(pg):
     pg.wait_for_selector("#summary-sheet.show", timeout=5000)
     assert pg.is_visible("#summary-sheet"), "al terminar se abre el resumen"
     assert pg.get_attribute("#summary-sheet", "aria-hidden") == "false"
+    pg.wait_for_function("document.getElementById('summary-vol').textContent.trim() === '500 kg'", timeout=3000)  # fin del conteo animado
     txt = pg.inner_text("#summary-sheet")
     assert "¡Bien hecho!" in txt and "PUSH" in txt
     assert "Duración" in txt and "Volumen" in txt and "Series" in txt

@@ -184,7 +184,7 @@ function countUp(el, to, fmt = n => String(Math.round(n))) {
   el.textContent = last = fmt(0);
   const step = now => {
     if (!el.isConnected) return;
-    const p = Math.min(1, (now - t0) / dur), txt = p >= 1 ? end : fmt(to * (1 - Math.pow(1 - p, 3)));
+    const p = Math.max(0, Math.min(1, (now - t0) / dur)), txt = p >= 1 ? end : fmt(to * (1 - Math.pow(1 - p, 3)));
     if (txt !== last) el.textContent = last = txt;
     if (p < 1) requestAnimationFrame(step);
   };
@@ -947,7 +947,65 @@ document.querySelectorAll('[data-descanso]').forEach(b => {
 $('settings-btn').onclick = () => setSettings(true);
 $('settings-close').onclick = () => setSettings(false);
 $('scrim').onclick = () => { setSettings(false); setCal(false); closeSummary(); closeFinish(); if (typeof closePicker === 'function') closePicker(); if (typeof closeDetail === 'function') closeDetail(); };
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { setSettings(false); setCal(false); } });
+// ---------- Hojas inferiores: foco, bloqueo del fondo, Escape y arrastrar para cerrar ----------
+const sheets = [...document.querySelectorAll('.sheet')];
+const openSheets = () => sheets.filter(s => s.classList.contains('show'));
+// Cierra una hoja por su propio botón (Cerrar o Cancelar); si no tiene, como al tocar fuera
+function dismissSheet(sheet) {
+  const closer = sheet.querySelector('.sheet-head .icon-btn, .sheet-head .link');
+  if (closer) closer.click(); else $('scrim').click();
+}
+const sheetOpener = new WeakMap();
+let lastTrigger = null;                             // en táctil, tocar un botón no le da el foco: se recuerda cuál abrió la hoja
+document.addEventListener('click', e => { lastTrigger = e.target.closest?.('button, [role="button"], a') || null; }, true);
+sheets.forEach(sheet => {
+  sheet.tabIndex = -1;
+  let was = sheet.classList.contains('show');
+  new MutationObserver(() => {
+    const now = sheet.classList.contains('show');
+    if (now === was) return;
+    was = now;
+    document.body.classList.toggle('sheet-open', openSheets().length > 0);
+    if (now) {
+      sheetOpener.set(sheet, lastTrigger && lastTrigger.isConnected && !sheet.contains(lastTrigger) ? lastTrigger : document.activeElement);
+      // el foco entra en la hoja (salvo que ella misma ya lo haya puesto en un campo suyo)
+      setTimeout(() => { if (sheet.classList.contains('show') && !sheet.contains(document.activeElement)) sheet.focus({ preventScroll: true }); }, 0);
+    } else {
+      sheet.style.transform = '';
+      const op = sheetOpener.get(sheet);
+      if (op && op.isConnected && !/^(INPUT|TEXTAREA|SELECT)$/.test(op.tagName) && (sheet.contains(document.activeElement) || document.activeElement === document.body)) op.focus({ preventScroll: true });
+    }
+  }).observe(sheet, { attributes: true, attributeFilter: ['class'] });
+
+  // Arrastrar la cabecera hacia abajo: la hoja sigue al dedo y se cierra al soltar si ha bajado lo suficiente
+  const head = sheet.querySelector('.sheet-head');
+  if (!head) return;
+  let drag = null;
+  head.addEventListener('touchstart', e => {
+    if (e.touches.length !== 1 || e.target.closest('button, input, a')) return;
+    drag = { y: e.touches[0].clientY, dy: 0, t: performance.now() };
+  }, { passive: true });
+  head.addEventListener('touchmove', e => {
+    if (!drag) return;
+    drag.dy = Math.max(0, e.touches[0].clientY - drag.y);
+    if (drag.dy > 4) { e.preventDefault(); sheet.classList.add('dragging'); sheet.style.transform = `translateY(${drag.dy}px)`; }
+  }, { passive: false });
+  const end = () => {
+    if (!drag) return;
+    const d = drag, fast = d.dy / Math.max(1, performance.now() - d.t) > .6;
+    drag = null;
+    sheet.classList.remove('dragging');
+    if (d.dy > 110 || (d.dy > 40 && fast)) { vibrate(8); dismissSheet(sheet); }
+    sheet.style.transform = '';                      // vuelve a su sitio, o baja del todo si se ha cerrado
+  };
+  head.addEventListener('touchend', end);
+  head.addEventListener('touchcancel', end);
+});
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  const top = openSheets().pop();
+  if (top) dismissSheet(top);
+});
 
 // ---------- Init ----------
 $('new-phrase').onclick = () => newPhrase(true);
