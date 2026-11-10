@@ -8,7 +8,13 @@
     "thumbnail": "",
     "source": "",
     "sourceType": "",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición estable.",
+      "Flexiona los codos llevando el peso hacia los hombros, manteniendo los brazos quietos.",
+      "Haz una pausa breve en la parte alta del movimiento.",
+      "Baja controladamente hasta la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "ab-scissors",
@@ -19,7 +25,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/28931101-Scissors-(advanced)-(female)_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/28931101-Scissors-(advanced)-(female)_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición de pie con los pies separados al ancho de los hombros.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "ab-wheel",
@@ -43,7 +55,13 @@
     "thumbnail": "",
     "source": "",
     "sourceType": "",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición de pie con los pies separados al ancho de los hombros.",
+      "Inicia el movimiento a un ritmo moderado.",
+      "Mantén un ritmo constante y controlado.",
+      "Continúa durante el tiempo o distancia deseada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "air-bike",
@@ -111,7 +129,14 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/17621101-Single-Leg-Squat-with-Support-(pistol)_Thighs_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/17621101-Single-Leg-Squat-with-Support-(pistol)_Thighs_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Ponte de pie con los pies separados al ancho de los hombros.",
+      "Flexiona las rodillas bajando el cuerpo hacia el suelo.",
+      "Mantén la espalda recta y el pecho levantado durante el movimiento.",
+      "Baja hasta que los muslos estén paralelos al suelo.",
+      "Empuja los talones para volver a la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "back-extension-hyperextension",
@@ -122,7 +147,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/18601201-Hyperextension-(VERSION-2)_Hips_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/18601201-Hyperextension-(VERSION-2)_Hips.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Realiza el movimiento de forma controlada.",
+      "Haz una pausa breve en la posición final.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "back-extension-machine",
@@ -146,7 +177,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/12341101-Plate-Hyperextension_Hips_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/12341101-Plate-Hyperextension_Hips_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Realiza el movimiento de forma controlada.",
+      "Haz una pausa breve en la posición final.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "ball-slams",
@@ -170,7 +207,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/15031101-Band-Pull-Apart_Shoulders_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/15031101-Band-Pull-Apart_Shoulders_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Siéntate con la espalda recta frente a la máquina o cable.",
+      "Tira del peso hacia ti, llevando los codos hacia atrás.",
+      "Haz una pausa breve cuando el peso esté cerca del cuerpo.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "battle-ropes",
@@ -194,7 +237,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/01041101-Barbell-Standing-Back-Wrist-Curl_Forearms_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/01041101-Barbell-Standing-Back-Wrist-Curl_Forearms_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición estable.",
+      "Flexiona los codos llevando el peso hacia los hombros, manteniendo los brazos quietos.",
+      "Haz una pausa breve en la parte alta del movimiento.",
+      "Baja controladamente hasta la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "bench-dip",
@@ -342,7 +391,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/08921101-Band-bent_Back-over-row_Back_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/08921101-Band-bent_Back-over-row_Back_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Siéntate con la espalda recta frente a la máquina o cable.",
+      "Tira del peso hacia ti, llevando los codos hacia atrás.",
+      "Haz una pausa breve cuando el peso esté cerca del cuerpo.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "bent-over-row-barbell",
@@ -389,7 +444,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/00311201-Barbell-Curl_Upper-Arms_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/00311201-Barbell-Curl_Upper-Arms.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición estable.",
+      "Flexiona los codos llevando el peso hacia los hombros, manteniendo los brazos quietos.",
+      "Haz una pausa breve en la parte alta del movimiento.",
+      "Baja controladamente hasta la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "bicep-curl-cable",
@@ -459,7 +520,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/10701101-Suspender-Arm-Curl_Upper-Arms_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/10701101-Suspender-Arm-Curl_Upper-Arms_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición estable.",
+      "Flexiona los codos llevando el peso hacia los hombros, manteniendo los brazos quietos.",
+      "Haz una pausa breve en la parte alta del movimiento.",
+      "Baja controladamente hasta la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "bicycle-crunch",
@@ -487,7 +554,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/01471201-Bycicle-Twisting-Crunch_Waist_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/01471201-Bycicle-Twisting-Crunch_Waist.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Ponte de pie con los pies separados al ancho de los hombros.",
+      "Contrae el abdomen y eleva el torso hacia las rodillas.",
+      "Haz una pausa breve en la contracción máxima.",
+      "Baja controladamente hasta la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "bird-dog",
@@ -515,7 +588,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/05091101-Jump-Box_Plyometrics_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/05091101-Jump-Box_Plyometrics_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición estable.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "box-squat-barbell",
@@ -529,7 +608,14 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/00261101-Barbell-Bench-Squat_Hips_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/00261101-Barbell-Bench-Squat_Hips_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Ponte de pie con los pies separados al ancho de los hombros.",
+      "Flexiona las rodillas bajando el cuerpo hacia el suelo.",
+      "Mantén la espalda recta y el pecho levantado durante el movimiento.",
+      "Baja hasta que los muslos estén paralelos al suelo.",
+      "Empuja los talones para volver a la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "boxing",
@@ -592,7 +678,13 @@
     "thumbnail": "",
     "source": "",
     "sourceType": "",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición de pie con los pies separados al ancho de los hombros.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "butterfly-pec-deck",
@@ -603,7 +695,14 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/10301201-Lever-Pec-Deck-Fly_Chest_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/10301201-Lever-Pec-Deck-Fly_Chest.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Abre los brazos en un movimiento de arco amplio.",
+      "Mantén una ligera flexión en los codos durante todo el movimiento.",
+      "Haz una pausa breve en la contracción máxima.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "cable-core-palloff-press",
@@ -614,7 +713,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/12021201-Cable-horizontal-Pallof-Press_waist_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/12021201-Cable-horizontal-Pallof-Press_waist.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Siéntate en un banco con respaldo.",
+      "Empuja el peso hacia adelante o arriba hasta la extensión completa.",
+      "Haz una pausa breve en la parte alta.",
+      "Baja controladamente hasta la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "cable-crunch",
@@ -642,7 +747,14 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/12691201-Cable-Standing-Up-Straight-Crossovers_Chest_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/12691201-Cable-Standing-Up-Straight-Crossovers_Chest.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Abre los brazos en un movimiento de arco amplio.",
+      "Mantén una ligera flexión en los codos durante todo el movimiento.",
+      "Haz una pausa breve en la contracción máxima.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "cable-pull-through",
@@ -708,7 +820,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/23151201-Lever-Rotary-Calf_Calves_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/23151201-Lever-Rotary-Calf_Calves.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Realiza el movimiento de forma controlada.",
+      "Haz una pausa breve en la posición final.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "calf-press-machine",
@@ -784,7 +902,14 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/09131101-Band-middle-fly_Chest_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/09131101-Band-middle-fly_Chest_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición estable.",
+      "Abre los brazos en un movimiento de arco amplio.",
+      "Mantén una ligera flexión en los codos durante todo el movimiento.",
+      "Haz una pausa breve en la contracción máxima.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "chest-fly-dumbbell",
@@ -795,7 +920,14 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/03081201-Dumbbell-Fly_Chest_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/03081201-Dumbbell-Fly_Chest.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Siéntate en un banco con respaldo.",
+      "Abre los brazos en un movimiento de arco amplio.",
+      "Mantén una ligera flexión en los codos durante todo el movimiento.",
+      "Haz una pausa breve en la contracción máxima.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "chest-fly-machine",
@@ -819,7 +951,14 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/10741101-Suspender-Fly_Chest_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/10741101-Suspender-Fly_Chest_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición estable.",
+      "Abre los brazos en un movimiento de arco amplio.",
+      "Mantén una ligera flexión en los codos durante todo el movimiento.",
+      "Haz una pausa breve en la contracción máxima.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "chest-press-band",
@@ -882,7 +1021,14 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/03831201-Dumbbell-Reverse-Fly_Shoulders_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/03831201-Dumbbell-Reverse-Fly_Shoulders.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Siéntate en un banco con respaldo.",
+      "Abre los brazos en un movimiento de arco amplio.",
+      "Mantén una ligera flexión en los codos durante todo el movimiento.",
+      "Haz una pausa breve en la contracción máxima.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "chest-supported-y-raise-dumbbell",
@@ -893,7 +1039,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/35411201-Dumbbell-Incline-Y-Raise_Shoulders__thumbnail_@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/35411201-Dumbbell-Incline-Y-Raise_Shoulders_.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Siéntate en un banco con respaldo.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "chin-up",
@@ -949,7 +1101,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/29871101-Weighted-Close-Grip-Chin-up-on-Dip-Cage_Back_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/29871101-Weighted-Close-Grip-Chin-up-on-Dip-Cage_Back_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "clamshell",
@@ -976,7 +1134,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/12731101-Clap-Push-Up_Plyometrics_Chest_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/12731101-Clap-Push-Up_Plyometrics_Chest_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición de pie con los pies separados al ancho de los hombros.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "clean",
@@ -1042,7 +1206,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/15171101-Barbell-Clean-Pull_Weightlifts_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/15171101-Barbell-Clean-Pull_Weightlifts_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Siéntate con la espalda recta frente a la máquina o cable.",
+      "Tira del peso hacia ti, llevando los codos hacia atrás.",
+      "Haz una pausa breve cuando el peso esté cerca del cuerpo.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "climbing",
@@ -1053,7 +1223,13 @@
     "thumbnail": "",
     "source": "",
     "sourceType": "",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición de pie con los pies separados al ancho de los hombros.",
+      "Inicia el movimiento a un ritmo moderado.",
+      "Mantén un ritmo constante y controlado.",
+      "Continúa durante el tiempo o distancia deseada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "concentration-curl",
@@ -1118,7 +1294,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/05951201-Lever-Seated-Crunch-(chest-pad)_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/05951201-Lever-Seated-Crunch-(chest-pad).mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Contrae el abdomen y eleva el torso hacia las rodillas.",
+      "Haz una pausa breve en la contracción máxima.",
+      "Baja controladamente hasta la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "crunch-weighted",
@@ -1148,7 +1330,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/08811101-Dumbbell-Curtsey-lunge_Thighs_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/08811101-Dumbbell-Curtsey-lunge_Thighs_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Siéntate en un banco con respaldo.",
+      "Da un paso hacia adelante y flexiona ambas rodillas.",
+      "Baja el cuerpo hasta que la rodilla trasera casi toque el suelo.",
+      "Empuja el talón delantero para volver a la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "cycling",
@@ -1274,7 +1462,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/07521201-Smith-Deadlift_Hips_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/07521201-Smith-Deadlift_Hips.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "deadlift-trap-bar",
@@ -1307,7 +1501,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/11991201-Sumo-Deadlift-High-Pull_Thighs_Shoulders_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/11991201-Sumo-Deadlift-High-Pull_Thighs_Shoulders.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Siéntate con la espalda recta frente a la máquina o cable.",
+      "Tira del peso hacia ti, llevando los codos hacia atrás.",
+      "Haz una pausa breve cuando el peso esté cerca del cuerpo.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "decline-bench-press-barbell",
@@ -1358,7 +1558,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/13001201-Lever-Decline-Chest-Press_Chest-FIX__thumbnail_@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/13001201-Lever-Decline-Chest-Press_Chest-FIX_.mp4",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Siéntate en un banco con respaldo.",
+      "Empuja el peso hacia adelante o arriba hasta la extensión completa.",
+      "Haz una pausa breve en la parte alta.",
+      "Baja controladamente hasta la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "decline-bench-press-smith-machine",
@@ -1390,7 +1596,14 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/03021201-Dumbbell-Decline-Fly_Chest_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/03021201-Dumbbell-Decline-Fly_Chest.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Siéntate en un banco con respaldo.",
+      "Abre los brazos en un movimiento de arco amplio.",
+      "Mantén una ligera flexión en los codos durante todo el movimiento.",
+      "Haz una pausa breve en la contracción máxima.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "decline-crunch",
@@ -1474,7 +1687,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/09491101-Downward-Facing-Dog-Adho-Mukha-Svanasana_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/09491101-Downward-Facing-Dog-Adho-Mukha-Svanasana_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición de pie con los pies separados al ancho de los hombros.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "drag-curl",
@@ -1515,7 +1734,13 @@
     "thumbnail": "",
     "source": "",
     "sourceType": "",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición de pie con los pies separados al ancho de los hombros.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "dumbbell-row",
@@ -1564,7 +1789,13 @@
     "thumbnail": "",
     "source": "",
     "sourceType": "",
-    "instructions": []
+    "instructions": [
+      "Siéntate en un banco con respaldo.",
+      "Empuja el peso hacia adelante o arriba hasta la extensión completa.",
+      "Haz una pausa breve en la parte alta.",
+      "Baja controladamente hasta la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "dumbbell-step-up",
@@ -1649,7 +1880,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/08961101-Band-face-pull_Shoulders_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/08961101-Band-face-pull_Shoulders_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Tira del peso hacia ti, llevando los codos hacia atrás.",
+      "Haz una pausa breve cuando el peso esté cerca del cuerpo.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "farmers-walk",
@@ -1677,7 +1914,13 @@
     "thumbnail": "",
     "source": "",
     "sourceType": "",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición de pie con los pies separados al ancho de los hombros.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "floor-press-barbell",
@@ -1718,7 +1961,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/08151201-Triceps-Dips-Floor_Upper-Arms_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/08151201-Triceps-Dips-Floor_Upper-Arms.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición de pie con los pies separados al ancho de los hombros.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "flutter-kicks",
@@ -1745,7 +1994,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/30881101-Frog-Hops-(male)_Plyometrics_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/30881101-Frog-Hops-(male)_Plyometrics_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición de pie con los pies separados al ancho de los hombros.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "frog-pumps-dumbbell",
@@ -1756,7 +2011,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/31821101-Weighted-Frog-Pump_Hips_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/31821101-Weighted-Frog-Pump_Hips_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Siéntate en un banco con respaldo.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "front-lever-hold",
@@ -1767,7 +2028,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/32961101-Front-Lever_Waist_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/32961101-Front-Lever_Waist_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición de pie con los pies separados al ancho de los hombros.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "front-lever-raise",
@@ -1778,7 +2045,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/32961101-Front-Lever_Waist_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/32961101-Front-Lever_Waist_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición de pie con los pies separados al ancho de los hombros.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "front-raise-band",
@@ -1855,7 +2128,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/10751101-Suspender-Front-Raise_Shoulders_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/10751101-Suspender-Front-Raise_Shoulders_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición estable.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "front-squat",
@@ -1959,7 +2238,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/14741201-Bent-Leg-Kickback-(kneeling)_Hips_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/14741201-Bent-Leg-Kickback-(kneeling)_Hips.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición de pie con los pies separados al ancho de los hombros.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "goblet-squat",
@@ -2010,7 +2295,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/72301201-Kettlebell-Gorilla-Row-(male)_Back__thumbnail_@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/72301201-Kettlebell-Gorilla-Row-(male)_Back_.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Siéntate con la espalda recta frente a la máquina o cable.",
+      "Tira del peso hacia ti, llevando los codos hacia atrás.",
+      "Haz una pausa breve cuando el peso esté cerca del cuerpo.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "hack-squat",
@@ -2042,7 +2333,14 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/07431201-Sled-Hack-Squat_Hips_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/07431201-Sled-Hack-Squat_Hips.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Flexiona las rodillas bajando el cuerpo hacia el suelo.",
+      "Mantén la espalda recta y el pecho levantado durante el movimiento.",
+      "Baja hasta que los muslos estén paralelos al suelo.",
+      "Empuja los talones para volver a la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "hammer-curl-band",
@@ -2053,7 +2351,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/08971101-Band-hammer-curl_Forearms_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/08971101-Band-hammer-curl_Forearms_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición estable.",
+      "Flexiona los codos llevando el peso hacia los hombros, manteniendo los brazos quietos.",
+      "Haz una pausa breve en la parte alta del movimiento.",
+      "Baja controladamente hasta la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "hammer-curl-cable",
@@ -2103,7 +2407,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/33021101-Handstand_Upper-arms_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/33021101-Handstand_Upper-arms_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición de pie con los pies separados al ancho de los hombros.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "handstand-push-up",
@@ -2150,7 +2460,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/15221101-Barbell-Hang-Snatch_Weightlifts_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/15221101-Barbell-Hang-Snatch_Weightlifts_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición estable.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "hanging-knee-raise",
@@ -2195,7 +2511,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/00061101-Alternate-Heel-Touchers_waist-FIX_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/00061101-Alternate-Heel-Touchers_waist-FIX_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición de pie con los pies separados al ancho de los hombros.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "hex-press-dumbbell",
@@ -2253,7 +2575,13 @@
     "thumbnail": "",
     "source": "",
     "sourceType": "",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición de pie con los pies separados al ancho de los hombros.",
+      "Inicia el movimiento a un ritmo moderado.",
+      "Mantén un ritmo constante y controlado.",
+      "Continúa durante el tiempo o distancia deseada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "hiking",
@@ -2264,7 +2592,13 @@
     "thumbnail": "",
     "source": "",
     "sourceType": "",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición de pie con los pies separados al ancho de los hombros.",
+      "Inicia el movimiento a un ritmo moderado.",
+      "Mantén un ritmo constante y controlado.",
+      "Continúa durante el tiempo o distancia deseada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "hip-abduction-machine",
@@ -2288,7 +2622,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/05981201-Lever-Seated-Hip-Adduction_Thighs_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/05981201-Lever-Seated-Hip-Adduction_Thighs.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "hip-thrust",
@@ -2312,7 +2652,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/10601101-Barbell-Hip-Thrust_Hips_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/10601101-Barbell-Hip-Thrust_Hips_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición estable.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "hip-thrust-machine",
@@ -2323,7 +2669,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/21461201-Lever-Hip-Thrust_Hips_thumbnail_@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/21461201-Lever-Hip-Thrust_Hips.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "hollow-rock",
@@ -2334,7 +2686,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/12461101-Hollow-Hold_Waist_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/12461101-Hollow-Hold_Waist_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición de pie con los pies separados al ancho de los hombros.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "incline-bench-press-barbell",
@@ -2390,7 +2748,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/07571201-Smith-Incline-Bench-Press_Chest_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/07571201-Smith-Incline-Bench-Press_Chest.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Siéntate en un banco inclinado con respaldo.",
+      "Empuja el peso hacia adelante o arriba hasta la extensión completa.",
+      "Haz una pausa breve en la parte alta.",
+      "Baja controladamente hasta la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "incline-chest-fly-dumbbell",
@@ -2401,7 +2765,14 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/03191201-Dumbbell-Incline-Fly_Chest_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/03191201-Dumbbell-Incline-Fly_Chest.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Siéntate en un banco inclinado con respaldo.",
+      "Abre los brazos en un movimiento de arco amplio.",
+      "Mantén una ligera flexión en los codos durante todo el movimiento.",
+      "Haz una pausa breve en la contracción máxima.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "incline-chest-press-machine",
@@ -2460,7 +2831,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/05761201-Lever-Chest-Press-(plate-loaded)_Chest_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/05761201-Lever-Chest-Press-(plate-loaded)_Chest.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Siéntate en un banco con respaldo.",
+      "Empuja el peso hacia adelante o arriba hasta la extensión completa.",
+      "Haz una pausa breve en la parte alta.",
+      "Baja controladamente hasta la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "iso-lateral-high-row-machine",
@@ -2471,7 +2848,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/05811101-Lever-High-Row-(plate-loaded)_Back_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/05811101-Lever-High-Row-(plate-loaded)_Back_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Tira del peso hacia ti, llevando los codos hacia atrás.",
+      "Haz una pausa breve cuando el peso esté cerca del cuerpo.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "iso-lateral-low-row",
@@ -2484,7 +2867,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/42141201-Lever-Low-Row-(plate-loaded)_Back__thumbnail_@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/42141201-Lever-Low-Row-(plate-loaded)_Back_.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Tira del peso hacia ti, llevando los codos hacia atrás.",
+      "Haz una pausa breve cuando el peso esté cerca del cuerpo.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "iso-lateral-row-machine",
@@ -2495,7 +2884,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/05881101-Lever-Narrow-Grip-Seated-Row-(plate-loaded)_Back_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/05881101-Lever-Narrow-Grip-Seated-Row-(plate-loaded)_Back_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Tira del peso hacia ti, llevando los codos hacia atrás.",
+      "Haz una pausa breve cuando el peso esté cerca del cuerpo.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "jack-knife-suspension",
@@ -2506,7 +2901,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/10821101-Suspender-Jack-knife_Waist_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/10821101-Suspender-Jack-knife_Waist_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición estable.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "jackknife-sit-up",
@@ -2567,7 +2968,13 @@
     "thumbnail": "",
     "source": "",
     "sourceType": "",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición estable.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "jump-squat",
@@ -2615,7 +3022,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/11661201-Jump-Split-m_Plyometrics_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/11661201-Jump-Split-m_Plyometrics.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Ponte de pie con los pies separados al ancho de los hombros.",
+      "Da un paso hacia adelante y flexiona ambas rodillas.",
+      "Baja el cuerpo hasta que la rodilla trasera casi toque el suelo.",
+      "Empuja el talón delantero para volver a la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "kettlebell-clean",
@@ -2695,7 +3108,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/35721101-Kettlebell-Strict-Press_Shoulders_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/35721101-Kettlebell-Strict-Press_Shoulders_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Siéntate en un banco con respaldo.",
+      "Empuja el peso hacia adelante o arriba hasta la extensión completa.",
+      "Haz una pausa breve en la parte alta.",
+      "Baja controladamente hasta la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "kettlebell-snatch",
@@ -2764,7 +3183,13 @@
     "thumbnail": "",
     "source": "",
     "sourceType": "",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Tira del peso hacia ti, llevando los codos hacia atrás.",
+      "Haz una pausa breve cuando el peso esté cerca del cuerpo.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "knee-raise-parallel-bars",
@@ -2775,7 +3200,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/21261201-Captains-chair-leg-raise_Hips_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/21261201-Captains-chair-leg-raise_Hips.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "kneeling-pulldown-band",
@@ -2824,7 +3255,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/14021201-L-sit_Waist_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/14021201-L-sit_Waist.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición de pie con los pies separados al ancho de los hombros.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "landmine-180",
@@ -2879,7 +3316,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/09741101-Band-close-grip-pulldown_Back_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/09741101-Band-close-grip-pulldown_Back_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Siéntate con la espalda recta frente a la máquina o cable.",
+      "Tira del peso hacia ti, llevando los codos hacia atrás.",
+      "Haz una pausa breve cuando el peso esté cerca del cuerpo.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "lat-pulldown-cable",
@@ -2926,7 +3369,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/26161101-Cable-Lateral-Pulldown-with-V-bar_Back_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/26161101-Cable-Lateral-Pulldown-with-V-bar_Back_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Tira del peso hacia ti, llevando los codos hacia atrás.",
+      "Haz una pausa breve cuando el peso esté cerca del cuerpo.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "lateral-band-walks",
@@ -2937,7 +3386,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/24601101-Resistance-Band-Lateral-Walk_Hips_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/24601101-Resistance-Band-Lateral-Walk_Hips_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición estable.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "lateral-box-jump",
@@ -2948,7 +3403,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/05641101-Lateral-Box-Jump_Plyometrics_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/05641101-Lateral-Box-Jump_Plyometrics_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición estable.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "lateral-leg-raises",
@@ -2959,7 +3420,13 @@
     "thumbnail": "",
     "source": "",
     "sourceType": "",
-    "instructions": []
+    "instructions": [
+      "Ponte de pie con los pies separados al ancho de los hombros.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "lateral-lunge",
@@ -3056,7 +3523,14 @@
     "thumbnail": "",
     "source": "",
     "sourceType": "",
-    "instructions": []
+    "instructions": [
+      "Ponte de pie con los pies separados al ancho de los hombros.",
+      "Flexiona las rodillas bajando el cuerpo hacia el suelo.",
+      "Mantén la espalda recta y el pecho levantado durante el movimiento.",
+      "Baja hasta que los muslos estén paralelos al suelo.",
+      "Empuja los talones para volver a la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "leg-extension-machine",
@@ -3067,7 +3541,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/05851201-Lever-Leg-Extension_Thighs_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/05851201-Lever-Leg-Extension_Thighs.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Realiza el movimiento de forma controlada.",
+      "Haz una pausa breve en la posición final.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "leg-press-machine",
@@ -3094,7 +3574,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/22671201-Lever-Seated-Leg-Press_Thighs_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/22671201-Lever-Seated-Leg-Press_Thighs.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Siéntate en un banco con respaldo.",
+      "Empuja el peso hacia adelante o arriba hasta la extensión completa.",
+      "Haz una pausa breve en la parte alta.",
+      "Baja controladamente hasta la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "leg-raise-parallel-bars",
@@ -3122,7 +3608,14 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/01791201-Cable-Low-Fly_Chest_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/01791201-Cable-Low-Fly_Chest.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Abre los brazos en un movimiento de arco amplio.",
+      "Mantén una ligera flexión en los codos durante todo el movimiento.",
+      "Haz una pausa breve en la contracción máxima.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "low-row-suspension",
@@ -3133,7 +3626,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/10921101-Suspender-Row_Back_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/10921101-Suspender-Row_Back_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Siéntate con la espalda recta frente a la máquina o cable.",
+      "Tira del peso hacia ti, llevando los codos hacia atrás.",
+      "Haz una pausa breve cuando el peso esté cerca del cuerpo.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "lunge",
@@ -3205,7 +3704,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/06171101-Lying-Hip-Leg-Raise-(on-floor)_Hips_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/06171101-Lying-Hip-Leg-Raise-(on-floor)_Hips_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición de pie con los pies separados al ancho de los hombros.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "lying-leg-curl-machine",
@@ -3216,7 +3721,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/05861201-Lever-Lying-Leg-Curl_Thighs_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/05861201-Lever-Lying-Leg-Curl_Thighs.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Flexiona los codos llevando el peso hacia los hombros, manteniendo los brazos quietos.",
+      "Haz una pausa breve en la parte alta del movimiento.",
+      "Baja controladamente hasta la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "lying-leg-raise",
@@ -3244,7 +3755,13 @@
     "thumbnail": "",
     "source": "",
     "sourceType": "",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición de pie con los pies separados al ancho de los hombros.",
+      "Flexiona los codos llevando el peso hacia los hombros, manteniendo los brazos quietos.",
+      "Haz una pausa breve en la parte alta del movimiento.",
+      "Baja controladamente hasta la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "lying-neck-curls-weighted",
@@ -3255,7 +3772,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/10431201-Weighted-Lying-Neck-Flexion_neck_thumbnail_@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/10431201-Weighted-Lying-Neck-Flexion_neck.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición estable.",
+      "Flexiona los codos llevando el peso hacia los hombros, manteniendo los brazos quietos.",
+      "Haz una pausa breve en la parte alta del movimiento.",
+      "Baja controladamente hasta la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "lying-neck-extension",
@@ -3266,7 +3789,13 @@
     "thumbnail": "",
     "source": "",
     "sourceType": "",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición de pie con los pies separados al ancho de los hombros.",
+      "Realiza el movimiento de forma controlada.",
+      "Haz una pausa breve en la posición final.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "lying-neck-extension-weighted",
@@ -3277,7 +3806,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/10421101-Weighted-Lying-Neck-Extension_neck_small_thumbnail_@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/10421101-Weighted-Lying-Neck-Extension_neck_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición estable.",
+      "Realiza el movimiento de forma controlada.",
+      "Haz una pausa breve en la posición final.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "meadows-rows-barbell",
@@ -3288,7 +3823,13 @@
     "thumbnail": "",
     "source": "",
     "sourceType": "",
-    "instructions": []
+    "instructions": [
+      "Siéntate con la espalda recta frente a la máquina o cable.",
+      "Tira del peso hacia ti, llevando los codos hacia atrás.",
+      "Haz una pausa breve cuando el peso esté cerca del cuerpo.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "mountain-climber",
@@ -3349,7 +3890,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/42041101-Resistance-Band-Assisted-Nordic-Hamstring-Curl_Thighs_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/42041101-Resistance-Band-Assisted-Nordic-Hamstring-Curl_Thighs_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición de pie con los pies separados al ancho de los hombros.",
+      "Flexiona los codos llevando el peso hacia los hombros, manteniendo los brazos quietos.",
+      "Haz una pausa breve en la parte alta del movimiento.",
+      "Baja controladamente hasta la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "oblique-crunch",
@@ -3418,7 +3965,13 @@
     "thumbnail": "",
     "source": "",
     "sourceType": "",
-    "instructions": []
+    "instructions": [
+      "Siéntate en un banco con respaldo.",
+      "Da un paso hacia adelante y flexiona ambas rodillas.",
+      "Baja el cuerpo hasta que la rodilla trasera casi toque el suelo.",
+      "Empuja el talón delantero para volver a la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "overhead-press-barbell",
@@ -3470,7 +4023,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/12241201-Smith-Standing-Shoulder-Press_Shoulders_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/12241201-Smith-Standing-Shoulder-Press_Shoulders.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Siéntate en un banco con respaldo.",
+      "Empuja el peso hacia adelante o arriba hasta la extensión completa.",
+      "Haz una pausa breve en la parte alta.",
+      "Baja controladamente hasta la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "overhead-squat",
@@ -3498,7 +4057,14 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/50161201-Barbell-Pause-Full-Squat_Thighs__thumbnail_@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/50161201-Barbell-Pause-Full-Squat_Thighs_.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Ponte de pie con los pies separados al ancho de los hombros.",
+      "Flexiona las rodillas bajando el cuerpo hacia el suelo.",
+      "Mantén la espalda recta y el pecho levantado durante el movimiento.",
+      "Baja hasta que los muslos estén paralelos al suelo.",
+      "Empuja los talones para volver a la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "pendlay-row-barbell",
@@ -3530,7 +4096,14 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/49511201-Lever-Pendulum-Squat-(plate-loaded)_Thighs__thumbnail_@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/49511201-Lever-Pendulum-Squat-(plate-loaded)_Thighs_.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Flexiona las rodillas bajando el cuerpo hacia el suelo.",
+      "Mantén la espalda recta y el pecho levantado durante el movimiento.",
+      "Baja hasta que los muslos estén paralelos al suelo.",
+      "Empuja los talones para volver a la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "pike-pushup",
@@ -3543,7 +4116,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/29211101-Pike-Push-up_Chest_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/29211101-Pike-Push-up_Chest_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición de pie con los pies separados al ancho de los hombros.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "pilates",
@@ -3554,7 +4133,13 @@
     "thumbnail": "",
     "source": "",
     "sourceType": "",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición de pie con los pies separados al ancho de los hombros.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "pinwheel-curl-dumbbell",
@@ -3565,7 +4150,13 @@
     "thumbnail": "",
     "source": "",
     "sourceType": "",
-    "instructions": []
+    "instructions": [
+      "Siéntate en un banco con respaldo.",
+      "Flexiona los codos llevando el peso hacia los hombros, manteniendo los brazos quietos.",
+      "Haz una pausa breve en la parte alta del movimiento.",
+      "Baja controladamente hasta la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "pistol-squat",
@@ -3618,7 +4209,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/28901101-Front-Plank-to-Push-up-(female)_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/28901101-Front-Plank-to-Push-up-(female)_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición de pie con los pies separados al ancho de los hombros.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "plate-curl",
@@ -3629,7 +4226,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/08531101-Weighted-Standing-Curl_Forearms_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/08531101-Weighted-Standing-Curl_Forearms_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición estable.",
+      "Flexiona los codos llevando el peso hacia los hombros, manteniendo los brazos quietos.",
+      "Haz una pausa breve en la parte alta del movimiento.",
+      "Baja controladamente hasta la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "plate-front-raise",
@@ -3640,7 +4243,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/08341201-Weighted-Front-Raise_Shoulders_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/08341201-Weighted-Front-Raise_Shoulders.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición estable.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "plate-press",
@@ -3651,7 +4260,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/12251101-Standing-Plate-Presses_Shoulders_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/12251101-Standing-Plate-Presses_Shoulders_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Siéntate en un banco con respaldo.",
+      "Empuja el peso hacia adelante o arriba hasta la extensión completa.",
+      "Haz una pausa breve en la parte alta.",
+      "Baja controladamente hasta la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "plate-squeeze-svend-press",
@@ -3662,7 +4277,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/08561201-Weighted-Svend-Press_Chest_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/08561201-Weighted-Svend-Press_Chest.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Siéntate en un banco con respaldo.",
+      "Empuja el peso hacia adelante o arriba hasta la extensión completa.",
+      "Haz una pausa breve en la parte alta.",
+      "Baja controladamente hasta la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "power-clean",
@@ -3693,7 +4314,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/15301101-Barbell-Power-Snatch_Weightlifts_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/15301101-Barbell-Power-Snatch_Weightlifts_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición estable.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "preacher-curl-barbell",
@@ -3754,7 +4381,13 @@
     "thumbnail": "",
     "source": "",
     "sourceType": "",
-    "instructions": []
+    "instructions": [
+      "Siéntate en un banco con respaldo.",
+      "Empuja el peso hacia adelante o arriba hasta la extensión completa.",
+      "Haz una pausa breve en la parte alta.",
+      "Baja controladamente hasta la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "pull-up",
@@ -3978,7 +4611,14 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/02251101-Cable-Standing-Cross-over-High-Reverse-Fly_Shoulders_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/02251101-Cable-Standing-Cross-over-High-Reverse-Fly_Shoulders_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Abre los brazos en un movimiento de arco amplio.",
+      "Mantén una ligera flexión en los codos durante todo el movimiento.",
+      "Haz una pausa breve en la contracción máxima.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "rear-delt-reverse-fly-dumbbell",
@@ -3991,7 +4631,14 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/24871101-Dumbbell-Rear-Delt-Fly-(female)_Shoulders_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/24871101-Dumbbell-Rear-Delt-Fly-(female)_Shoulders_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Siéntate en un banco con respaldo.",
+      "Abre los brazos en un movimiento de arco amplio.",
+      "Mantén una ligera flexión en los codos durante todo el movimiento.",
+      "Haz una pausa breve en la contracción máxima.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "rear-delt-reverse-fly-machine",
@@ -4004,7 +4651,14 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/06021201-Lever-Seated-Reverse-Fly_Shoulders_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/06021201-Lever-Seated-Reverse-Fly_Shoulders.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Abre los brazos en un movimiento de arco amplio.",
+      "Mantén una ligera flexión en los codos durante todo el movimiento.",
+      "Haz una pausa breve en la contracción máxima.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "renegade-row-dumbbell",
@@ -4015,7 +4669,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/05211101-Kettlebell-Alternating-Renegade-Row_back_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/05211101-Kettlebell-Alternating-Renegade-Row_back_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Siéntate en un banco con respaldo.",
+      "Tira del peso hacia ti, llevando los codos hacia atrás.",
+      "Haz una pausa breve cuando el peso esté cerca del cuerpo.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "reverse-crunch",
@@ -4105,7 +4765,14 @@
     "thumbnail": "",
     "source": "",
     "sourceType": "",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Abre los brazos en un movimiento de arco amplio.",
+      "Mantén una ligera flexión en los codos durante todo el movimiento.",
+      "Haz una pausa breve en la contracción máxima.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "reverse-grip-concentration-curl",
@@ -4116,7 +4783,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/04031101-Dumbbell-Seated-Revers-grip-Concentration-Curl_Forearms_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/04031101-Dumbbell-Seated-Revers-grip-Concentration-Curl_Forearms_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición estable.",
+      "Flexiona los codos llevando el peso hacia los hombros, manteniendo los brazos quietos.",
+      "Haz una pausa breve en la parte alta del movimiento.",
+      "Baja controladamente hasta la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "reverse-grip-lat-pulldown-cable",
@@ -4127,7 +4800,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/02081201-Cable-Reverse-grip-Straight-Back-Seated-High-Row_Back_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/02081201-Cable-Reverse-grip-Straight-Back-Seated-High-Row_Back.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Tira del peso hacia ti, llevando los codos hacia atrás.",
+      "Haz una pausa breve cuando el peso esté cerca del cuerpo.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "reverse-hyperextension",
@@ -4161,7 +4840,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/15811101-Bodyweight-Rear-Lunge_Thighs_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/15811101-Bodyweight-Rear-Lunge_Thighs_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Ponte de pie con los pies separados al ancho de los hombros.",
+      "Da un paso hacia adelante y flexiona ambas rodillas.",
+      "Baja el cuerpo hasta que la rodilla trasera casi toque el suelo.",
+      "Empuja el talón delantero para volver a la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "reverse-lunge-barbell",
@@ -4175,7 +4860,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/00781101-Barbell-Rear-Lunge_Thighs_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/00781101-Barbell-Rear-Lunge_Thighs_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Ponte de pie con los pies separados al ancho de los hombros.",
+      "Da un paso hacia adelante y flexiona ambas rodillas.",
+      "Baja el cuerpo hasta que la rodilla trasera casi toque el suelo.",
+      "Empuja el talón delantero para volver a la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "reverse-lunge-dumbbell",
@@ -4189,7 +4880,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/03811201-Dumbbell-Rear-Lunge_Thighs_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/03811201-Dumbbell-Rear-Lunge_Thighs.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Siéntate en un banco con respaldo.",
+      "Da un paso hacia adelante y flexiona ambas rodillas.",
+      "Baja el cuerpo hasta que la rodilla trasera casi toque el suelo.",
+      "Empuja el talón delantero para volver a la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "reverse-plank",
@@ -4376,7 +5073,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/06881101-Scapular-Pull-Up_back_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/06881101-Scapular-Pull-Up_back_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Siéntate con la espalda recta frente a la máquina o cable.",
+      "Tira del peso hacia ti, llevando los codos hacia atrás.",
+      "Haz una pausa breve cuando el peso esté cerca del cuerpo.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "seated-cable-row-bar-grip",
@@ -4387,7 +5090,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/01801201-Cable-Low-Seated-Row_Back_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/01801201-Cable-Low-Seated-Row_Back.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Tira del peso hacia ti, llevando los codos hacia atrás.",
+      "Haz una pausa breve cuando el peso esté cerca del cuerpo.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "seated-cable-row-bar-wide-grip",
@@ -4398,7 +5107,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/02181201-Cable-Seated-Wide-grip-Row_Back_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/02181201-Cable-Seated-Wide-grip-Row_Back.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Tira del peso hacia ti, llevando los codos hacia atrás.",
+      "Haz una pausa breve cuando el peso esté cerca del cuerpo.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "seated-cable-row-v-grip-cable",
@@ -4444,7 +5159,14 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/38691101-Cable-Seated-Chest-Fly_Chest_small_thumbnail_@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/38691101-Cable-Seated-Chest-Fly_Chest_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Abre los brazos en un movimiento de arco amplio.",
+      "Mantén una ligera flexión en los codos durante todo el movimiento.",
+      "Haz una pausa breve en la contracción máxima.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "seated-dip-machine",
@@ -4455,7 +5177,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/14511201-Lever-Seated-Dip_Upper-Arms_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/14511201-Lever-Seated-Dip_Upper-Arms.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "seated-incline-curl-dumbbell",
@@ -4466,7 +5194,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/03151201-Dumbbell-Incline-Biceps-Curl_Upper-Arms_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/03151201-Dumbbell-Incline-Biceps-Curl_Upper-Arms.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Siéntate en un banco inclinado con respaldo.",
+      "Flexiona los codos llevando el peso hacia los hombros, manteniendo los brazos quietos.",
+      "Haz una pausa breve en la parte alta del movimiento.",
+      "Baja controladamente hasta la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "seated-lateral-raise-dumbbell",
@@ -4494,7 +5228,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/05991201-Lever-Seated-Leg-Curl_Thighs_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/05991201-Lever-Seated-Leg-Curl_Thighs.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Flexiona los codos llevando el peso hacia los hombros, manteniendo los brazos quietos.",
+      "Haz una pausa breve en la parte alta del movimiento.",
+      "Baja controladamente hasta la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "seated-overhead-press-barbell",
@@ -4527,7 +5267,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/02901201-Dumbbell-Bench-Seated-Press_Shoulders_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/02901201-Dumbbell-Bench-Seated-Press_Shoulders.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Siéntate en un banco con respaldo.",
+      "Empuja el peso hacia adelante o arriba hasta la extensión completa.",
+      "Haz una pausa breve en la parte alta.",
+      "Baja controladamente hasta la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "seated-palms-up-wrist-curl",
@@ -4570,7 +5316,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/14541201-Lever-Seated-Shoulder-Press_Shoulders_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/14541201-Lever-Seated-Shoulder-Press_Shoulders.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Siéntate en un banco con respaldo.",
+      "Empuja el peso hacia adelante o arriba hasta la extensión completa.",
+      "Haz una pausa breve en la parte alta.",
+      "Baja controladamente hasta la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "seated-triceps-press",
@@ -4594,7 +5346,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/00791201-Barbell-Revers-Wrist-Curl-II_Forearms_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/00791201-Barbell-Revers-Wrist-Curl-II_Forearms.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición estable.",
+      "Realiza el movimiento de forma controlada.",
+      "Haz una pausa breve en la posición final.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "shoulder-press-dumbbell",
@@ -4621,7 +5379,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/05871201-Lever-Military-Press-(plate-loaded)_shoulder_thumbnail_@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/05871201-Lever-Military-Press-(plate-loaded)_shoulder.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Siéntate en un banco con respaldo.",
+      "Empuja el peso hacia adelante o arriba hasta la extensión completa.",
+      "Haz una pausa breve en la parte alta.",
+      "Baja controladamente hasta la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "shoulder-taps",
@@ -4706,7 +5470,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/06041201-Lever-Shrug-(plate-loaded)_Back_thumbnail_@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/06041201-Lever-Shrug-(plate-loaded)_Back.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "shrug-smith-machine",
@@ -4719,7 +5489,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/07461201-Smith-Back-Shrug_Back_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/07461201-Smith-Back-Shrug_Back.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "side-bend",
@@ -4780,7 +5556,13 @@
     "thumbnail": "",
     "source": "",
     "sourceType": "",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "single-arm-cable-row",
@@ -4804,7 +5586,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/01901101-Cable-One-Arm-Curl_Upper-Arms_small_thumbnail_@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/01901101-Cable-One-Arm-Curl_Upper-Arms_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Flexiona los codos llevando el peso hacia los hombros, manteniendo los brazos quietos.",
+      "Haz una pausa breve en la parte alta del movimiento.",
+      "Baja controladamente hasta la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "single-arm-landmine-press-barbell",
@@ -4815,7 +5603,13 @@
     "thumbnail": "",
     "source": "",
     "sourceType": "",
-    "instructions": []
+    "instructions": [
+      "Siéntate en un banco con respaldo.",
+      "Empuja el peso hacia adelante o arriba hasta la extensión completa.",
+      "Haz una pausa breve en la parte alta.",
+      "Baja controladamente hasta la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "single-arm-lat-pulldown",
@@ -4839,7 +5633,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/01921201-Cable-One-Arm-Lateral-Raise_Shoulders-3_thumbnail_@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/01921201-Cable-One-Arm-Lateral-Raise_Shoulders.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "single-arm-tricep-extension-dumbbell",
@@ -4850,7 +5650,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/03621201-Dumbbell-One-Arm-Triceps-Extension-(on-bench)_Upper-Arms_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/03621201-Dumbbell-One-Arm-Triceps-Extension-(on-bench)_Upper-Arms.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Siéntate en un banco con respaldo.",
+      "Realiza el movimiento de forma controlada.",
+      "Haz una pausa breve en la posición final.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "single-arm-triceps-pushdown-cable",
@@ -4861,7 +5667,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/50331201-Cable-Single-Arm-Triceps-Pushdown-(rope-attachment_thumbnail_@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/50331201-Cable-Single-Arm-Triceps-Pushdown-(rope-attachment.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "single-leg-extensions",
@@ -4872,7 +5684,13 @@
     "thumbnail": "",
     "source": "",
     "sourceType": "",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Realiza el movimiento de forma controlada.",
+      "Haz una pausa breve en la posición final.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "single-leg-glute-bridge",
@@ -4922,7 +5740,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/08831201-Lever-Horizontal-One-leg-Press_Hips_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/08831201-Lever-Horizontal-One-leg-Press_Hips.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Siéntate en un banco con respaldo.",
+      "Empuja el peso hacia adelante o arriba hasta la extensión completa.",
+      "Haz una pausa breve en la parte alta.",
+      "Baja controladamente hasta la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "single-leg-romanian-deadlift-barbell",
@@ -4935,7 +5759,13 @@
     "thumbnail": "",
     "source": "",
     "sourceType": "",
-    "instructions": []
+    "instructions": [
+      "Ponte de pie con los pies separados al ancho de los hombros.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "single-leg-romanian-deadlift-dumbbell",
@@ -4948,7 +5778,13 @@
     "thumbnail": "",
     "source": "",
     "sourceType": "",
-    "instructions": []
+    "instructions": [
+      "Siéntate en un banco con respaldo.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "single-leg-standing-calf-raise",
@@ -4959,7 +5795,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/13731101-Bodyweight-Standing-Calf-Raise_Calves_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/13731101-Bodyweight-Standing-Calf-Raise_Calves_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Ponte de pie con los pies separados al ancho de los hombros.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "single-leg-standing-calf-raise-barbell",
@@ -4970,7 +5812,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/01081101-Barbell-Standing-Leg-Calf-Raise_Calf_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/01081101-Barbell-Standing-Leg-Calf-Raise_Calf_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Ponte de pie con los pies separados al ancho de los hombros.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "single-leg-standing-calf-raise-dumbbell",
@@ -4981,7 +5829,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/04171201-Dumbbell-Standing-Calf-Raise_Calves_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/04171201-Dumbbell-Standing-Calf-Raise_Calves.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Siéntate en un banco con respaldo.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "single-leg-standing-calf-raise-machine",
@@ -4992,7 +5846,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/06051201-Lever-Standing-Calf-Raise_Calves_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/06051201-Lever-Standing-Calf-Raise_Calves.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "sissy-squat-weighted",
@@ -5055,7 +5915,13 @@
     "thumbnail": "",
     "source": "",
     "sourceType": "",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición de pie con los pies separados al ancho de los hombros.",
+      "Inicia el movimiento a un ritmo moderado.",
+      "Mantén un ritmo constante y controlado.",
+      "Continúa durante el tiempo o distancia deseada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "skiing",
@@ -5066,7 +5932,13 @@
     "thumbnail": "",
     "source": "",
     "sourceType": "",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición de pie con los pies separados al ancho de los hombros.",
+      "Inicia el movimiento a un ritmo moderado.",
+      "Mantén un ritmo constante y controlado.",
+      "Continúa durante el tiempo o distancia deseada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "skullcrusher-barbell",
@@ -5095,7 +5967,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/03511101-Dumbbell-Lying-Triceps-Extension_Upper-Arms_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/03511101-Dumbbell-Lying-Triceps-Extension_Upper-Arms_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Siéntate en un banco con respaldo.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "sled-push",
@@ -5139,7 +6017,13 @@
     "thumbnail": "",
     "source": "",
     "sourceType": "",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición de pie con los pies separados al ancho de los hombros.",
+      "Inicia el movimiento a un ritmo moderado.",
+      "Mantén un ritmo constante y controlado.",
+      "Continúa durante el tiempo o distancia deseada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "spider-curl-barbell",
@@ -5184,7 +6068,13 @@
     "thumbnail": "",
     "source": "",
     "sourceType": "",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición de pie con los pies separados al ancho de los hombros.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "spinning",
@@ -5195,7 +6085,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/22791201-Stationary-Bike-Run-(version-4)_Cardio_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/22791201-Stationary-Bike-Run-(version-4)_Cardio.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Inicia el movimiento a un ritmo moderado.",
+      "Mantén un ritmo constante y controlado.",
+      "Continúa durante el tiempo o distancia deseada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "split-jerk",
@@ -5206,7 +6102,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/15381101-Barbell-Split-Jerk_Weightlifts_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/15381101-Barbell-Split-Jerk_Weightlifts_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición estable.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "split-squat-dumbbell",
@@ -5364,7 +6266,14 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/11431101-Suspender-Squat_Thighs_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/11431101-Suspender-Squat_Thighs_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Ponte de pie con los pies separados al ancho de los hombros.",
+      "Flexiona las rodillas bajando el cuerpo hacia el suelo.",
+      "Mantén la espalda recta y el pecho levantado durante el movimiento.",
+      "Baja hasta que los muslos estén paralelos al suelo.",
+      "Empuja los talones para volver a la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "squat-row",
@@ -5394,7 +6303,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/23111201-Walking-on-Stepmill_Cardio_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/23111201-Walking-on-Stepmill_Cardio.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Inicia el movimiento a un ritmo moderado.",
+      "Mantén un ritmo constante y controlado.",
+      "Continúa durante el tiempo o distancia deseada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "standing-cable-glute-kickbacks",
@@ -5405,7 +6320,13 @@
     "thumbnail": "",
     "source": "",
     "sourceType": "",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "standing-calf-raise",
@@ -5464,7 +6385,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/06051201-Lever-Standing-Calf-Raise_Calves_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/06051201-Lever-Standing-Calf-Raise_Calves.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "standing-calf-raise-smith",
@@ -5493,7 +6420,13 @@
     "thumbnail": "",
     "source": "",
     "sourceType": "",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Flexiona los codos llevando el peso hacia los hombros, manteniendo los brazos quietos.",
+      "Haz una pausa breve en la parte alta del movimiento.",
+      "Baja controladamente hasta la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "standing-military-press-barbell",
@@ -5540,7 +6473,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/04661101-Gironda-Sternum-Chin_Back_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/04661101-Gironda-Sternum-Chin_Back_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Tira del peso hacia ti, llevando los codos hacia atrás.",
+      "Haz una pausa breve cuando el peso esté cerca del cuerpo.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "straight-arm-lat-pulldown-cable",
@@ -5551,7 +6490,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/02381201-Cable-Straight-Arm-Pulldown_Back_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/02381201-Cable-Straight-Arm-Pulldown_Back.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Tira del peso hacia ti, llevando los codos hacia atrás.",
+      "Haz una pausa breve cuando el peso esté cerca del cuerpo.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "straight-leg-deadlift",
@@ -5583,7 +6528,13 @@
     "thumbnail": "",
     "source": "",
     "sourceType": "",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición de pie con los pies separados al ancho de los hombros.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "sumo-deadlift",
@@ -5639,7 +6590,14 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/10631201-Barbell-sumo-squat_Thighs_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/10631201-Barbell-sumo-squat_Thighs.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Ponte de pie con los pies separados al ancho de los hombros.",
+      "Flexiona las rodillas bajando el cuerpo hacia el suelo.",
+      "Mantén la espalda recta y el pecho levantado durante el movimiento.",
+      "Baja hasta que los muslos estén paralelos al suelo.",
+      "Empuja los talones para volver a la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "sumo-squat-dumbbell",
@@ -5650,7 +6608,14 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/23221201-Dumbbell-Sumo-Squat-(female)_Thighs__thumbnail_@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/23221201-Dumbbell-Sumo-Squat-(female)_Thighs_.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Siéntate en un banco con respaldo.",
+      "Flexiona las rodillas bajando el cuerpo hacia el suelo.",
+      "Mantén la espalda recta y el pecho levantado durante el movimiento.",
+      "Baja hasta que los muslos estén paralelos al suelo.",
+      "Empuja los talones para volver a la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "sumo-squat-kettlebell",
@@ -5661,7 +6626,14 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/40891201-Kettlebell-Sumo-Squat-(male)_Hips__thumbnail_@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/40891201-Kettlebell-Sumo-Squat-(male)_Hips_.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Ponte de pie con los pies separados al ancho de los hombros.",
+      "Flexiona las rodillas bajando el cuerpo hacia el suelo.",
+      "Mantén la espalda recta y el pecho levantado durante el movimiento.",
+      "Baja hasta que los muslos estén paralelos al suelo.",
+      "Empuja los talones para volver a la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "superman",
@@ -5920,7 +6892,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/10331201-Lever-Triceps-Extension_Upper-Arms_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/10331201-Lever-Triceps-Extension_Upper-Arms.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Realiza el movimiento de forma controlada.",
+      "Haz una pausa breve en la posición final.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "triceps-extension-suspension",
@@ -5931,7 +6909,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/11041101-Suspender-Triceps-Extension_Upper-Arms_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/11041101-Suspender-Triceps-Extension_Upper-Arms_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición estable.",
+      "Realiza el movimiento de forma controlada.",
+      "Haz una pausa breve en la posición final.",
+      "Vuelve a la posición inicial de forma controlada.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "triceps-kickback-cable",
@@ -5942,7 +6926,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/45661101-Cable-Neutral-Grip-Kickback_Upper-arms_small_thumbnail_@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/45661101-Cable-Neutral-Grip-Kickback_Upper-arms_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "triceps-kickback-dumbbell",
@@ -5953,7 +6943,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/03331201-Dumbbell-Kickback_Upper-Arms_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/03331201-Dumbbell-Kickback_Upper-Arms.mp4",
     "sourceType": "video",
-    "instructions": []
+    "instructions": [
+      "Siéntate en un banco con respaldo.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "triceps-pressdown",
@@ -5964,7 +6960,13 @@
     "thumbnail": "",
     "source": "",
     "sourceType": "",
-    "instructions": []
+    "instructions": [
+      "Siéntate en un banco con respaldo.",
+      "Empuja el peso hacia adelante o arriba hasta la extensión completa.",
+      "Haz una pausa breve en la parte alta.",
+      "Baja controladamente hasta la posición inicial.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "triceps-pushdown",
@@ -5995,7 +6997,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/02001101-Cable-Pushdown-(with-rope-attachment)_Upper-Arms_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/02001101-Cable-Pushdown-(with-rope-attachment)_Upper-Arms_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Ajusta la máquina según tu altura y posiciónate correctamente.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "upright-row-barbell",
@@ -6138,7 +7146,13 @@
     "thumbnail": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-thumbnails/24581101-Wall-Ball_Thighs_small_thumbnail@3x.jpg",
     "source": "https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/24581101-Wall-Ball_Thighs_small.jpg",
     "sourceType": "image",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición estable.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "wall-sit",
@@ -6166,7 +7180,13 @@
     "thumbnail": "",
     "source": "",
     "sourceType": "",
-    "instructions": []
+    "instructions": [
+      "Adopta una posición de pie con los pies separados al ancho de los hombros.",
+      "Realiza el movimiento de forma controlada.",
+      "Evita usar la inercia durante el movimiento.",
+      "Mantén la tensión en el músculo objetivo.",
+      "Repite para el número de repeticiones deseado."
+    ]
   },
   {
     "id": "wide-pull-up",
