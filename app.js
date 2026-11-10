@@ -357,25 +357,21 @@ function exBlockHtml(ex, ei, kind) {
       ? `<button type="button" class="ex-img-btn" onclick="showExDetail('${ex.ejId}')" aria-label="Ver ejercicio"><img src="${ex.image}" alt="" class="ex-img" loading="lazy"></button>`
       : `<img src="${ex.image}" alt="" class="ex-img" loading="lazy">`
     : '';
-  const collapsed = kind === 'draft' && !!ex.collapsed;
   const head = kind === 'draft'
     ? `<input class="exname" placeholder="Ejercicio (ej. Press banca)" value="${esc(ex.name)}" data-f="name" data-ex="${ei}" aria-label="Nombre del ejercicio">
-       <button type="button" class="sx chevbtn" data-act="togglecol" data-ex="${ei}" aria-expanded="${!collapsed}" aria-label="${collapsed ? 'Desplegar series' : 'Plegar series'}"><svg viewBox="0 0 24 24" class="ico"><path d="M6 9l6 6 6-6"/></svg></button>
-       <button type="button" class="sx" data-act="delex" data-ex="${ei}" aria-label="Quitar ejercicio"><svg viewBox="0 0 24 24" class="ico"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></button>
-       <button type="button" class="exhandle" data-ex="${ei}" aria-label="Arrastrar para reordenar ejercicio"><svg viewBox="0 0 24 24" class="ico"><path d="M4 8h16M4 12h16M4 16h16"/></svg></button>`
+       <button type="button" class="sx" data-act="delex" data-ex="${ei}" aria-label="Quitar ejercicio"><svg viewBox="0 0 24 24" class="ico"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></button>`
     : `<h4 class="exn">${esc(ex.name)}</h4>`;
   const btns = kind === 'draft'
     ? `<button type="button" class="btn ghost small" data-act="addset" data-ex="${ei}">+ Añadir serie</button>`
     : `<button type="button" class="btn ghost small" data-act="addset" data-ex="${ei}">+ SERIE</button>
        <button type="button" class="btn ghost small" data-act="lastset" data-ex="${ei}"${ex.sets.length < 2 ? ' disabled' : ''}>− SERIE</button>`;
-  const cuerpo = collapsed
-    ? `<p class="excol-n">${plural(ex.sets.length, 'serie', 'series')}</p>`
-    : `<div class="shead"><span>Serie</span><span>KG</span><span>Reps</span><span>${kind === 'draft' ? '' : '✓'}</span></div>
-    ${setRowsHtml(ex, ei, kind)}
-    <div class="setbtns">${btns}</div>`;
-  return `<div class="exblock${collapsed ? ' is-collapsed' : ''}">
+  const resumen = kind === 'draft' ? `<p class="excol-n">${plural(ex.sets.length, 'serie', 'series')}</p>` : '';
+  return `<div class="exblock">
     <div class="exhead">${exImg}${head}</div>
-    ${cuerpo}
+    ${resumen}
+    <div class="shead"><span>Serie</span><span>KG</span><span>Reps</span><span>${kind === 'draft' ? '' : '✓'}</span></div>
+    ${setRowsHtml(ex, ei, kind)}
+    <div class="setbtns">${btns}</div>
   </div>`;
 }
 // Los inputs actualizan el estado sin repintar (así no pierdes el teclado); los botones sí repintan
@@ -386,33 +382,44 @@ function moveEx(exs, from, to) {
   exs.splice(to, 0, x);
   return true;
 }
-// Arrastrar el asa: el bloque sigue al dedo y al soltar se coloca en su nuevo sitio
+// Mantener pulsada la cabecera de un ejercicio: se cierran sus series y se puede moverlo arrastrando
+const HOLD_MS = 420;
 function bindExDrag(box, getExs, rerender) {
-  let d = null;
+  let timer = null, start = null, d = null;
+  const cancel = () => { clearTimeout(timer); timer = null; };
   box.addEventListener('pointerdown', e => {
-    const h = e.target.closest('.exhandle');
-    if (!h) return;
-    e.preventDefault();
-    const blocks = [...box.querySelectorAll('.exblock')], block = h.closest('.exblock');
-    const from = +h.dataset.ex;
-    d = { from, y: e.clientY, dy: 0, block, centers: blocks.map(b => b.offsetTop + b.offsetHeight / 2) };
-    h.setPointerCapture(e.pointerId);
-    block.classList.add('moving');
+    const head = e.target.closest('.exhead');
+    if (!head || e.target.closest('button')) return;
+    const block = head.closest('.exblock');
+    start = { x: e.clientX, y: e.clientY };
+    timer = setTimeout(() => {
+      timer = null;
+      const blocks = [...box.querySelectorAll('.exblock')];
+      document.activeElement?.blur?.();
+      block.classList.add('is-collapsed', 'moving');
+      d = { from: blocks.indexOf(block), y: start.y, dy: 0, block, centers: blocks.map(b => b.offsetTop + b.offsetHeight / 2) };
+      vibrate(8);
+    }, HOLD_MS);
   });
   box.addEventListener('pointermove', e => {
-    if (!d) return;
+    if (!d) {
+      if (start && Math.hypot(e.clientX - start.x, e.clientY - start.y) > 8) { cancel(); start = null; }
+      return;
+    }
     d.dy = e.clientY - d.y;
     d.block.style.transform = `translateY(${d.dy}px)`;
   });
+  box.addEventListener('touchmove', e => { if (d) e.preventDefault(); }, { passive: false });
+  box.addEventListener('contextmenu', e => { if (e.target.closest('.exhead')) e.preventDefault(); });
   const fin = () => {
+    cancel(); start = null;
     if (!d) return;
     const cur = d; d = null;
-    cur.block.classList.remove('moving');
-    cur.block.style.transform = '';
     const mid = cur.centers[cur.from] + cur.dy;   // centro del bloque arrastrado en su nueva posición
     let to = cur.from;
     cur.centers.forEach((c, i) => { if (Math.abs(c - mid) < Math.abs(cur.centers[to] - mid)) to = i; });
-    if (moveEx(getExs(), cur.from, to)) rerender();
+    moveEx(getExs(), cur.from, to);
+    rerender();                                    // al soltar, se repinta con las series visibles
   };
   box.addEventListener('pointerup', fin);
   box.addEventListener('pointercancel', fin);
@@ -436,7 +443,6 @@ function bindSets(box, getExs, rerender) {
     else if (act === 'lastset') { if (ex.sets.length > 1) ex.sets.pop(); }
     else if (act === 'togw') ex.sets[si].w = !ex.sets[si].w;
     else if (act === 'delex') exs.splice(ei, 1);
-    else if (act === 'togglecol') ex.collapsed = !ex.collapsed;
     else if (act === 'done') {
       const s = ex.sets[si], p = (ex.prev && ex.prev[si]) || {};
       if (!s.done) {                                   // al marcar, se rellenan los huecos con lo de la última vez

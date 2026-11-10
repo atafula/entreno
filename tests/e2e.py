@@ -1431,52 +1431,30 @@ def _nombres_editor(pg):
     return pg.locator("#routine-exercises .exname").evaluate_all("els => els.map(e => e.value)")
 
 @test
-def rutina_editor_sin_flechas_y_orden_arrastrado_se_guarda(pg):
+def rutina_editor_sin_indicador_de_arrastre(pg):
     _rutina_abc(pg); tab(pg, "rutinas"); editar_rutina(pg, "r1")
-    assert pg.locator('#routine-exercises [data-act="upex"], #routine-exercises [data-act="downex"]').count() == 0, "no quiere flechas para mover ejercicios"
+    n = pg.locator("#routine-exercises .exhandle, #routine-exercises .chevbtn, #routine-exercises [data-act='togglecol']").count()
+    assert n == 0, "sin asa ni flecha: nada indica que el ejercicio se puede mover"
+
+@test
+def rutina_editor_mantener_cierra_series_y_permite_mover(pg):
+    _rutina_abc(pg); tab(pg, "rutinas"); editar_rutina(pg, "r1")
     bloques = pg.locator("#routine-exercises .exblock")
-    h = bloques.nth(2).locator(".exhandle").bounding_box()
-    b1 = bloques.nth(1).bounding_box(); b2 = bloques.nth(2).bounding_box()
-    x, y = h["x"] + h["width"] / 2, h["y"] + h["height"] / 2
-    pg.mouse.move(x, y); pg.mouse.down()
-    dy = b1["y"] - b2["y"]
-    for i in range(1, 13): pg.mouse.move(x, y + (dy - 6) * i / 12)
+    r = bloques.nth(0).locator(".exhead").bounding_box(); x, y = r["x"] + 8, r["y"] + r["height"] / 2
+    pg.mouse.move(x, y); pg.mouse.down(); pg.wait_for_timeout(120); pg.mouse.up(); pg.wait_for_timeout(150)
+    assert bloques.nth(0).locator(".srow").count() >= 1, "una pulsación corta no cierra las series"
+    pg.mouse.move(x, y); pg.mouse.down(); pg.wait_for_timeout(700)
+    assert "is-collapsed" in bloques.nth(0).get_attribute("class"), "al mantener, las series se cierran"
+    assert bloques.nth(0).locator(".srow").first.is_hidden(), "las series quedan ocultas mientras se mueve"
+    b0 = bloques.nth(0).bounding_box(); b1 = bloques.nth(1).bounding_box()
+    dy = (b1["y"] + b1["height"] / 2) - (b0["y"] + b0["height"] / 2) + 12
+    for i in range(1, 13): pg.mouse.move(x, y + dy * i / 12)
     pg.mouse.up(); pg.wait_for_timeout(300)
-    assert _nombres_editor(pg) == ["A", "C", "B"], f"arrastrar el asa sube el ejercicio: {_nombres_editor(pg)}"
+    assert _nombres_editor(pg) == ["B", "A", "C"], f"al soltar, el ejercicio cambia de sitio: {_nombres_editor(pg)}"
+    assert pg.locator("#routine-exercises .exblock").nth(1).locator(".srow").count() >= 1, "al soltar, las series vuelven a verse"
     pg.click("#routine-save"); pg.wait_for_timeout(300)
     orden = pg.evaluate("db.routines.find(r => r.id === 'r1').exercises.map(e => e.name)")
-    assert orden == ["A", "C", "B"], f"el orden se guarda: {orden}"
-
-@test
-def rutina_editor_arrastrar_asa_reordena(pg):
-    _rutina_abc(pg); tab(pg, "rutinas"); editar_rutina(pg, "r1")
-    bloques = pg.locator("#routine-exercises .exblock")
-    h = bloques.nth(0).locator(".exhandle").bounding_box()
-    b1 = bloques.nth(1).bounding_box()
-    x, y = h["x"] + h["width"] / 2, h["y"] + h["height"] / 2
-    pg.mouse.move(x, y); pg.mouse.down()
-    dy = b1["y"] - bloques.nth(0).bounding_box()["y"]
-    for i in range(1, 13): pg.mouse.move(x, y + (dy + 6) * i / 12)
-    pg.mouse.up(); pg.wait_for_timeout(300)
-    assert _nombres_editor(pg) == ["B", "A", "C"], f"arrastrar el asa baja el ejercicio: {_nombres_editor(pg)}"
-
-@test
-def rutina_editor_series_se_pliegan_y_despliegan(pg):
-    _rutina_abc(pg); tab(pg, "rutinas"); editar_rutina(pg, "r1")
-    bloque = pg.locator("#routine-exercises .exblock").nth(0)
-    assert bloque.locator(".srow").count() >= 1, "al abrir, las series se ven"
-    bloque.locator('[data-act="togglecol"]').click(); pg.wait_for_timeout(200)
-    assert bloque.locator(".srow").count() == 0, "al plegar, se ocultan las series"
-    assert "1 serie" in bloque.inner_text(), "plegado, indica cuántas series tiene"
-    bloque.locator('[data-act="togglecol"]').click(); pg.wait_for_timeout(200)
-    assert bloque.locator(".srow").count() >= 1, "al desplegar, vuelven las series"
-
-@test
-def rutina_editor_asa_de_arrastre_estilo_hevy(pg):
-    _rutina_abc(pg); tab(pg, "rutinas"); editar_rutina(pg, "r1")
-    asa = pg.locator("#routine-exercises .exblock").nth(0).locator(".exhandle")
-    assert asa.locator("circle").count() == 0, "sin puntitos: tres líneas como en Hevy"
-    assert asa.locator("path").count() == 1, "el asa es un solo trazo de tres líneas"
+    assert orden == ["B", "A", "C"], f"el orden se guarda: {orden}"
 
 @test
 def entreno_descanso_sigue_abajo_al_bajar(pg):
