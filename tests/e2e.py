@@ -1461,6 +1461,24 @@ def rutina_editor_arrastrar_asa_reordena(pg):
     assert _nombres_editor(pg) == ["B", "A", "C"], f"arrastrar el asa baja el ejercicio: {_nombres_editor(pg)}"
 
 @test
+def rutina_editor_series_se_pliegan_y_despliegan(pg):
+    _rutina_abc(pg); tab(pg, "rutinas"); editar_rutina(pg, "r1")
+    bloque = pg.locator("#routine-exercises .exblock").nth(0)
+    assert bloque.locator(".srow").count() >= 1, "al abrir, las series se ven"
+    bloque.locator('[data-act="togglecol"]').click(); pg.wait_for_timeout(200)
+    assert bloque.locator(".srow").count() == 0, "al plegar, se ocultan las series"
+    assert "1 serie" in bloque.inner_text(), "plegado, indica cuántas series tiene"
+    bloque.locator('[data-act="togglecol"]').click(); pg.wait_for_timeout(200)
+    assert bloque.locator(".srow").count() >= 1, "al desplegar, vuelven las series"
+
+@test
+def rutina_editor_asa_de_arrastre_estilo_hevy(pg):
+    _rutina_abc(pg); tab(pg, "rutinas"); editar_rutina(pg, "r1")
+    asa = pg.locator("#routine-exercises .exblock").nth(0).locator(".exhandle")
+    assert asa.locator("circle").count() == 0, "sin puntitos: tres líneas como en Hevy"
+    assert asa.locator("path").count() == 1, "el asa es un solo trazo de tres líneas"
+
+@test
 def entreno_descanso_sigue_abajo_al_bajar(pg):
     seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
     for n in range(6):
