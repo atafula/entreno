@@ -1192,6 +1192,18 @@ def _sw_controlando(p):
     assert p.evaluate("!!navigator.serviceWorker.controller"), "el service worker controla la página"
 
 @test
+def sw_nueva_version_recarga_la_app_para_mostrar_el_cambio(pg):
+    ctx, p = _con_service_worker(pg)
+    try:
+        seed(p); _sw_controlando(p)
+        p.evaluate("window.__antes = 1")
+        p.evaluate("navigator.serviceWorker.dispatchEvent(new Event('controllerchange'))")
+        p.wait_for_timeout(1500)
+        assert p.evaluate("typeof window.__antes") == "undefined", "al tomar control una versión nueva la página se recarga y no muestra la copia vieja"
+    finally:
+        ctx.close()
+
+@test
 def offline_la_app_abre_sin_conexion_y_conserva_los_datos(pg):
     ctx, p = _con_service_worker(pg)
     try:

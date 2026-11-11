@@ -1142,6 +1142,13 @@ window.addEventListener('load', () => loadEjercicios().then(() => renderRoutines
 moveIndicator();
 
 if ('serviceWorker' in navigator) {
+  // Si ya había una versión controlando la página y llega una nueva, se recarga una vez para mostrar el cambio
+  // (si no, la primera apertura seguiría con la copia vieja de la caché)
+  const teniaSW = !!navigator.serviceWorker.controller;
+  let recargada = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (teniaSW && !recargada) { recargada = true; location.reload(); }
+  });
   navigator.serviceWorker.register('sw.js');
 }
 
