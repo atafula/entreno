@@ -1206,6 +1206,31 @@ def imagenes_de_ejercicios_piden_cors_y_reintentan_sin_el_si_falla(pg):
     nuevas = pg.evaluate("[...document.querySelectorAll('#picker-list img.picker-img')].map(i => i.getAttribute('crossorigin'))")
     assert nuevas and all(c is None for c in nuevas), "lo que se pinta después ya no lo pide"
 
+_MUESTREO = """([sel, clic]) => new Promise(res => { const ys = []; const t0 = performance.now();
+    const f = () => { const e = document.querySelector(sel); if (e) ys.push(e.getBoundingClientRect().top); if (performance.now() - t0 < 900) requestAnimationFrame(f); else res(ys); };
+    requestAnimationFrame(() => { f(); (new Function('return ' + clic))()(); });
+  })"""
+
+@test
+def paneles_que_suben_no_rebotan(pg):
+    seed(pg); tab(pg, "rutinas"); empezar(pg, "a"); pg.wait_for_timeout(500)
+    row = pg.locator("#wk-in .exblock:not([hidden])").first.locator(".wrow:not(.whead)").nth(1)   # sin series hechas, «Terminar» descarta
+    row.locator('input[data-f="kg"]').fill("60"); row.locator('input[data-f="reps"]').fill("10")
+    row.locator('[data-act="done"]').click(); pg.wait_for_timeout(1500)
+    ys = pg.evaluate(_MUESTREO, ["#finish-sheet", "() => document.getElementById('wk-finish').click()"])
+    final = ys[-1]
+    assert len(ys) > 10 and min(ys) >= final - 0.5, f"el panel de terminar no se pasa de su sitio: sube hasta {min(ys):.1f} y se queda en {final:.1f}"
+
+@test
+def panel_de_descanso_no_rebota_al_subir(pg):
+    seed(pg); tab(pg, "rutinas"); empezar(pg, "a"); pg.wait_for_timeout(500)
+    row = pg.locator("#wk-in .exblock:not([hidden])").first.locator(".wrow:not(.whead)").nth(1)
+    row.locator('input[data-f="kg"]').fill("60"); row.locator('input[data-f="reps"]').fill("10")
+    ys = pg.evaluate(_MUESTREO, ["#rest", "() => document.querySelectorAll('#wk-in .exblock:not([hidden]) .wrow:not(.whead)')[1].querySelector('[data-act=done]').click()"])
+    ys = [y for y in ys if y > 0]
+    final = ys[-1]
+    assert len(ys) > 5 and min(ys) >= final - 0.5, f"el descanso no se pasa de su sitio: sube hasta {min(ys):.1f} y se queda en {final:.1f}"
+
 @test
 def picker_no_ofrece_ejercicios_sin_foto(pg):
     seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
