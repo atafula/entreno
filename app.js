@@ -1006,13 +1006,11 @@ function renderCal() {
     $('cal-summary').textContent = `${inMonth} ${inMonth === 1 ? 'día' : 'días'} este mes · ${days.size} en total`;
     $('cal-next').disabled = calMonth >= today.slice(0, 7);
     $('cal-prev').setAttribute('aria-label', 'Mes anterior'); $('cal-next').setAttribute('aria-label', 'Mes siguiente');
-    const first = [...days].sort()[0] || null;
     const lead = (new Date(y, m - 1, 1).getDay() + 6) % 7, n = new Date(y, m, 0).getDate();
     let out = '<span></span>'.repeat(lead);
     for (let d = 1; d <= n; d++) {
       const key = `${calMonth}-${String(d).padStart(2, '0')}`, on = days.has(key);
-      const miss = !on && key < today && first !== null && key > first;
-      out += `<button type="button" class="cd${on ? ' on' : ''}${miss ? ' miss' : ''}${key === today ? ' today' : ''}${key === calSel ? ' sel' : ''}" data-date="${key}">${on ? CHECK_ICO : miss ? '✕' : d}</button>`;
+      out += `<button type="button" class="cd${on ? ' on' : ''}${key === today ? ' today' : ''}${key === calSel ? ' sel' : ''}" data-date="${key}">${on ? CHECK_ICO : d}</button>`;
     }
     $('cal-grid').innerHTML = out;
   }

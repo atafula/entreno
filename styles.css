@@ -493,7 +493,6 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; }
 .cd { aspect-ratio: 1; min-height: var(--tap); display: grid; place-items: center; padding: 0; margin: 0; border: 1.5px solid var(--line-2); border-radius: var(--r-md); background: transparent; color: var(--muted); font: 700 var(--t-md)/1 var(--ui); }
 .cd .ico { width: 18px; height: 18px; stroke-width: 3; }
 .cd.on { background: var(--fire); border-color: var(--fire); color: var(--on-fire); }
-.cd.miss { border-color: color-mix(in srgb, var(--fire) 55%, transparent); color: var(--fire-text); }
 .cd.today { border-color: var(--text); color: var(--text); }
 .cd.today.on { border-color: var(--fire); color: var(--on-fire); }
 .cd.sel { outline: 2px solid var(--text); outline-offset: 2px; }

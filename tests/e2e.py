@@ -820,18 +820,19 @@ def ir_al_dia(pg, n):
     return pg.locator(f'#cal-grid [data-date="{fecha}"]')
 
 @test
-def calendario_mes_pone_x_en_los_dias_sin_entreno_tras_el_primero(pg):
+def calendario_mes_solo_marca_los_dias_cumplidos(pg):
     pg.goto(URL)
     f = lambda n: pg.evaluate(dia(n))
     seed(pg, sessions=[sesion(f(1), "a"), sesion(f(3), "b"), sesion(f(4), "c"), sesion(f(6), "d")])
     pg.click("#week"); pg.wait_for_timeout(500)
-    miss = ir_al_dia(pg, 5)
-    assert "miss" in miss.get_attribute("class") and miss.inner_text().strip() == "✕", (miss.get_attribute("class"), miss.inner_text())
+    sin = ir_al_dia(pg, 5)
+    assert "miss" not in sin.get_attribute("class") and "✕" not in sin.inner_text(), (sin.get_attribute("class"), sin.inner_text())
     pg.click("#cal-close"); pg.wait_for_timeout(400); pg.click("#week"); pg.wait_for_timeout(500)
     hueco = ir_al_dia(pg, 2)
-    assert "miss" in hueco.get_attribute("class") and hueco.inner_text().strip() == "✕", (hueco.get_attribute("class"), hueco.inner_text())
-    assert "restday" not in hueco.get_attribute("class"), "ya no hay días de descanso"
-    assert miss.evaluate("e => getComputedStyle(e).borderTopStyle") == "solid"
+    assert "miss" not in hueco.get_attribute("class") and "✕" not in hueco.inner_text(), (hueco.get_attribute("class"), hueco.inner_text())
+    assert ir_al_dia(pg, 3).get_attribute("class").split()[0] == "cd", "los días cumplidos siguen marcados"
+    assert "on" in ir_al_dia(pg, 3).get_attribute("class")
+    assert sin.evaluate("e => getComputedStyle(e).borderTopStyle") == "solid"
 
 @test
 def calendario_mes_no_marca_hoy_vacio_ni_dias_anteriores_al_primer_registro(pg):
@@ -1548,6 +1549,7 @@ def racha_semanal_se_muestra_en_el_marcador(pg):
     seed(pg, sessions=[{"id": "x", "date": off_days(pg, -7), "routine": "PUSH", "sets": [{"exercise": "A", "reps": 5, "kg": 10, "w": False}]},
                        {"id": "y", "date": off_days(pg, 0), "routine": "PUSH", "sets": [{"exercise": "A", "reps": 5, "kg": 10, "w": False}]}])
     assert pg.inner_text("#streak-n") == "2"
+    assert pg.inner_text("#streak small") == "Racha", pg.inner_text("#streak small")
 
 @test
 def racha_semanal_no_tiene_ajuste_de_descanso_en_ajustes(pg):
