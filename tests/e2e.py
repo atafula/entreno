@@ -1126,6 +1126,77 @@ def entreno_en_descanso_cambiar_de_ejercicio_no_baja_la_pantalla(pg):
     b = pg.locator("#rest").bounding_box()
     assert abs((b["y"] + b["height"]) - pg.evaluate("innerHeight")) <= 2, "el descanso sigue pegado abajo"
 
+def _con_service_worker(pg):
+    """Contexto aparte con el service worker activo (el resto de tests lo bloquea). Sin Firebase: en el sandbox no hay acceso a gstatic."""
+    ctx = pg.context.browser.new_context(viewport={"width": 390, "height": 844}, has_touch=True, is_mobile=True, service_workers="allow")
+    p = ctx.new_page(); p.set_default_timeout(6000); p.__errs = errs = []
+    p.on("pageerror", lambda e: errs.append(str(e)))
+    return ctx, p
+
+def _sw_listo(p, ms=6000):
+    return p.evaluate("ms => Promise.race([navigator.serviceWorker.ready.then(r => !!r.active), new Promise(res => setTimeout(() => res(false), ms))])", ms)
+
+def _sw_controlando(p):
+    """Espera a que el service worker esté activo y controle la página (hace falta una recarga tras instalarlo)."""
+    assert _sw_listo(p), "el service worker se instala y se activa"
+    p.reload(); p.wait_for_timeout(500)
+    assert p.evaluate("!!navigator.serviceWorker.controller"), "el service worker controla la página"
+
+@test
+def offline_la_app_abre_sin_conexion_y_conserva_los_datos(pg):
+    ctx, p = _con_service_worker(pg)
+    try:
+        seed(p); _sw_controlando(p)
+        ctx.set_offline(True)
+        p.reload(); p.wait_for_selector(".tab-bar, nav, #tabs", state="attached"); p.wait_for_timeout(500)
+        tab(p, "rutinas")
+        assert p.locator("#routines-list [data-start-routine]").count() >= 1, "las rutinas guardadas se ven sin red"
+        assert not p.__errs, f"sin errores JS sin conexión: {p.__errs}"
+    finally:
+        ctx.close()
+
+@test
+def offline_se_puede_entrenar_y_elegir_ejercicios_sin_conexion(pg):
+    ctx, p = _con_service_worker(pg)
+    try:
+        seed(p); _sw_controlando(p)
+        ctx.set_offline(True)
+        p.reload(); p.wait_for_timeout(700); tab(p, "rutinas"); empezar(p, "a")
+        n = p.locator("#wk-in .exblock").count()
+        p.click("#wk-add-ex"); p.wait_for_selector("#picker-sheet.show"); p.wait_for_timeout(300)
+        assert p.locator("#picker-list [data-name]").count() > 20, "el catálogo está disponible sin red"
+        p.locator("#picker-list [data-name]").first.click(); p.wait_for_timeout(300)
+        assert p.locator("#wk-in .exblock").count() == n + 1, "se añade el ejercicio sin red"
+        assert not p.__errs, f"sin errores JS sin conexión: {p.__errs}"
+    finally:
+        ctx.close()
+
+@test
+def offline_el_service_worker_se_instala_aunque_falle_un_recurso_externo(pg):
+    ctx, p = _con_service_worker(pg)    # aquí gstatic (Firebase) no responde: no debe impedir la instalación
+    try:
+        p.goto(URL)
+        assert _sw_listo(p), "el service worker queda activo aunque gstatic falle"
+        claves = p.evaluate("caches.keys()")
+        assert any(k.startswith("entreno-v") for k in claves), claves
+        guardados = p.evaluate("caches.open(%s).then(c => c.keys()).then(ks => ks.map(k => new URL(k.url).pathname))" % json.dumps(next(k for k in claves if k.startswith("entreno-v"))))
+        assert "/ejercicios_local.json" in guardados and "/app.js" in guardados, "los archivos propios quedan guardados"
+    finally:
+        ctx.close()
+
+@test
+def imagenes_de_ejercicios_piden_cors_y_reintentan_sin_el_si_falla(pg):
+    seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
+    pg.click("#wk-add-ex"); pg.wait_for_selector("#picker-sheet.show"); pg.wait_for_timeout(1200)
+    imgs = pg.evaluate("[...document.querySelectorAll('#picker-list img.picker-img')].map(i => [i.getAttribute('crossorigin'), i.dataset.retry || ''])")
+    assert imgs, "el selector muestra fotos"
+    assert any(r == "1" for c, r in imgs), f"si la foto falla con CORS se reintenta una vez sin él: {imgs[:3]}"
+    assert all(c is None for c, r in imgs if r == "1"), "tras el reintento ya no lleva crossorigin"
+    assert pg.evaluate("corsFotos") is False, "y se deja de pedir con CORS en esta sesión"
+    pg.fill("#picker-search", "Curl"); pg.wait_for_timeout(300)
+    nuevas = pg.evaluate("[...document.querySelectorAll('#picker-list img.picker-img')].map(i => i.getAttribute('crossorigin'))")
+    assert nuevas and all(c is None for c in nuevas), "lo que se pinta después ya no lo pide"
+
 @test
 def picker_no_ofrece_ejercicios_sin_foto(pg):
     seed(pg); tab(pg, "rutinas"); empezar(pg, "a")

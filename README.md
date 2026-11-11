@@ -14,6 +14,14 @@ App web instalable en iPhone para registrar entrenos, rutinas y caminatas. Estil
 - Los datos se guardan en el propio iPhone (localStorage). Si borras los datos de Safari, se pierden.
 - El GPS solo cuenta con la app abierta: iOS no permite ubicación en segundo plano a las webs.
 - Al cambiar archivos, sube la versión de `CACHE` en `sw.js` para forzar la actualización.
+
+## Sin conexión
+
+La app funciona sin wifi ni datos. El service worker (`sw.js`) guarda el código, las fuentes, el catálogo de ejercicios y las traducciones al instalarse, y sirve siempre primero la copia guardada (la actualiza en segundo plano), así que abre al instante aunque la cobertura sea mala. Los datos del usuario viven en el dispositivo.
+
+- Los cambios llegan al instalarse la nueva versión: tras subir `CACHE`, hay que abrir la app **dos veces**.
+- Las librerías de Firebase se guardan si se puede; si fallan, no impiden instalar (la sincronización solo funciona con conexión).
+- Las fotos de los ejercicios (de un servidor externo) se guardan al verlas por primera vez, hasta 250, en una caché aparte que no se borra al subir de versión. Para poder guardarlas se piden con CORS; si el servidor no lo permite, se muestran igual pero no quedan disponibles sin red.
 - Fuentes autoalojadas: Fraunces y Manrope (licencia SIL OFL 1.1, ver `fonts/`).
 - Iconos en `icons/`: aro grueso crema con arco naranja y punto oscuro. Fuente en `icons/icon.svg`.
 

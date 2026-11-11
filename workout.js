@@ -49,8 +49,8 @@ function wkExHtml(ex, ei, cur) {
   }).join('');
   const exImg = ex.image
     ? ex.ejId
-      ? `<button type="button" class="ex-img-btn" onclick="showExDetail('${ex.ejId}')" aria-label="Ver ejercicio"><img src="${ex.image}" alt="" class="ex-img" loading="lazy"></button>`
-      : `<img src="${ex.image}" alt="" class="ex-img" loading="lazy">`
+      ? `<button type="button" class="ex-img-btn" onclick="showExDetail('${ex.ejId}')" aria-label="Ver ejercicio"><img src="${ex.image}"${CORS()} alt="" class="ex-img" loading="lazy"></button>`
+      : `<img src="${ex.image}"${CORS()} alt="" class="ex-img" loading="lazy">`
     : '';
   return `<div class="exblock"${ei === cur ? '' : ' hidden'}>
     <div class="exhead">${exImg}<h4 class="exn">${esc(ex.name)}</h4><button type="button" class="sx" data-act="delex" data-ex="${ei}" aria-label="Quitar ejercicio"><svg viewBox="0 0 24 24" class="ico"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></button></div>

@@ -147,7 +147,7 @@ function renderPickerList() {
     const nombreEs = capFirst(tradName(e.name));
     const imgUrl = e.thumbnail || (e.sourceType === 'image' ? e.source : '');
     const img = imgUrl
-      ? `<img src="${imgUrl}" alt="" class="picker-img" loading="lazy">`
+      ? `<img src="${imgUrl}"${CORS()} alt="" class="picker-img" loading="lazy">`
       : `<div class="picker-img-ph"></div>`;
     return `<button type="button" class="picker-item" data-name="${nombreEs.replace(/"/g, '&quot;')}" data-image="${imgUrl}" data-id="${e.id}">
       ${img}
@@ -243,9 +243,9 @@ function setDetail(open, id) {
       if (ex.source && ex.sourceType === 'video') {
         mediaHtml = `<video src="${ex.source}" class="detail-gif" autoplay loop muted playsinline></video>`;
       } else if (ex.source && ex.sourceType === 'image') {
-        mediaHtml = `<img src="${ex.source}" alt="${esc(nombreEs)}" class="detail-gif" loading="lazy">`;
+        mediaHtml = `<img src="${ex.source}"${CORS()} alt="${esc(nombreEs)}" class="detail-gif" loading="lazy">`;
       } else if (ex.thumbnail) {
-        mediaHtml = `<img src="${ex.thumbnail}" alt="${esc(nombreEs)}" class="detail-gif" loading="lazy">`;
+        mediaHtml = `<img src="${ex.thumbnail}"${CORS()} alt="${esc(nombreEs)}" class="detail-gif" loading="lazy">`;
       }
       const musclesHtml = `<p class="detail-muscles">
         <b>Músculo principal:</b> ${esc(parte)}

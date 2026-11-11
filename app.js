@@ -354,8 +354,8 @@ function setRowsHtml(ex, ei, kind) {
 function exBlockHtml(ex, ei, kind) {
   const exImg = ex.image
     ? ex.ejId
-      ? `<button type="button" class="ex-img-btn" onclick="showExDetail('${ex.ejId}')" aria-label="Ver ejercicio"><img src="${ex.image}" alt="" class="ex-img" loading="lazy"></button>`
-      : `<img src="${ex.image}" alt="" class="ex-img" loading="lazy">`
+      ? `<button type="button" class="ex-img-btn" onclick="showExDetail('${ex.ejId}')" aria-label="Ver ejercicio"><img src="${ex.image}"${CORS()} alt="" class="ex-img" loading="lazy"></button>`
+      : `<img src="${ex.image}"${CORS()} alt="" class="ex-img" loading="lazy">`
     : '';
   const head = kind === 'draft'
     ? `<input class="exname" placeholder="Ejercicio (ej. Press banca)" value="${esc(ex.name)}" data-f="name" data-ex="${ei}" aria-label="Nombre del ejercicio">
@@ -941,6 +941,17 @@ const THEME_BG = { light: '#eef2f9', dark: '#0a1220' };
 const lsGet = k => { try { return localStorage.getItem(k); } catch { return null; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch { /* sin almacenamiento */ } };
 const lightMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: light)') : null;
+// Fotos de ejercicios: se piden con CORS para que el service worker pueda guardarlas y verse sin conexión.
+// Si el servidor no lo permite (o falla), se reintenta una vez sin CORS y se deja de pedir en esta sesión.
+let corsFotos = true;
+const CORS = () => corsFotos ? ' crossorigin="anonymous"' : '';
+document.addEventListener('error', e => {
+  const i = e.target;
+  if (!i || i.tagName !== 'IMG' || !i.hasAttribute('crossorigin') || i.dataset.retry) return;
+  corsFotos = false; i.dataset.retry = '1'; i.removeAttribute('crossorigin');
+  i.setAttribute('src', i.getAttribute('src'));
+}, true);
+
 const reduceMQ = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : null;
 
 function fadeTheme() {
