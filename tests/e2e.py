@@ -835,6 +835,30 @@ def calendario_mes_solo_marca_los_dias_cumplidos(pg):
     assert sin.evaluate("e => getComputedStyle(e).borderTopStyle") == "solid"
 
 @test
+def semana_no_marca_con_x_los_dias_sin_entreno(pg):
+    pg.goto(URL)
+    seed(pg, sessions=[sesion(pg.evaluate(dia(3)), "a")])
+    assert pg.locator("#week .day.miss").count() == 0, pg.locator("#week .day.miss").count()
+    assert "✕" not in pg.inner_text("#week")
+
+@test
+def calendario_cambiar_mes_o_ano_no_mueve_la_cabecera(pg):
+    pg.set_viewport_size({"width": 390, "height": 844})
+    pg.goto(URL)
+    seed(pg)
+    pg.click("#week"); pg.wait_for_timeout(500)
+    top = lambda: pg.evaluate("document.getElementById('cal-close').getBoundingClientRect().top")
+    t0 = top()
+    pg.click("#cal-prev"); pg.wait_for_timeout(300)
+    assert abs(top() - t0) < 1, ("mes anterior", t0, top())
+    pg.click('[data-calview="anio"]'); pg.wait_for_timeout(300)
+    assert abs(top() - t0) < 1, ("vista año", t0, top())
+    pg.click("#cal-prev"); pg.wait_for_timeout(300)
+    assert abs(top() - t0) < 1, ("año anterior", t0, top())
+    pg.click('[data-calview="mes"]'); pg.wait_for_timeout(300)
+    assert abs(top() - t0) < 1, ("vuelta a mes", t0, top())
+
+@test
 def calendario_mes_no_marca_hoy_vacio_ni_dias_anteriores_al_primer_registro(pg):
     pg.goto(URL)
     seed(pg, sessions=[sesion(pg.evaluate(dia(3)), "a")])

@@ -283,16 +283,14 @@ let prMap = {};
 const CHECK_ICO = '<svg viewBox="0 0 24 24" class="ico"><path d="M5 13l4 4L19 7"/></svg>';
 function renderWeek() {
   const days = activeDays();
-  const first = [...days].sort()[0] || null;          // solo cuentan como fallados los días posteriores al primer registro
   const today = new Date();
   const out = [];
   for (let i = 6; i >= 0; i--) {
     const d = new Date(today);
     d.setDate(today.getDate() - i);
     const key = localDate(d), on = days.has(key);
-    const miss = !on && i > 0 && first !== null && key > first;
     const label = d.toLocaleDateString('es-ES', { weekday: 'narrow' }).toUpperCase();
-    out.push(`<div class="day${on ? ' on' : ''}${miss ? ' miss' : ''}${i === 0 ? ' today' : ''}" style="--i:${6 - i}">${label}<i>${on ? CHECK_ICO : miss ? '✕' : d.getDate()}</i></div>`);
+    out.push(`<div class="day${on ? ' on' : ''}${i === 0 ? ' today' : ''}" style="--i:${6 - i}">${label}<i>${on ? CHECK_ICO : d.getDate()}</i></div>`);
   }
   $('week').innerHTML = out.join('');
 }
