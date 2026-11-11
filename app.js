@@ -954,7 +954,7 @@ $('walk-goal').oninput = updateGoalLabel;
 
 // ---------- Ajustes: tema ----------
 const THEME_KEY = 'entreno-tema';
-const THEME_BG = { light: '#eef2f9', dark: '#0a1220' };
+const THEME_BG = { light: '#eef2f9', dark: '#0c0d10' };
 const lsGet = k => { try { return localStorage.getItem(k); } catch { return null; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch { /* sin almacenamiento */ } };
 const lightMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: light)') : null;

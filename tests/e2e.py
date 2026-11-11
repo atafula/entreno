@@ -733,7 +733,7 @@ def icono_es_la_f_inclinada_sobre_azul_marino(pg):
     import math
     from PIL import Image
     cerca = lambda a, b: all(abs(x - y) <= 14 for x, y in zip(a, b))
-    FONDO, AZUL, CLARO = (10, 18, 32), (49, 105, 230), (238, 243, 252)   # --bg, --fire, --text
+    FONDO, AZUL, CLARO = (12, 13, 16), (74, 99, 147), (232, 235, 241)   # --bg, --fire, --text (oscuro y poco saturado)
     inclina = lambda x, y: (x - math.tan(math.radians(12)) * (y - 70), y)  # skewX(-12) alrededor del centro
     for nombre, tam, k in [("apple-touch-icon", 180, 1), ("icon-192", 192, 1), ("icon-512", 512, 1), ("icon-maskable-512", 512, .85)]:
         im = Image.open(os.path.join(ROOT, "icons", nombre + ".png")).convert("RGB")
@@ -750,8 +750,8 @@ def icono_es_la_f_inclinada_sobre_azul_marino(pg):
     fav = Image.open(os.path.join(ROOT, "icons", "favicon.png")).convert("RGB")
     assert cerca(fav.getpixel((1, 1)), FONDO), "el favicon también es azul marino"
     m = json.loads(open(os.path.join(ROOT, "manifest.webmanifest")).read())
-    assert m["background_color"].lower() == "#0a1220" and m["theme_color"].lower() == "#0a1220", "el color del manifiesto es el del icono"
-    assert 'content="#0a1220"' in open(os.path.join(ROOT, "index.html"), encoding="utf-8").read()
+    assert m["background_color"].lower() == "#0c0d10" and m["theme_color"].lower() == "#0c0d10", "el color del manifiesto es el del icono"
+    assert 'content="#0c0d10"' in open(os.path.join(ROOT, "index.html"), encoding="utf-8").read()
 
 @test
 def copia_restaurar_acepta_copias_antiguas_de_entreno(pg):
@@ -2067,11 +2067,11 @@ def _rgb_t(c):
 @test
 def azul_oscuro_fondo_azul_noche_y_acento_azul(pg):
     seed(pg)
-    assert _var(pg, "--bg").lower() == "#0a1220", _var(pg, "--bg")
+    assert _var(pg, "--bg").lower() == "#0c0d10", _var(pg, "--bg")
     for n in ["--bg", "--surface", "--surface-2", "--surface-3"]:
         h = _hue("rgb(%d,%d,%d)" % tuple(int(_var(pg, n).lstrip("#")[i:i + 2], 16) for i in (0, 2, 4)))
         assert 205 <= h <= 235, f"{n} es azul, no marrón: tono {h:.0f}"
-    assert _var(pg, "--fire").lower() == "#3169e6", _var(pg, "--fire")
+    assert _var(pg, "--fire").lower() == "#4a6393", _var(pg, "--fire")
     assert _var(pg, "--on-fire").lower() == "#ffffff"
     pg.click('[data-tab="tab-rutinas"]') if False else tab(pg, "rutinas")
     b = _rgb(pg, "[data-start-routine]", "backgroundColor")
@@ -2095,9 +2095,9 @@ def azul_claro_fondo_azulado_y_acento_azul(pg):
 @test
 def azul_barra_de_estado_y_manifest_azul_noche(pg):
     seed(pg)
-    assert pg.get_attribute('meta[name="theme-color"]', "content").lower() == "#0a1220"
+    assert pg.get_attribute('meta[name="theme-color"]', "content").lower() == "#0c0d10"
     m = json.loads(open(os.path.join(ROOT, "manifest.webmanifest")).read())
-    assert m["background_color"].lower() == "#0a1220" and m["theme_color"].lower() == "#0a1220", m
+    assert m["background_color"].lower() == "#0c0d10" and m["theme_color"].lower() == "#0c0d10", m
 
 @test
 def diseno_tokens_de_espaciado_radios_texto_y_movimiento(pg):

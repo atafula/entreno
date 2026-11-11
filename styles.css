@@ -22,10 +22,10 @@
   --snap: var(--ease-out); --spring: var(--ease-spring);
 
   /* Color — OSCURO cálido (predeterminado): superficies en capas, sin negro ni blanco puros */
-  --bg: #0a1220; --surface: #111b2e; --surface-2: #192740; --surface-3: #233453;
-  --line: #1d2b45; --line-2: #31466b;
-  --text: #eef3fc; --text-2: #c5d1e6; --muted: #8a99b5;
-  --fire: #3169e6; --fire-2: #6c9cff; --fire-text: #8fb2ff; --on-fire: #ffffff;
+  --bg: #0c0d10; --surface: #14161b; --surface-2: #1c1f26; --surface-3: #262a33;
+  --line: #232730; --line-2: #363c48;
+  --text: #e8ebf1; --text-2: #c2c8d4; --muted: #9aa3b5;
+  --fire: #4a6393; --fire-2: #7a93c2; --fire-text: #9fb3d6; --on-fire: #ffffff;
   --acid: #2ea77a; --acid-text: #5fd9a8; --on-acid: #03150d;
   --warn: #e8b02f; --warn-text: #f0c14d;
   --scrim: rgba(3, 7, 16, .66);
