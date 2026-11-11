@@ -626,6 +626,21 @@ def historial_editar_entreno_kg_y_reps(pg):
     assert "540" in pg.inner_text("#history-list"), "el volumen debe recalcularse (45 x 12 = 540)"
 
 @test
+def historial_editar_muestra_la_foto_de_cada_ejercicio(pg):
+    seed(pg, sessions=[{"id": "fz", "date": "2026-11-09", "routine": "PULL", "sets": [{"exercise": "Remo con mancuerna", "reps": 10, "kg": 20, "w": False}]}])
+    editar(pg, "session", "fz"); pg.wait_for_timeout(900)
+    img = pg.locator(".entry-editor .exhead img.ex-img")
+    assert img.count() == 1, "el ejercicio de la sesión muestra su foto al editarlo"
+    assert img.first.get_attribute("src", ) and img.first.get_attribute("src").startswith("http"), "con la URL de la foto"
+
+@test
+def historial_editar_guardar_es_como_el_de_las_rutinas(pg):
+    seed(pg, sessions=SESIONES); editar(pg, "session", "s2")
+    b = pg.locator("#entry-save")
+    assert "wide" in (b.get_attribute("class") or ""), "ocupa el ancho, como «Guardar rutina»"
+    assert b.inner_text().strip() == "Guardar cambios", "el mismo texto que en las rutinas"
+
+@test
 def historial_editar_cancelar_arriba_como_en_rutina(pg):
     seed(pg, sessions=SESIONES); editar(pg, "session", "s2")
     assert pg.evaluate("document.getElementById('entry-cancel').closest('.card-head, .entry-head') !== null"), "Cancelar va arriba"

@@ -614,13 +614,27 @@ function startEditEntry(kind, id) {
     const exercises = [];
     e.sets.forEach(x => {
       let g = exercises.find(g => g.name === x.exercise);
-      if (!g) exercises.push(g = { name: x.exercise, sets: [] });
+      if (!g) exercises.push(g = { name: x.exercise, image: '', ejId: '', sets: [] });
       g.sets.push({ w: !!x.w, kg: x.kg ? String(x.kg) : '', reps: String(x.reps) });
     });
     editingEntry = { kind, id, draft: { date: e.date, exercises } };
+    completarFotos(editingEntry.draft.exercises);
+    if (!ejCache) loadEjercicios().then(() => { if (editingEntry && editingEntry.id === id) { completarFotos(editingEntry.draft.exercises); histQuiet = true; renderHistory(); } }).catch(() => {});
   } else editingEntry = { kind, id, draft: { date: e.date, min: String(Math.round(e.seconds / 60)), km: String(e.meters / 1000) } };
   renderHistory();
   window.scrollTo(0, 0);
+}
+// Las sesiones guardan solo el nombre: la foto y el id se buscan por nombre (en las rutinas, o en el catálogo)
+function fotoDeEjercicio(name) {
+  const key = sinAcentos(name);
+  const deRutina = db.routines.flatMap(r => r.exercises).find(x => x.image && sinAcentos(x.name) === key);
+  if (deRutina) return { image: deRutina.image, ejId: deRutina.ejId || '' };
+  if (!ejCache) return null;
+  const hit = ejCache.find(e => (e.thumbnail || (e.sourceType === 'image' && e.source)) && [tradName(e.name), e.name].some(k => sinAcentos(k) === key));
+  return hit ? { image: hit.thumbnail || hit.source, ejId: hit.id } : null;
+}
+function completarFotos(exs) {
+  exs.forEach(ex => { if (ex.image) return; const f = fotoDeEjercicio(ex.name); if (f) { ex.image = f.image; ex.ejId = f.ejId; } });
 }
 function entryEditorHtml(kind, e) {
   const d = editingEntry.draft;
@@ -630,7 +644,7 @@ function entryEditorHtml(kind, e) {
     ? d.exercises.map((ex, i) => exBlockHtml(ex, i, 'draft')).join('')
     : `<div class="wedit"><label>Minutos<input id="entry-min" type="text" inputmode="decimal" value="${esc(d.min)}"></label>
         <label>KM<input id="entry-km" type="text" inputmode="decimal" value="${esc(d.km)}"></label></div>`;
-  return `<div class="entry-editor">${head}${body}<div class="eactions"><button type="button" class="btn primary" id="entry-save">Guardar</button></div></div>`;
+  return `<div class="entry-editor">${head}${body}<div class="eactions"><button type="button" class="btn primary wide" id="entry-save">Guardar cambios</button></div></div>`;
 }
 function saveEditEntry() {
   const { kind, id, draft: d } = editingEntry, e = db[KEY_OF[kind]].find(x => x.id === id);
