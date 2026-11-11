@@ -714,18 +714,24 @@ def la_app_se_llama_forjado(pg):
     assert m["name"] == "Forjado" and m["short_name"] == "Forjado"
 
 @test
-def icono_es_el_aro_grueso_azul_de_la_app(pg):
+def icono_es_la_f_inclinada_sobre_azul_marino(pg):
+    import math
     from PIL import Image
     cerca = lambda a, b: all(abs(x - y) <= 14 for x, y in zip(a, b))
-    FONDO, AZUL, PUNTO, PISTA = (10, 18, 32), (49, 105, 230), (238, 243, 252), (25, 39, 64)   # --bg, --fire, --text, --surface-2
+    FONDO, AZUL, CLARO = (10, 18, 32), (49, 105, 230), (238, 243, 252)   # --bg, --fire, --text
+    inclina = lambda x, y: (x - math.tan(math.radians(12)) * (y - 70), y)  # skewX(-12) alrededor del centro
     for nombre, tam, k in [("apple-touch-icon", 180, 1), ("icon-192", 192, 1), ("icon-512", 512, 1), ("icon-maskable-512", 512, .85)]:
         im = Image.open(os.path.join(ROOT, "icons", nombre + ".png")).convert("RGB")
-        p = lambda x, y: im.getpixel((round(x / 140 * tam), round(y / 140 * tam)))
-        c = lambda v: 70 + (v - 70) * k
+        def p(x, y, f=False):
+            if f: x, y = inclina(x, y)
+            x, y = 70 + (x - 70) * k, 70 + (y - 70) * k
+            return im.getpixel((round(x / 140 * tam), round(y / 140 * tam)))
         assert cerca(p(1, 1), FONDO), f"{nombre}: el fondo es el azul marino de la app, a sangre: {p(1, 1)}"
-        assert cerca(p(70, 70), PUNTO), f"{nombre}: punto claro en el centro: {p(70, 70)}"
-        assert cerca(p(70, c(70 - 46)), AZUL), f"{nombre}: el arco azul empieza arriba: {p(70, c(24))}"
-        assert cerca(p(c(70 - 46), 70), PISTA), f"{nombre}: el tramo sin completar es la pista oscura: {p(c(24), 70)}"
+        assert cerca(p(53, 95, True), CLARO), f"{nombre}: el palo de la F es claro: {p(53, 95, True)}"
+        assert cerca(p(85, 42, True), CLARO), f"{nombre}: el brazo de arriba es claro: {p(85, 42, True)}"
+        assert cerca(p(85, 70, True), CLARO), f"{nombre}: el brazo de en medio es claro: {p(85, 70, True)}"
+        assert cerca(p(85, 56, True), FONDO), f"{nombre}: entre los brazos se ve el fondo: {p(85, 56, True)}"
+        assert cerca(p(60, 115), AZUL), f"{nombre}: la línea azul bajo la F: {p(60, 115)}"
     fav = Image.open(os.path.join(ROOT, "icons", "favicon.png")).convert("RGB")
     assert cerca(fav.getpixel((1, 1)), FONDO), "el favicon también es azul marino"
     m = json.loads(open(os.path.join(ROOT, "manifest.webmanifest")).read())
