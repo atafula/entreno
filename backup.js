@@ -51,6 +51,25 @@ function mergeBackup(c) {
   db.walks = merge(db.walks, c.walks).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : (a.ts || 0) - (b.ts || 0)));
 }
 
+// Copias antiguas: los ejercicios sin id se vinculan al catálogo si su nombre coincide exactamente
+// (sin tildes ni mayúsculas) con uno que tiene foto. Los que no están en el catálogo se quedan como están.
+const sinAcentos = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+async function vincularCatalogo(routines) {
+  await loadEjercicios().catch(() => null);
+  if (!ejCache) return;
+  const idx = new Map();
+  ejCache.forEach(e => {
+    const img = e.thumbnail || (e.sourceType === 'image' ? e.source : '');
+    if (!img) return;
+    [tradName(e.name), e.name].forEach(k => { const key = sinAcentos(k); if (!idx.has(key)) idx.set(key, { id: e.id, image: img }); });
+  });
+  routines.forEach(r => r.exercises.forEach(x => {
+    if (x.ejId) return;
+    const hit = idx.get(sinAcentos(x.name));
+    if (hit) { x.ejId = hit.id; if (!x.image) x.image = hit.image; }
+  }));
+}
+
 function downloadFile(name, blob) {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob); a.download = name;
@@ -83,6 +102,7 @@ $('backup-file').onchange = async e => {
   if (!f) return;
   try {
     const c = parseBackup(await f.text());
+    await vincularCatalogo(c.routines);
     mergeBackup(c);
     if (c.routines.length) { db.routinesTs = Date.now(); delete db.routinesSig; }   // para que la nube la tome como lo más reciente
     if (persist()) toast(`Copia restaurada: ${c.routines.length} rutinas, ${c.sessions.length} entrenos, ${c.walks.length} caminatas`);

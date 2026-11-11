@@ -1316,6 +1316,20 @@ def copia_guarda_y_restaura_la_foto_y_el_id_de_los_ejercicios(pg):
     assert restaurado.get("image") == ej["image"] and restaurado.get("ejId") == "dom-1", f"al restaurar se ve la foto: {restaurado}"
 
 @test
+def copia_antigua_recupera_la_foto_de_los_ejercicios_que_coinciden_con_el_catalogo(pg):
+    # Copia de antes del arreglo: sin foto ni id. Los nombres que existen en el catálogo recuperan su foto.
+    copia = {"app": "forja", "version": 1, "routines": [{"id": "r7", "name": "PUSH", "exercises": [
+        {"name": "Crunch (máquina)", "image": "", "ejId": "", "sets": [{"w": False, "kg": 68, "reps": 10}]},
+        {"name": "Press de pecho", "image": "", "ejId": "", "sets": [{"w": False, "kg": 39, "reps": 10}]}]}], "sessions": [], "walks": []}
+    seed(pg, routines=[], sessions=[]); tab(pg, "ajustes") if pg.locator('[data-tab="tab-ajustes"]').count() else None
+    pg.set_input_files("#backup-file", files=[{"name": "copia.json", "mimeType": "application/json", "buffer": json.dumps(copia).encode()}])
+    pg.wait_for_timeout(1200)
+    ejs = db(pg)["routines"][0]["exercises"]
+    assert ejs[0].get("ejId") and ejs[0].get("image", "").startswith("http"), f"«Crunch (máquina)» recupera su foto: {ejs[0]}"
+    assert not ejs[1].get("ejId") and not ejs[1].get("image"), "«Press de pecho» no está en el catálogo: se queda sin foto"
+    assert ejs[1]["name"] == "Press de pecho" and ejs[1]["sets"][0]["kg"] == 39, "no se pierde nada más"
+
+@test
 def paneles_que_suben_no_rebotan(pg):
     seed(pg); tab(pg, "rutinas"); empezar(pg, "a"); pg.wait_for_timeout(500)
     row = pg.locator("#wk-in .exblock:not([hidden])").first.locator(".wrow:not(.whead)").nth(1)   # sin series hechas, «Terminar» descarta
