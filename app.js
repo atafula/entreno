@@ -108,7 +108,15 @@ const PHRASES = [
 const KEY = 'entreno-v1';
 const CIRC = 2 * Math.PI * 94;
 const $ = id => document.getElementById(id);
-let db = JSON.parse(localStorage.getItem(KEY) || '{"routines":[],"sessions":[],"walks":[]}');
+let db = null;
+try { db = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch { db = null; }
+if (!db || typeof db !== 'object' || Array.isArray(db)) {
+  // Datos ilegibles: se guarda una copia para poder recuperarlos y se empieza en limpio, en vez de romper la app
+  try { const raw = localStorage.getItem(KEY); if (raw) localStorage.setItem(KEY + '-corrupto', raw); } catch { /* sin almacenamiento */ }
+  db = { routines: [], sessions: [], walks: [] };
+}
+// Lo que hay en el móvil es la fuente de verdad: se pide al navegador que no lo borre para liberar espacio
+try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {}); } catch { /* nada */ }
 // Las rutinas antiguas solo tenían nombres de ejercicio: se convierten al formato con series
 function normRoutine(r) {
   return {
@@ -119,23 +127,18 @@ function normRoutine(r) {
   };
 }
 db.routines = (db.routines || []).map(normRoutine);
-// Migración: elimina ejercicios sin ejId (añadidos antes del picker con foto)
-(function migrateEjercicios() {
-  let changed = false;
-  db.routines.forEach(r => {
-    const antes = r.exercises.length;
-    r.exercises = r.exercises.filter(e => e.ejId);
-    if (r.exercises.length !== antes) changed = true;
-  });
-  if (changed) { localStorage.setItem(KEY, JSON.stringify(db)); }
-})();
 db.deleted = db.deleted || { sesiones: [], caminatas: [] };        // borrados pendientes de propagar a la nube
 db.syncedIds = db.syncedIds || { sesiones: [], caminatas: [] };  // ids que había en la nube la última vez
 let walk = null;
 let lastStreak = null;
 let lastPhrase = -1;
 
-const persist = () => { localStorage.setItem(KEY, JSON.stringify(db)); render(); if (typeof syncPush === 'function') syncPush(); };
+// Guardado local: si el móvil no deja (espacio lleno, modo privado), se avisa en vez de perder datos en silencio
+function guardarLocal() {
+  try { localStorage.setItem(KEY, JSON.stringify(db)); return true; }
+  catch { toast('No se pudo guardar en el móvil'); return false; }
+}
+const persist = () => { const ok = guardarLocal(); render(); if (typeof syncPush === 'function') syncPush(); return ok; };
 const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
 const localDate = (d = new Date()) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -641,15 +644,13 @@ function saveEditEntry() {
   }
   e.date = date; e.upd = Date.now();
   editingEntry = null;
-  persist();
-  toast('Cambios guardados.');
+  if (persist()) toast('Cambios guardados.');
 }
 function deleteEntry(kind, id) {
   const key = kind === 'session' ? 'sessions' : 'walks', name = kind === 'session' ? 'sesiones' : 'caminatas';
   db[key] = db[key].filter(x => x.id !== id);
   if (lsGet('entreno-uid') && !db.deleted[name].includes(id)) db.deleted[name].push(id);   // para que no vuelva desde la nube
-  persist();
-  toast('Borrado.');
+  if (persist()) toast('Borrado.');
 }
 // Borrar pide un segundo toque: el botón se pone rojo y, si no confirmas, se desarma solo
 bindSets($('history-list'), () => (editingEntry && editingEntry.kind === 'session' ? editingEntry.draft.exercises : []), () => renderHistory());
@@ -761,8 +762,7 @@ $('routine-save').onclick = () => {
   const edited = !!mine;
   draft = newDraft(); creating = false;
   renderEditor();
-  persist();
-  toast(edited ? 'Rutina actualizada.' : 'Rutina guardada. Ahora a trabajar.');
+  if (persist()) toast(edited ? 'Rutina actualizada.' : 'Rutina guardada. Ahora a trabajar.');
 };
 
 $('routines-list').onclick = e => {
@@ -794,8 +794,7 @@ $('routine-delete').onclick = () => {
   db.routines = db.routines.filter(r => r.id !== id);
   draft = newDraft(); creating = false;
   renderEditor();
-  persist();
-  toast('Rutina borrada.');
+  if (persist()) toast('Rutina borrada.');
 };
 
 // ---------- Caminar ----------

@@ -32,7 +32,7 @@ def seed(pg, routines=ROUTINES, sessions=HISTORY, walks=None, fb=None, prev_uid=
             if (!sessionStorage.getItem('fake-cloud')) sessionStorage.setItem('fake-cloud', JSON.stringify(o.cloud));
             if (o.logged && !sessionStorage.getItem('fake-user-set')) { sessionStorage.setItem('fake-user', JSON.stringify({uid: o.uid, email: 'yo@ejemplo.com'})); sessionStorage.setItem('fake-user-set', '1'); }
         })(%s)""" % json.dumps(init))
-    # Los ejercicios llevan ejId desde el buscador con foto: sin él, la migración de la app los descarta
+    # Los ejercicios de las rutinas de prueba llevan ejId, como los elegidos en el buscador con foto
     routines = [dict(r, exercises=[dict(e, ejId=e.get("ejId") or "t-" + e["name"]) if isinstance(e, dict) else e for e in r.get("exercises", [])]) for r in routines]
     pg.goto(URL)
     pg.evaluate("([d, u]) => { localStorage.clear(); localStorage.setItem('entreno-v1', JSON.stringify(d)); if (u) localStorage.setItem('entreno-uid', u); }",
@@ -1210,6 +1210,70 @@ _MUESTREO = """([sel, clic]) => new Promise(res => { const ys = []; const t0 = p
     const f = () => { const e = document.querySelector(sel); if (e) ys.push(e.getBoundingClientRect().top); if (performance.now() - t0 < 900) requestAnimationFrame(f); else res(ys); };
     requestAnimationFrame(() => { f(); (new Function('return ' + clic))()(); });
   })"""
+
+def _nombres_guardados(pg, rid):
+    return pg.evaluate("rid => db.routines.filter(r => r.id === rid).flatMap(r => r.exercises.map(e => e.name))", rid)   # lo cargado (las antiguas se normalizan en memoria)
+
+@test
+def rutina_con_ejercicios_del_catalogo_y_a_mano_sobrevive_a_cerrar_y_abrir(pg):
+    seed(pg, routines=[], sessions=[]); tab(pg, "rutinas")
+    pg.click("#new-routine"); pg.fill("#routine-name", "MIA")
+    pg.click("#add-exercise"); pg.wait_for_selector("#picker-sheet.show"); pg.wait_for_timeout(300)
+    catalogo = pg.locator("#picker-list [data-id]").first.get_attribute("data-name")
+    pg.locator("#picker-list [data-id]").first.click(); pg.wait_for_timeout(300)
+    pg.click("#add-exercise"); pg.wait_for_selector("#picker-sheet.show")
+    pg.fill("#picker-search", "Mi ejercicio raro"); pg.wait_for_timeout(200)
+    pg.locator("#picker-list .picker-custom").click(); pg.wait_for_timeout(300)
+    pg.click("#routine-save"); pg.wait_for_timeout(200)
+    antes = [e["name"] for r in db(pg)["routines"] for e in r["exercises"]]
+    assert antes == [catalogo, "Mi ejercicio raro"], antes
+    for _ in range(2):                                  # cerrar y abrir la app, dos veces
+        pg.reload(); pg.wait_for_timeout(700)
+        despues = [e["name"] for r in db(pg)["routines"] for e in r["exercises"]]
+        assert despues == antes, f"al reabrir se pierden ejercicios de la rutina: {despues}"
+    tab(pg, "rutinas")
+    assert pg.locator("#routines-list .rtags, #routines-list .card").count() >= 1
+
+@test
+def rutinas_antiguas_con_ejercicios_sin_ejid_no_se_borran_al_abrir(pg):
+    antiguas = [{"id": "r1", "name": "VIEJA", "exercises": ["Press banca", {"name": "Remo", "sets": [{"w": False, "kg": 40, "reps": 8}]}]}]
+    pg.goto(URL)
+    pg.evaluate("d => { localStorage.clear(); localStorage.setItem('entreno-v1', JSON.stringify(d)); }", {"routines": antiguas, "sessions": [], "walks": []})
+    pg.reload(); pg.wait_for_timeout(700)
+    assert _nombres_guardados(pg, "r1") == ["Press banca", "Remo"], "los ejercicios antiguos se conservan"
+    pg.reload(); pg.wait_for_timeout(500)
+    assert _nombres_guardados(pg, "r1") == ["Press banca", "Remo"], "y siguen ahí tras volver a abrir"
+
+@test
+def datos_ilegibles_no_rompen_la_app_y_se_guarda_una_copia(pg):
+    errs = []; pg.on("pageerror", lambda e: errs.append(str(e)))
+    pg.goto(URL)
+    pg.evaluate("localStorage.clear(); localStorage.setItem('entreno-v1', '{\"routines\": [{\"id\": \"r1\", \"name\": \"X\", \"exer')")   # JSON cortado
+    pg.reload(); pg.wait_for_timeout(700)
+    assert pg.is_visible("#routines-list") or pg.is_visible("#new-routine") or pg.locator(".tab-bar, nav").count(), "la app arranca"
+    assert not errs, f"sin errores JS: {errs}"
+    assert pg.evaluate("localStorage.getItem('entreno-v1-corrupto')") is not None and "exer" in pg.evaluate("localStorage.getItem('entreno-v1-corrupto')"), "queda una copia de lo ilegible para poder recuperarlo"
+    tab(pg, "rutinas"); pg.click("#new-routine"); pg.fill("#routine-name", "NUEVA")
+    pg.click("#add-exercise"); pg.wait_for_selector("#picker-sheet.show"); pg.fill("#picker-search", "Algo mío"); pg.wait_for_timeout(200)
+    pg.locator("#picker-list .picker-custom").click(); pg.wait_for_timeout(300)
+    pg.click("#routine-save"); pg.wait_for_timeout(200)
+    assert [r["name"] for r in db(pg)["routines"]] == ["NUEVA"], "y se puede seguir usando"
+
+@test
+def si_el_movil_no_deja_guardar_se_avisa(pg):
+    seed(pg); tab(pg, "rutinas")
+    pg.evaluate("(o => { Storage.prototype.setItem = function (k, v) { if (k === 'entreno-v1') throw new DOMException('lleno', 'QuotaExceededError'); return o.call(this, k, v); }; })(Storage.prototype.setItem)")
+    pg.click("#new-routine"); pg.fill("#routine-name", "NO CABE")
+    pg.click("#add-exercise"); pg.wait_for_selector("#picker-sheet.show"); pg.fill("#picker-search", "Algo mío"); pg.wait_for_timeout(200)
+    pg.locator("#picker-list .picker-custom").click(); pg.wait_for_timeout(300)
+    pg.click("#routine-save"); pg.wait_for_timeout(300)
+    assert "no se pudo guardar" in pg.inner_text("#toast").lower(), pg.inner_text("#toast")
+
+@test
+def la_app_pide_almacenamiento_persistente(pg):
+    pg.add_init_script("window.__persist = 0; if (navigator.storage) { navigator.storage.persist = () => { window.__persist++; return Promise.resolve(true); }; }")
+    seed(pg); pg.wait_for_timeout(300)
+    assert pg.evaluate("window.__persist") >= 1, "pide que el navegador no borre los datos para liberar espacio"
 
 @test
 def paneles_que_suben_no_rebotan(pg):

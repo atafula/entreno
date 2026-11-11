@@ -82,8 +82,7 @@ $('backup-file').onchange = async e => {
     const c = parseBackup(await f.text());
     mergeBackup(c);
     if (c.routines.length) { db.routinesTs = Date.now(); delete db.routinesSig; }   // para que la nube la tome como lo más reciente
-    persist();
-    toast(`Copia restaurada: ${c.routines.length} rutinas, ${c.sessions.length} entrenos, ${c.walks.length} caminatas`);
+    if (persist()) toast(`Copia restaurada: ${c.routines.length} rutinas, ${c.sessions.length} entrenos, ${c.walks.length} caminatas`);
   } catch { toast('Ese archivo no es una copia de Forja'); }
   e.target.value = '';
 };

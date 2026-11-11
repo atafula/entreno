@@ -15,6 +15,16 @@ App web instalable en iPhone para registrar entrenos, rutinas y caminatas. Estil
 - El GPS solo cuenta con la app abierta: iOS no permite ubicación en segundo plano a las webs.
 - Al cambiar archivos, sube la versión de `CACHE` en `sw.js` para forzar la actualización.
 
+## Dónde se guardan los datos
+
+Los datos viven primero en el móvil (`localStorage`, clave `entreno-v1`) y, si inicias sesión con Google, se copian a Firestore y se sincronizan entre dispositivos. Es el mismo sistema que la app de finanzas.
+
+- Las rutinas **nunca se borran solas al abrir**: antes una migración eliminaba los ejercicios sin `ejId` (los escritos a mano y los de rutinas antiguas) en cada arranque. Ya no existe.
+- Si el móvil no deja guardar (espacio lleno, modo privado), se avisa con «No se pudo guardar en el móvil» y no se confirma nada falso.
+- Si los datos locales quedan ilegibles, la app arranca igualmente y guarda una copia en `entreno-v1-corrupto` para poder recuperarlos.
+- Se pide al navegador almacenamiento persistente (`navigator.storage.persist()`) para que no los borre al liberar espacio.
+- Sin sesión, los datos solo están en ese móvil: inicia sesión en Ajustes → Cuenta para tener copia en la nube.
+
 ## Sin conexión
 
 La app funciona sin wifi ni datos. El service worker (`sw.js`) guarda el código, las fuentes, el catálogo de ejercicios y las traducciones al instalarse, y sirve siempre primero la copia guardada (la actualiza en segundo plano), así que abre al instante aunque la cobertura sea mala. Los datos del usuario viven en el dispositivo.

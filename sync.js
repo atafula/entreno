@@ -14,7 +14,7 @@ const cfg = window.ENTRENO_FIREBASE_CONFIG || FIREBASE_CONFIG;   // los tests in
 let fdb = null, fauth = null, fuser = null, cloudIds = { sesiones: new Map(), caminatas: new Map() };   // id -> marca `upd` que hay en la nube
 let unsubs = [], pushT = null, pending = false;
 
-const saveLocal = () => { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch { /* sin almacenamiento */ } };
+const saveLocal = () => guardarLocal();
 const routinesSig = () => JSON.stringify(db.routines);
 
 function setAccountUI() {
