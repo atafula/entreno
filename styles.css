@@ -156,7 +156,6 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline: non
 .day i .ico { width: 20px; height: 20px; stroke-width: 3; }
 .day.on i { background: var(--fire); color: var(--on-fire); }
 .day.miss i { border-color: color-mix(in srgb, var(--fire) 55%, transparent); background: none; color: var(--fire-text); }
-.day.restday i { border: 1.5px dashed var(--line-2); background: none; }
 .day.today i { border-color: var(--text); color: var(--text); }
 .day.today.on i { border-color: var(--fire); color: var(--on-fire); }
 
@@ -495,7 +494,6 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; }
 .cd .ico { width: 18px; height: 18px; stroke-width: 3; }
 .cd.on { background: var(--fire); border-color: var(--fire); color: var(--on-fire); }
 .cd.miss { border-color: color-mix(in srgb, var(--fire) 55%, transparent); color: var(--fire-text); }
-.cd.restday { border-style: dashed; }
 .cd.today { border-color: var(--text); color: var(--text); }
 .cd.today.on { border-color: var(--fire); color: var(--on-fire); }
 .cd.sel { outline: 2px solid var(--text); outline-offset: 2px; }

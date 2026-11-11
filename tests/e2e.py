@@ -820,7 +820,7 @@ def ir_al_dia(pg, n):
     return pg.locator(f'#cal-grid [data-date="{fecha}"]')
 
 @test
-def calendario_mes_pone_x_en_fallos_y_discontinuo_en_descansos(pg):
+def calendario_mes_pone_x_en_los_dias_sin_entreno_tras_el_primero(pg):
     pg.goto(URL)
     f = lambda n: pg.evaluate(dia(n))
     seed(pg, sessions=[sesion(f(1), "a"), sesion(f(3), "b"), sesion(f(4), "c"), sesion(f(6), "d")])
@@ -828,9 +828,9 @@ def calendario_mes_pone_x_en_fallos_y_discontinuo_en_descansos(pg):
     miss = ir_al_dia(pg, 5)
     assert "miss" in miss.get_attribute("class") and miss.inner_text().strip() == "✕", (miss.get_attribute("class"), miss.inner_text())
     pg.click("#cal-close"); pg.wait_for_timeout(400); pg.click("#week"); pg.wait_for_timeout(500)
-    rest = ir_al_dia(pg, 2)
-    assert "rest" in rest.get_attribute("class") and rest.inner_text().strip() == "–", (rest.get_attribute("class"), rest.inner_text())
-    assert rest.evaluate("e => getComputedStyle(e).borderTopStyle") == "dashed"
+    hueco = ir_al_dia(pg, 2)
+    assert "miss" in hueco.get_attribute("class") and hueco.inner_text().strip() == "✕", (hueco.get_attribute("class"), hueco.inner_text())
+    assert "restday" not in hueco.get_attribute("class"), "ya no hay días de descanso"
     assert miss.evaluate("e => getComputedStyle(e).borderTopStyle") == "solid"
 
 @test
@@ -880,14 +880,14 @@ def calendario_vista_anual_cabe_en_la_hoja(pg):
     assert r[2] >= r[0] and r[3] <= r[1] + 0.5, r
 
 @test
-def calendario_mes_el_dia_de_descanso_se_queda_en_su_casilla(pg):
+def calendario_mes_el_dia_sin_entreno_se_queda_en_su_casilla(pg):
     pg.goto(URL)
     f = lambda n: pg.evaluate(dia(n))
     seed(pg, sessions=[sesion(f(1), "a"), sesion(f(3), "b"), sesion(f(4), "c"), sesion(f(6), "d")])
     pg.click("#week"); pg.wait_for_timeout(500)
     c = ir_al_dia(pg, 2)
     assert c.evaluate("e => getComputedStyle(e).position") != "fixed", "choca con el panel de descanso del entreno"
-    assert c.evaluate("e => getComputedStyle(e).borderTopStyle") == "dashed"
+    assert c.evaluate("e => getComputedStyle(e).borderTopStyle") == "solid"
     b, g = c.bounding_box(), pg.locator("#cal-grid").bounding_box()
     assert b["width"] < 80 and g["x"] - 1 <= b["x"] and b["x"] + b["width"] <= g["x"] + g["width"] + 1 and g["y"] <= b["y"], (b, g)
     seg = pg.locator(".cal-views").bounding_box()
@@ -1518,37 +1518,41 @@ def entreno_libre_empieza_vacio_y_se_guarda(pg):
     s = db(pg)["sessions"][-1]
     assert s["routine"] == "Entreno libre" and s["sets"][0]["exercise"].lower().startswith("dominadas")
 
-# ---------- 3. Racha con días de descanso ----------
+# ---------- 3. Racha semanal (semanas seguidas con al menos un entreno) ----------
 def off(pg, k): return pg.evaluate("k => { const d = new Date(); d.setDate(d.getDate() + k); return localDate(d); }", k)
-def streak_info(pg, offsets, rest):
-    return pg.evaluate("([o, r]) => { const days = new Set(o.map(k => { const d = new Date(); d.setDate(d.getDate() + k); return localDate(d); })); const i = streakInfo(days, r); return { n: i.n, rest: [...i.rest].length }; }", [offsets, rest])
+def semanas(pg, dias):
+    # dias: pares [semana, dia]; semana 0 = esta semana, -1 la anterior; dia 0 = lunes ... 6 = domingo
+    return pg.evaluate("""sem => { const t = new Date(); const lunes = new Date(t); lunes.setHours(12, 0, 0, 0); lunes.setDate(t.getDate() - ((t.getDay() + 6) % 7));
+        const days = new Set(sem.map(([w, d]) => { const x = new Date(lunes); x.setDate(lunes.getDate() + 7 * w + d); return localDate(x); }));
+        return rachaSemanas(days); }""", dias)
 
 @test
-def racha_sin_descansos_se_rompe_con_un_hueco(pg):
+def racha_semanal_cuenta_semanas_seguidas_con_actividad(pg):
     seed(pg)
-    assert streak_info(pg, [-2, -1, 0], 0)["n"] == 3
-    assert streak_info(pg, [-3, -2, 0], 0)["n"] == 1
-    assert streak_info(pg, [-2, -1], 0)["n"] == 2, "hoy aún se puede salvar"
+    assert semanas(pg, [[0, 0]]) == 1
+    assert semanas(pg, [[-1, 2], [0, 4]]) == 2, "dos semanas seguidas aunque los días no lo sean"
+    assert semanas(pg, [[-2, 0], [-1, 6], [0, 1]]) == 3
+    assert semanas(pg, [[0, 0], [0, 1], [0, 2]]) == 1, "varias sesiones en una semana cuentan una vez"
 
 @test
-def racha_con_un_descanso_perdona_un_dia_por_semana(pg):
+def racha_semanal_se_rompe_con_una_semana_vacia(pg):
     seed(pg)
-    assert streak_info(pg, [-4, -3, -1, 0], 1) == {"n": 4, "rest": 1}, "el hueco del -2 se perdona"
-    assert streak_info(pg, [-5, -4, 0], 1)["n"] == 1, "dos huecos seguidos rompen"
-    assert streak_info(pg, [-9, -8, -7, -6, -5, -4, -3, -1, 0], 1) == {"n": 9, "rest": 1}
-    assert streak_info(pg, [-3, -2, -1, 0, -12, -11, -10, -9, -8, -7, -6, -5], 1)["n"] == 12 - 0, "hueco en -4 perdonado"
-    assert streak_info(pg, [-1, 0], 3)["n"] == 2 and streak_info(pg, [0], 2) == {"n": 1, "rest": 0}, "los descansos del final no cuentan"
+    assert semanas(pg, [[-2, 0], [0, 0]]) == 1, "la semana -1 vacía rompe la racha"
+    assert semanas(pg, [[-3, 0], [-2, 0], [-1, 0]]) == 3, "esta semana aún sin entreno no rompe la racha"
+    assert semanas(pg, [[-1, 3]]) == 1
+    assert semanas(pg, [[-2, 3]]) == 0
 
 @test
-def racha_ajuste_de_descanso_en_ajustes_cambia_la_racha(pg):
+def racha_semanal_se_muestra_en_el_marcador(pg):
     pg.goto(URL)
-    seed(pg, sessions=[{"id": "x", "date": off_days(pg, -2), "routine": "PUSH", "sets": [{"exercise": "A", "reps": 5, "kg": 10, "w": False}]},
+    seed(pg, sessions=[{"id": "x", "date": off_days(pg, -7), "routine": "PUSH", "sets": [{"exercise": "A", "reps": 5, "kg": 10, "w": False}]},
                        {"id": "y", "date": off_days(pg, 0), "routine": "PUSH", "sets": [{"exercise": "A", "reps": 5, "kg": 10, "w": False}]}])
-    assert pg.inner_text("#streak-n") == "2", "por defecto se perdona un día de descanso"
-    assert pg.locator(".day.restday").count() == 1
-    abrir_ajustes(pg); pg.click('[data-descanso="0"]'); pg.wait_for_timeout(200)
-    assert pg.inner_text("#streak-n") == "1" and pg.get_attribute('[data-descanso="0"]', "aria-pressed") == "true"
-    assert pg.locator(".day.restday").count() == 0
+    assert pg.inner_text("#streak-n") == "2"
+
+@test
+def racha_semanal_no_tiene_ajuste_de_descanso_en_ajustes(pg):
+    seed(pg); abrir_ajustes(pg)
+    assert pg.locator("#rest-sec").count() == 0 and pg.locator("[data-descanso]").count() == 0
 
 def off_days(pg, k): return off(pg, k)
 
@@ -1615,7 +1619,7 @@ def records_la_etiqueta_pr_va_en_el_numero_de_la_serie(pg):
     assert sn.inner_text().replace("PR", "").strip() == "1", "el número de serie sigue visible"
 
 @test
-def semana_con_dia_de_descanso_no_rompe_la_maqueta(pg):
+def semana_con_hueco_no_rompe_la_maqueta(pg):
     pg.goto(URL)
     seed(pg, sessions=[{"id": "x", "date": off(pg, -2), "routine": "PUSH", "sets": [{"exercise": "A", "reps": 5, "kg": 10, "w": False}]},
                        {"id": "y", "date": off(pg, 0), "routine": "PUSH", "sets": [{"exercise": "A", "reps": 5, "kg": 10, "w": False}]}])

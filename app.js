@@ -215,33 +215,23 @@ function render() {
   if (typeof rsRefresh === 'function') rsRefresh();
 }
 
-// Días de descanso que se perdonan por semana (0 = hace falta actividad todos los días)
-const REST_KEY2 = 'entreno-descanso';
-const restAllowance = () => { const v = parseInt(lsGet(REST_KEY2), 10); return [0, 1, 2, 3].includes(v) ? v : 1; };
-// Cuenta los días con actividad seguidos hacia atrás desde hoy (o ayer si hoy aún se puede salvar).
-// Un día vacío se perdona si en los 7 días hasta él no hay más huecos que `rest`.
-function streakInfo(days, rest = restAllowance(), today = new Date()) {
-  const rests = new Set(), first = [...days].sort()[0];
-  if (!first) return { n: 0, rest: rests };
-  const d = new Date(today), missing = [];
-  if (!days.has(localDate(d))) d.setDate(d.getDate() - 1);
-  let n = 0, oldest = null;
-  while (localDate(d) >= first) {
-    const k = localDate(d);
-    if (days.has(k)) { n++; oldest = k; }
-    else {
-      missing.push(k);
-      const near = missing.filter(m => (new Date(m + 'T12:00:00') - new Date(k + 'T12:00:00')) / 864e5 <= 6).length;
-      if (near > rest) { missing.pop(); break; }
-    }
-    d.setDate(d.getDate() - 1);
-  }
-  missing.forEach(k => { if (oldest && k > oldest) rests.add(k); });   // los descansos del final no cuentan
-  return { n, rest: rests };
+// Racha semanal: semanas (lunes a domingo) seguidas con al menos un día de entreno, contadas hacia atrás.
+// Si esta semana aún no tiene entreno, la racha no se rompe y cuenta desde la semana anterior.
+function rachaSemanas(days, today = new Date()) {
+  const tieneSemana = (lunes) => {
+    for (let i = 0; i < 7; i++) { const d = new Date(lunes); d.setDate(lunes.getDate() + i); if (days.has(localDate(d))) return true; }
+    return false;
+  };
+  const lunes = new Date(today); lunes.setHours(12, 0, 0, 0);
+  lunes.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+  if (!tieneSemana(lunes)) lunes.setDate(lunes.getDate() - 7);
+  let n = 0;
+  while (tieneSemana(lunes)) { n++; lunes.setDate(lunes.getDate() - 7); }
+  return n;
 }
 
 function renderStreak() {
-  const n = streakInfo(activeDays()).n;
+  const n = rachaSemanas(activeDays());
   $('streak-n').textContent = n;
   if (lastStreak !== null && n !== lastStreak) tick($('streak-n'));
   $('streak').classList.toggle('hot', n > 0);
@@ -294,16 +284,15 @@ const CHECK_ICO = '<svg viewBox="0 0 24 24" class="ico"><path d="M5 13l4 4L19 7"
 function renderWeek() {
   const days = activeDays();
   const first = [...days].sort()[0] || null;          // solo cuentan como fallados los días posteriores al primer registro
-  const rests = streakInfo(days).rest;                // huecos perdonados por los días de descanso
   const today = new Date();
   const out = [];
   for (let i = 6; i >= 0; i--) {
     const d = new Date(today);
     d.setDate(today.getDate() - i);
     const key = localDate(d), on = days.has(key);
-    const rest = !on && rests.has(key), miss = !on && !rest && i > 0 && first !== null && key > first;
+    const miss = !on && i > 0 && first !== null && key > first;
     const label = d.toLocaleDateString('es-ES', { weekday: 'narrow' }).toUpperCase();
-    out.push(`<div class="day${on ? ' on' : ''}${miss ? ' miss' : ''}${rest ? ' restday' : ''}${i === 0 ? ' today' : ''}" style="--i:${6 - i}">${label}<i>${on ? CHECK_ICO : miss ? '✕' : rest ? '–' : d.getDate()}</i></div>`);
+    out.push(`<div class="day${on ? ' on' : ''}${miss ? ' miss' : ''}${i === 0 ? ' today' : ''}" style="--i:${6 - i}">${label}<i>${on ? CHECK_ICO : miss ? '✕' : d.getDate()}</i></div>`);
   }
   $('week').innerHTML = out.join('');
 }
@@ -1017,13 +1006,13 @@ function renderCal() {
     $('cal-summary').textContent = `${inMonth} ${inMonth === 1 ? 'día' : 'días'} este mes · ${days.size} en total`;
     $('cal-next').disabled = calMonth >= today.slice(0, 7);
     $('cal-prev').setAttribute('aria-label', 'Mes anterior'); $('cal-next').setAttribute('aria-label', 'Mes siguiente');
-    const first = [...days].sort()[0] || null, rests = streakInfo(days).rest;
+    const first = [...days].sort()[0] || null;
     const lead = (new Date(y, m - 1, 1).getDay() + 6) % 7, n = new Date(y, m, 0).getDate();
     let out = '<span></span>'.repeat(lead);
     for (let d = 1; d <= n; d++) {
       const key = `${calMonth}-${String(d).padStart(2, '0')}`, on = days.has(key);
-      const rest = !on && rests.has(key), miss = !on && !rest && key < today && first !== null && key > first;
-      out += `<button type="button" class="cd${on ? ' on' : ''}${miss ? ' miss' : ''}${rest ? ' restday' : ''}${key === today ? ' today' : ''}${key === calSel ? ' sel' : ''}" data-date="${key}">${on ? CHECK_ICO : miss ? '✕' : rest ? '–' : d}</button>`;
+      const miss = !on && key < today && first !== null && key > first;
+      out += `<button type="button" class="cd${on ? ' on' : ''}${miss ? ' miss' : ''}${key === today ? ' today' : ''}${key === calSel ? ' sel' : ''}" data-date="${key}">${on ? CHECK_ICO : miss ? '✕' : d}</button>`;
     }
     $('cal-grid').innerHTML = out;
   }
@@ -1076,14 +1065,6 @@ function setSettings(open) {
   $('settings-sheet').setAttribute('aria-hidden', String(!open));
   if (open) $('settings-close').focus({ preventScroll: true });
 }
-document.querySelectorAll('[data-descanso]').forEach(b => {
-  b.setAttribute('aria-pressed', String(+b.dataset.descanso === restAllowance()));
-  b.onclick = () => {
-    lsSet(REST_KEY2, b.dataset.descanso);
-    document.querySelectorAll('[data-descanso]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
-    render(); vibrate(8);
-  };
-});
 $('settings-btn').onclick = () => setSettings(true);
 $('settings-close').onclick = () => setSettings(false);
 $('scrim').onclick = () => { setSettings(false); setCal(false); closeSummary(); closeFinish(); if (typeof closePicker === 'function') closePicker(); if (typeof closeDetail === 'function') closeDetail(); };
