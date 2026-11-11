@@ -1326,8 +1326,21 @@ def copia_antigua_recupera_la_foto_de_los_ejercicios_que_coinciden_con_el_catalo
     pg.wait_for_timeout(1200)
     ejs = db(pg)["routines"][0]["exercises"]
     assert ejs[0].get("ejId") and ejs[0].get("image", "").startswith("http"), f"«Crunch (máquina)» recupera su foto: {ejs[0]}"
-    assert not ejs[1].get("ejId") and not ejs[1].get("image"), "«Press de pecho» no está en el catálogo: se queda sin foto"
+    assert ejs[1].get("ejId") == "chest-press-machine" and ejs[1].get("image", "").startswith("http"), f"«Press de pecho» usa su equivalente en máquina: {ejs[1]}"
     assert ejs[1]["name"] == "Press de pecho" and ejs[1]["sets"][0]["kg"] == 39, "no se pierde nada más"
+
+@test
+def copia_antigua_usa_equivalentes_para_los_ejercicios_personales(pg):
+    nombres = ["Aperturas de pecho", "Aperturas inversas", "Curl de isquiotibiales tumbado", "Elevación lateral", "Extensión de cuádriceps",
+               "Hip thrust (barra)", "Jalón al pecho", "Press de hombros sentado", "Press de pecho", "Remo sentado"]
+    copia = {"app": "forja", "version": 1, "routines": [{"id": "r8", "name": "MIA", "exercises": [{"name": n, "image": "", "ejId": "", "sets": [{"w": False, "kg": 10, "reps": 10}]} for n in nombres]}], "sessions": [], "walks": []}
+    seed(pg, routines=[], sessions=[]); tab(pg, "ajustes") if pg.locator('[data-tab="tab-ajustes"]').count() else None
+    pg.set_input_files("#backup-file", files=[{"name": "copia.json", "mimeType": "application/json", "buffer": json.dumps(copia).encode()}])
+    pg.wait_for_timeout(1200)
+    ejs = db(pg)["routines"][0]["exercises"]
+    sin = [e["name"] for e in ejs if not e.get("image", "").startswith("http")]
+    assert not sin, f"todos los de la rutina tienen foto: faltan {sin}"
+    assert [e["name"] for e in ejs] == nombres, "los nombres no cambian"
 
 @test
 def paneles_que_suben_no_rebotan(pg):

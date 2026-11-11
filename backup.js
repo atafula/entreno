@@ -54,18 +54,33 @@ function mergeBackup(c) {
 // Copias antiguas: los ejercicios sin id se vinculan al catálogo si su nombre coincide exactamente
 // (sin tildes ni mayúsculas) con uno que tiene foto. Los que no están en el catálogo se quedan como están.
 const sinAcentos = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+// Ejercicios personales sin equivalente exacto: se asigna el más parecido del catálogo (revisable aquí).
+const EQUIVALENTES = {
+  'aperturas de pecho': 'chest-fly-machine',
+  'aperturas inversas': 'rear-delt-reverse-fly-machine',
+  'curl de isquiotibiales tumbado': 'lying-leg-curl-machine',
+  'elevacion lateral': 'lateral-raise-dumbbell',
+  'extension de cuadriceps': 'leg-extension-machine',
+  'hip thrust (barra)': 'hip-thrust-barbell',
+  'jalon al pecho': 'lat-pulldown-machine',
+  'press de hombros sentado': 'seated-shoulder-press-machine',
+  'press de pecho': 'chest-press-machine',
+  'remo sentado': 'seated-row-machine'
+};
 async function vincularCatalogo(routines) {
   await loadEjercicios().catch(() => null);
   if (!ejCache) return;
-  const idx = new Map();
+  const idx = new Map(), porId = new Map();
   ejCache.forEach(e => {
     const img = e.thumbnail || (e.sourceType === 'image' ? e.source : '');
     if (!img) return;
+    porId.set(e.id, img);
     [tradName(e.name), e.name].forEach(k => { const key = sinAcentos(k); if (!idx.has(key)) idx.set(key, { id: e.id, image: img }); });
   });
   routines.forEach(r => r.exercises.forEach(x => {
     if (x.ejId) return;
-    const hit = idx.get(sinAcentos(x.name));
+    const key = sinAcentos(x.name);
+    const hit = idx.get(key) || (EQUIVALENTES[key] && porId.has(EQUIVALENTES[key]) ? { id: EQUIVALENTES[key], image: porId.get(EQUIVALENTES[key]) } : null);
     if (hit) { x.ejId = hit.id; if (!x.image) x.image = hit.image; }
   }));
 }
