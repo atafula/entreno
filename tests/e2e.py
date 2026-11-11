@@ -1299,6 +1299,23 @@ def sync_avisos_de_la_nube_sin_cambios_no_repintan(pg):
     assert pg.evaluate("window.__n") == 0, "si la nube no trae nada nuevo, no se repinta"
 
 @test
+def copia_guarda_y_restaura_la_foto_y_el_id_de_los_ejercicios(pg):
+    ej = {"name": "Dominadas", "image": "https://ejemplo.test/dominadas.jpg", "ejId": "dom-1", "sets": [{"w": False, "kg": "", "reps": 8}]}
+    seed(pg, routines=[{"id": "r9", "name": "TIRON", "exercises": [ej]}], sessions=[]); tab(pg, "ajustes") if pg.locator('[data-tab="tab-ajustes"]').count() else None
+    # 1) lo que descarga la app: la foto y el id tienen que venir en la copia
+    with pg.expect_download() as d:
+        pg.evaluate("document.getElementById('backup-export').click()")
+    contenido = open(d.value.path(), encoding="utf-8").read()
+    rut = json.loads(contenido)["routines"][0]["exercises"][0]
+    assert rut.get("image") == ej["image"] and rut.get("ejId") == "dom-1", f"la copia guarda la foto y el id: {rut}"
+    # 2) al volver a ponerla, la foto y el id siguen en la rutina
+    pg.evaluate("localStorage.clear()"); seed(pg, routines=[], sessions=[]); tab(pg, "ajustes") if pg.locator('[data-tab="tab-ajustes"]').count() else None
+    pg.set_input_files("#backup-file", files=[{"name": "copia.json", "mimeType": "application/json", "buffer": contenido.encode()}])
+    pg.wait_for_timeout(400)
+    restaurado = db(pg)["routines"][0]["exercises"][0]
+    assert restaurado.get("image") == ej["image"] and restaurado.get("ejId") == "dom-1", f"al restaurar se ve la foto: {restaurado}"
+
+@test
 def paneles_que_suben_no_rebotan(pg):
     seed(pg); tab(pg, "rutinas"); empezar(pg, "a"); pg.wait_for_timeout(500)
     row = pg.locator("#wk-in .exblock:not([hidden])").first.locator(".wrow:not(.whead)").nth(1)   # sin series hechas, «Terminar» descarta

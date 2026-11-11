@@ -7,9 +7,12 @@ const isDate = v => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
 
 function cleanRoutine(r) {
   if (!r || !isStr(r.id, 80) || !r.id || !isStr(r.name, 100) || !r.name.trim() || !Array.isArray(r.exercises)) return null;
-  const exercises = r.exercises.filter(e => e && isStr(e.name, 100) && e.name.trim()).map(e => ({
-    name: e.name, sets: (Array.isArray(e.sets) ? e.sets : []).map(s => ({ w: !!(s && s.w), kg: s && isNum(s.kg) ? s.kg : '', reps: s && isNum(s.reps) ? s.reps : '' }))
-  }));
+  const exercises = r.exercises.filter(e => e && isStr(e.name, 100) && e.name.trim()).map(e => {
+    const out = { name: e.name, sets: (Array.isArray(e.sets) ? e.sets : []).map(s => ({ w: !!(s && s.w), kg: s && isNum(s.kg) ? s.kg : '', reps: s && isNum(s.reps) ? s.reps : '' })) };
+    if (isStr(e.image, 500)) out.image = e.image;      // la foto del ejercicio (URL) y su id en el catálogo, para que vuelvan a verse
+    if (isStr(e.ejId, 80)) out.ejId = e.ejId;
+    return out;
+  });
   return { id: r.id, name: r.name, exercises };
 }
 function cleanSession(s) {
