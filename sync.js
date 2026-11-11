@@ -16,6 +16,9 @@ let unsubs = [], pushT = null, pending = false;
 
 const saveLocal = () => guardarLocal();
 const routinesSig = () => JSON.stringify(db.routines);
+// Un aviso de la nube solo repinta si trajo algo distinto, y sin reanimar la pantalla
+const firma = () => JSON.stringify([db.routines, db.sessions, db.walks]);
+const renderSiCambio = antes => { if (firma() !== antes) renderSilencioso(); };
 
 function setAccountUI() {
   const on = !!fuser;
@@ -57,10 +60,11 @@ function listenCloud(user) {
   stopListen();
   const root = fdb.collection('users').doc(user.uid);
   unsubs.push(root.onSnapshot(snap => {
+    const antes = firma();
     const d = snap.exists ? snap.data() : null;
     if (d && Array.isArray(d.rutinas) && (d.rutinasTs || 0) > (db.routinesTs || 0)) {
       db.routines = d.rutinas.map(normRoutine); db.routinesTs = d.rutinasTs; db.routinesSig = routinesSig();
-      saveLocal(); render();
+      saveLocal(); renderSiCambio(antes);
     } else if (!d && db.routines.length) {
       if (!db.routinesTs) db.routinesTs = Date.now();
       db.routinesSig = routinesSig(); saveLocal(); pushNow();
@@ -69,6 +73,7 @@ function listenCloud(user) {
   [['sesiones', 'sessions'], ['caminatas', 'walks']].forEach(([name, key]) => {
     unsubs.push(root.collection(name).onSnapshot(snap => {
       if (snap.metadata && snap.metadata.fromCache) return;
+      const antes = firma();
       const cloud = new Map(snap.docs.map(x => [x.id, x.data().upd || 0]));
       cloudIds[name] = cloud;
       const synced = new Set(db.syncedIds[name]);
@@ -83,7 +88,7 @@ function listenCloud(user) {
       const add = snap.docs.filter(x => !have.has(x.id) && !pendingDel.has(x.id)).map(x => ({ id: x.id, ...x.data() }));
       if (add.length) db[key] = [...db[key], ...add];
       db[key].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : (a.ts || 0) - (b.ts || 0)));
-      saveLocal(); render();
+      saveLocal(); renderSiCambio(antes);
       if (db.deleted[name].length || db[key].some(x => !cloud.has(x.id) || (x.upd || 0) > cloud.get(x.id))) pushNow();
     }, () => { /* sin permisos o sin red */ }));
   });

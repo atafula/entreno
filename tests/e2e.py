@@ -1276,6 +1276,29 @@ def la_app_pide_almacenamiento_persistente(pg):
     assert pg.evaluate("window.__persist") >= 1, "pide que el navegador no borre los datos para liberar espacio"
 
 @test
+def sync_borrar_en_el_historial_con_sesion_no_reinicia_la_pantalla(pg):
+    seed(pg, sessions=SESIONES, fb={"logged": True}); pg.wait_for_timeout(900)
+    tab(pg, "historial"); pg.wait_for_timeout(1500)        # que acabe la entrada inicial y la cuenta de los números
+    menu(pg, "session", "s2"); pg.click('[data-del-session="s2"]'); pg.wait_for_timeout(100)
+    pg.evaluate("""() => { window.__n = 0; window.__txt = []; const o = renderHistory; renderHistory = function (...a) { window.__n++; return o.apply(this, a); };
+        const t0 = performance.now(); const f = () => { const b = document.querySelector('#stats .stat b'); if (b) window.__txt.push(b.textContent); if (performance.now() - t0 < 1500) requestAnimationFrame(f); }; requestAnimationFrame(f); }""")
+    pg.click('[data-del-session="s2"]'); pg.wait_for_timeout(1700)
+    n = pg.evaluate("window.__n"); txt = pg.evaluate("window.__txt")
+    assert n <= 1, f"el historial se repinta {n} veces tras un solo borrado"
+    assert "0" not in txt, f"los números no vuelven a empezar desde 0: {txt[:8]}"
+    assert pg.evaluate("[...document.querySelectorAll('#history-list > *, #stats > *')].reduce((a, e) => a + e.getAnimations().length, 0)") == 0, "no hay tarjetas reanimándose"
+    assert "users/U1/sesiones/s2" not in cloud(pg), "y sigue borrándose de la nube"
+
+@test
+def sync_avisos_de_la_nube_sin_cambios_no_repintan(pg):
+    seed(pg, sessions=SESIONES, fb={"logged": True}); pg.wait_for_timeout(900)
+    tab(pg, "historial"); pg.wait_for_timeout(1500)
+    pg.evaluate("() => { window.__n = 0; const o = render; render = function (...a) { window.__n++; return o.apply(this, a); }; }")
+    pg.evaluate("() => { document.dispatchEvent(new Event('visibilitychange')); window.dispatchEvent(new Event('online')); }")
+    pg.wait_for_timeout(1000)
+    assert pg.evaluate("window.__n") == 0, "si la nube no trae nada nuevo, no se repinta"
+
+@test
 def paneles_que_suben_no_rebotan(pg):
     seed(pg); tab(pg, "rutinas"); empezar(pg, "a"); pg.wait_for_timeout(500)
     row = pg.locator("#wk-in .exblock:not([hidden])").first.locator(".wrow:not(.whead)").nth(1)   # sin series hechas, «Terminar» descarta

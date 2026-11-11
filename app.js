@@ -203,6 +203,9 @@ function shake(el) {
 }
 
 // ---------- Render ----------
+// Repintar sin volver a animar las tarjetas: lo usan los avisos de la nube y el borrado
+let silencio = false;
+function renderSilencioso() { silencio = true; try { render(); } finally { silencio = false; } }
 function render() {
   renderRoutines();
   renderStreak();
@@ -650,6 +653,7 @@ function deleteEntry(kind, id) {
   const key = kind === 'session' ? 'sessions' : 'walks', name = kind === 'session' ? 'sesiones' : 'caminatas';
   db[key] = db[key].filter(x => x.id !== id);
   if (lsGet('entreno-uid') && !db.deleted[name].includes(id)) db.deleted[name].push(id);   // para que no vuelva desde la nube
+  histQuiet = true;                                                                          // las demás tarjetas no se reanimen
   if (persist()) toast('Borrado.');
 }
 // Borrar pide un segundo toque: el botón se pone rojo y, si no confirmas, se desarma solo
@@ -682,7 +686,7 @@ $('history-list').addEventListener('click', e => {
   b.dataset.delSession ? deleteEntry('session', b.dataset.delSession) : deleteEntry('walk', b.dataset.delWalk);
 });
 function renderHistory() {
-  const quiet = histQuiet; histQuiet = false;
+  const quiet = histQuiet || silencio; histQuiet = false;
   prMap = computePRs();
   const km = db.walks.reduce((a, w) => a + w.meters, 0) / 1000;
   const stats = [
