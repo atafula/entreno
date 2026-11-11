@@ -714,20 +714,23 @@ def la_app_se_llama_forjado(pg):
     assert m["name"] == "Forjado" and m["short_name"] == "Forjado"
 
 @test
-def icono_es_el_aro_grueso_crema_naranja(pg):
+def icono_es_el_aro_grueso_azul_de_la_app(pg):
     from PIL import Image
     cerca = lambda a, b: all(abs(x - y) <= 14 for x, y in zip(a, b))
-    CREMA, NARANJA, OSCURO, ARO = (243, 239, 230), (226, 90, 44), (23, 21, 15), (229, 223, 208)
+    FONDO, AZUL, PUNTO, PISTA = (10, 18, 32), (49, 105, 230), (238, 243, 252), (25, 39, 64)   # --bg, --fire, --text, --surface-2
     for nombre, tam, k in [("apple-touch-icon", 180, 1), ("icon-192", 192, 1), ("icon-512", 512, 1), ("icon-maskable-512", 512, .85)]:
         im = Image.open(os.path.join(ROOT, "icons", nombre + ".png")).convert("RGB")
         p = lambda x, y: im.getpixel((round(x / 140 * tam), round(y / 140 * tam)))
         c = lambda v: 70 + (v - 70) * k
-        assert cerca(p(1, 1), CREMA), f"{nombre}: el fondo es crema a sangre: {p(1, 1)}"
-        assert cerca(p(70, 70), OSCURO), f"{nombre}: punto oscuro en el centro: {p(70, 70)}"
-        assert cerca(p(70, c(70 - 46)), NARANJA), f"{nombre}: el arco naranja empieza arriba: {p(70, c(24))}"
-        assert cerca(p(c(70 - 46), 70), ARO), f"{nombre}: el tramo sin completar es beige: {p(c(24), 70)}"
+        assert cerca(p(1, 1), FONDO), f"{nombre}: el fondo es el azul marino de la app, a sangre: {p(1, 1)}"
+        assert cerca(p(70, 70), PUNTO), f"{nombre}: punto claro en el centro: {p(70, 70)}"
+        assert cerca(p(70, c(70 - 46)), AZUL), f"{nombre}: el arco azul empieza arriba: {p(70, c(24))}"
+        assert cerca(p(c(70 - 46), 70), PISTA), f"{nombre}: el tramo sin completar es la pista oscura: {p(c(24), 70)}"
+    fav = Image.open(os.path.join(ROOT, "icons", "favicon.png")).convert("RGB")
+    assert cerca(fav.getpixel((1, 1)), FONDO), "el favicon también es azul marino"
     m = json.loads(open(os.path.join(ROOT, "manifest.webmanifest")).read())
-    assert m["background_color"]
+    assert m["background_color"].lower() == "#0a1220" and m["theme_color"].lower() == "#0a1220", "el color del manifiesto es el del icono"
+    assert 'content="#0a1220"' in open(os.path.join(ROOT, "index.html"), encoding="utf-8").read()
 
 @test
 def copia_restaurar_acepta_copias_antiguas_de_entreno(pg):

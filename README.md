@@ -23,7 +23,7 @@ La app funciona sin wifi ni datos. El service worker (`sw.js`) guarda el código
 - Las librerías de Firebase se guardan si se puede; si fallan, no impiden instalar (la sincronización solo funciona con conexión).
 - Las fotos de los ejercicios (de un servidor externo) se guardan al verlas por primera vez, hasta 250, en una caché aparte que no se borra al subir de versión. Para poder guardarlas se piden con CORS; si el servidor no lo permite, se muestran igual pero no quedan disponibles sin red.
 - Fuentes autoalojadas: Fraunces y Manrope (licencia SIL OFL 1.1, ver `fonts/`).
-- Iconos en `icons/`: aro grueso crema con arco naranja y punto oscuro. Fuente en `icons/icon.svg`.
+- Iconos en `icons/`: aro grueso de progreso en azul sobre el azul marino de la app (`--bg`), con punto claro en el centro. Fuente en `icons/icon.svg`; los PNG se generan con `rsvg-convert` (el «maskable» con el dibujo al 85 %).
 
 ## Funciones
 
