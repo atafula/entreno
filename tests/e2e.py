@@ -805,11 +805,11 @@ def la_app_se_llama_forjado(pg):
     assert m["name"] == "Forjado" and m["short_name"] == "Forjado"
 
 @test
-def icono_es_la_f_inclinada_sobre_fondo_calido_y_linea_terracota(pg):
+def icono_es_la_f_inclinada_sobre_fondo_violeta_y_linea_morada(pg):
     import math
     from PIL import Image
     cerca = lambda a, b: all(abs(x - y) <= 14 for x, y in zip(a, b))
-    FONDO, ACENTO, CLARO = (15, 13, 12), (208, 135, 92), (243, 237, 232)   # --bg, --fire, --text
+    FONDO, ACENTO, CLARO = (14, 11, 20), (166, 136, 245), (241, 237, 247)   # --bg, --fire, --text
     inclina = lambda x, y: (x - math.tan(math.radians(12)) * (y - 70), y)  # skewX(-12) alrededor del centro
     for nombre, tam, k in [("apple-touch-icon", 180, 1), ("icon-192", 192, 1), ("icon-512", 512, 1), ("icon-maskable-512", 512, .85)]:
         im = Image.open(os.path.join(ROOT, "icons", nombre + ".png")).convert("RGB")
@@ -817,17 +817,17 @@ def icono_es_la_f_inclinada_sobre_fondo_calido_y_linea_terracota(pg):
             if f: x, y = inclina(x, y)
             x, y = 70 + (x - 70) * k, 70 + (y - 70) * k
             return im.getpixel((round(x / 140 * tam), round(y / 140 * tam)))
-        assert cerca(p(1, 1), FONDO), f"{nombre}: el fondo es el casi negro cálido de la app: {p(1, 1)}"
+        assert cerca(p(1, 1), FONDO), f"{nombre}: el fondo es el casi negro violeta de la app: {p(1, 1)}"
         assert cerca(p(53, 95, True), CLARO), f"{nombre}: el palo de la F es claro: {p(53, 95, True)}"
         assert cerca(p(85, 42, True), CLARO), f"{nombre}: el brazo de arriba es claro: {p(85, 42, True)}"
         assert cerca(p(85, 70, True), CLARO), f"{nombre}: el brazo de en medio es claro: {p(85, 70, True)}"
         assert cerca(p(85, 56, True), FONDO), f"{nombre}: entre los brazos se ve el fondo: {p(85, 56, True)}"
-        assert cerca(p(60, 115), ACENTO), f"{nombre}: la línea terracota bajo la F: {p(60, 115)}"
+        assert cerca(p(60, 115), ACENTO), f"{nombre}: la línea morada bajo la F: {p(60, 115)}"
     fav = Image.open(os.path.join(ROOT, "icons", "favicon.png")).convert("RGB")
     assert cerca(fav.getpixel((1, 1)), FONDO), "el favicon también lleva el fondo de la app"
     m = json.loads(open(os.path.join(ROOT, "manifest.webmanifest")).read())
-    assert m["background_color"].lower() == "#0f0d0c" and m["theme_color"].lower() == "#0f0d0c", "el color del manifiesto es el del icono"
-    assert 'content="#0f0d0c"' in open(os.path.join(ROOT, "index.html"), encoding="utf-8").read()
+    assert m["background_color"].lower() == "#0e0b14" and m["theme_color"].lower() == "#0e0b14", "el color del manifiesto es el del icono"
+    assert 'content="#0e0b14"' in open(os.path.join(ROOT, "index.html"), encoding="utf-8").read()
 
 @test
 def copia_restaurar_acepta_copias_antiguas_de_entreno(pg):
@@ -2264,7 +2264,7 @@ def tema_unico_oscuro_aunque_hubiera_claro_guardado(pg):
     assert _lum(_rgb(pg, "body", "backgroundColor")) < .03, _rgb(pg, "body", "backgroundColor")
     _tema(pg, "auto"); pg.emulate_media(color_scheme="light"); pg.wait_for_timeout(200)
     assert _lum(_rgb(pg, "body", "backgroundColor")) < .03, "ni siquiera con el iPhone en modo claro"
-    assert pg.get_attribute('meta[name="theme-color"]', "content").lower() == "#0f0d0c"
+    assert pg.get_attribute('meta[name="theme-color"]', "content").lower() == "#0e0b14"
 
 def _hue(c):
     import colorsys
@@ -2276,17 +2276,17 @@ def _rgb_t(c):
     return tuple(int(x) for x in re.findall(r"\d+", c)[:3])
 
 @test
-def terracota_fondo_calido_y_acento_terracota(pg):
+def morado_fondo_violeta_y_acento_morado(pg):
     seed(pg)
-    assert _var(pg, "--bg").lower() == "#0f0d0c", _var(pg, "--bg")
+    assert _var(pg, "--bg").lower() == "#0e0b14", _var(pg, "--bg")
     for n in ["--bg", "--surface", "--surface-2", "--surface-3"]:
         h = _hue("rgb(%d,%d,%d)" % tuple(int(_var(pg, n).lstrip("#")[i:i + 2], 16) for i in (0, 2, 4)))
-        assert 0 <= h <= 40, f"{n} es cálido, no azul: tono {h:.0f}"
-    assert _var(pg, "--fire").lower() == "#d0875c", _var(pg, "--fire")
-    assert _var(pg, "--on-fire").lower() == "#1a0f09"
+        assert 250 <= h <= 285, f"{n} es violeta oscuro: tono {h:.0f}"
+    assert _var(pg, "--fire").lower() == "#a688f5", _var(pg, "--fire")
+    assert _var(pg, "--on-fire").lower() == "#120a24"
     tab(pg, "rutinas")
     b = _rgb(pg, "[data-start-routine]", "backgroundColor")
-    assert 15 <= _hue(b) <= 30, f"el botón Comenzar es terracota: {b}"
+    assert 250 <= _hue(b) <= 270, f"el botón Comenzar es morado: {b}"
 
 @test
 def azul_fondo_liso_sin_degradado_ni_difuminado(pg):
@@ -2299,11 +2299,11 @@ def azul_fondo_liso_sin_degradado_ni_difuminado(pg):
 
 
 @test
-def terracota_barra_de_estado_y_manifest_oscuros(pg):
+def morado_barra_de_estado_y_manifest_oscuros(pg):
     seed(pg)
-    assert pg.get_attribute('meta[name="theme-color"]', "content").lower() == "#0f0d0c"
+    assert pg.get_attribute('meta[name="theme-color"]', "content").lower() == "#0e0b14"
     m = json.loads(open(os.path.join(ROOT, "manifest.webmanifest")).read())
-    assert m["background_color"].lower() == "#0f0d0c" and m["theme_color"].lower() == "#0f0d0c", m
+    assert m["background_color"].lower() == "#0e0b14" and m["theme_color"].lower() == "#0e0b14", m
 
 @test
 def diseno_tokens_de_espaciado_radios_texto_y_movimiento(pg):

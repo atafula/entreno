@@ -1,6 +1,6 @@
 # Forjado (PWA)
 
-App web instalable en iPhone para registrar entrenos, rutinas y caminatas. Estilo "papel": tipografía Fraunces y Manrope, esquinas redondeadas y un solo tema, oscuro cálido con acento terracota. Racha semanal, cifras de la semana, siguiente rutina sugerida, calendario de días entrenados y frases sin piedad.
+App web instalable en iPhone para registrar entrenos, rutinas y caminatas. Estilo "papel": tipografía Fraunces y Manrope, esquinas redondeadas y un solo tema, oscuro violeta con acento morado. Racha semanal, cifras de la semana, siguiente rutina sugerida, calendario de días entrenados y frases sin piedad.
 
 ## Instalar en el iPhone
 
@@ -34,7 +34,7 @@ La app funciona sin wifi ni datos. El service worker (`sw.js`) guarda el código
 - Las librerías de Firebase se guardan si se puede; si fallan, no impiden instalar (la sincronización solo funciona con conexión).
 - Las fotos de los ejercicios (de un servidor externo) se guardan al verlas por primera vez, hasta 250, en una caché aparte que no se borra al subir de versión. Para poder guardarlas se piden con CORS; si el servidor no lo permite, se muestran igual pero no quedan disponibles sin red.
 - Fuentes autoalojadas: Fraunces y Manrope (licencia SIL OFL 1.1, ver `fonts/`).
-- Iconos en `icons/`: una «F» clara inclinada con una línea terracota debajo, sobre el fondo casi negro de la app (`--bg`). Fuente en `icons/icon.svg`; los PNG se generan con `rsvg-convert` (el «maskable» con el dibujo al 85 %).
+- Iconos en `icons/`: una «F» clara inclinada con una línea morada debajo, sobre el fondo casi negro de la app (`--bg`). Fuente en `icons/icon.svg`; los PNG se generan con `rsvg-convert` (el «maskable» con el dibujo al 85 %).
 
 ## Funciones
 

@@ -1,5 +1,5 @@
 /* FORJADO — estilo "papel": Fraunces + Manrope, formas suaves, acento naranja.
-   Un solo tema: OSCURO cálido con acento terracota.
+   Un solo tema: OSCURO violeta con acento morado.
    Una sola capa: todo sale de los tokens de :root. No añadas colores ni medidas sueltas más abajo. */
 
 /* ===== Tokens ===== */
@@ -21,14 +21,14 @@
   --ease-spring: cubic-bezier(.34, 1.4, .64, 1);
   --snap: var(--ease-out); --spring: var(--ease-spring);
 
-  /* Color — un solo tema: OSCURO cálido con acento terracota. Superficies en capas, sin negro ni blanco puros */
-  --bg: #0f0d0c; --surface: #171413; --surface-2: #1f1b19; --surface-3: #2a2421;
-  --line: #2a2522; --line-2: #3a332f;
-  --text: #f3ede8; --text-2: #cdc3bb; --muted: #9c918a;
-  --fire: #d0875c; --fire-2: #e6a27a; --fire-text: #e6a27a; --on-fire: #1a0f09;
+  /* Color — un solo tema: OSCURO violeta con acento morado. Superficies en capas, sin negro ni blanco puros */
+  --bg: #0e0b14; --surface: #15111d; --surface-2: #1c1727; --surface-3: #282237;
+  --line: #29223a; --line-2: #3a3150;
+  --text: #f1edf7; --text-2: #c9c1d8; --muted: #9b92ad;
+  --fire: #a688f5; --fire-2: #bda4fa; --fire-text: #bda4fa; --on-fire: #120a24;
   --acid: #2ea77a; --acid-text: #7fcfa1; --on-acid: #03150d;
   --warn: #e8b02f; --warn-text: #f0c14d;
-  --scrim: rgba(8, 5, 3, .66);
+  --scrim: rgba(6, 4, 12, .66);
   --shadow-1: inset 0 0 0 1px var(--line), inset 0 1px 0 rgba(255, 255, 255, .035);
   --shadow-2: inset 0 0 0 1px var(--line-2), 0 14px 34px -12px rgba(0, 0, 0, .75);
   --shadow-3: 0 -1px 0 var(--line-2), 0 -18px 44px -14px rgba(0, 0, 0, .8);
