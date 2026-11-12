@@ -340,7 +340,7 @@ function siguienteRutina() {
   db.routines.forEach(r => { const f = ultimaVez(r); if (mejor === null || f < fecha) { mejor = r; fecha = f; } });
   return mejor;
 }
-const PLAY_ICO = '<svg viewBox="0 0 24 24" class="ico play-ico"><path d="M7 4.5v15l13-7.5z"/></svg>';
+const PLAY_ICO = '<svg viewBox="0 0 24 24" class="ico play-ico"><path d="M8 4.5v15L20 12z"/></svg>';
 function renderNext() {
   const r = siguienteRutina(), box = $('next-routine');
   box.hidden = !r;

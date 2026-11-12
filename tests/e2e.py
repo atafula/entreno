@@ -531,6 +531,23 @@ def rutinas_menu_tres_puntos_editar_duplicar_y_borrar(pg):
 _ANIMANDO = "sel => [...document.querySelectorAll(sel)].reduce((a, e) => a + e.getAnimations().filter(x => x.playState === 'running' && !e.closest('.entry-menu')).length, 0)"
 
 @test
+def boton_play_con_la_flecha_centrada_opticamente(pg):
+    seed(pg); tab(pg, "rutinas"); pg.wait_for_timeout(900)
+    from PIL import Image
+    import io
+    for sel in ["#routines-list .play"]:
+        assert pg.locator(sel).count() >= 1, "hay botones circulares"
+        for i in range(min(2, pg.locator(sel).count())):
+            el = pg.locator(sel).nth(i)
+            im = Image.open(io.BytesIO(el.screenshot())).convert("RGB")
+            w, h = im.size
+            bg = im.getpixel((w // 2, 3))
+            px = [(x, y) for x in range(w) for y in range(h)
+                  if sum(abs(a - b) for a, b in zip(im.getpixel((x, y)), bg)) > 90 and (x - w / 2) ** 2 + (y - h / 2) ** 2 < (w / 2 - 4) ** 2]
+            cx = sum(p[0] for p in px) / len(px); cy = sum(p[1] for p in px) / len(px)
+            assert abs(cx - w / 2) <= w * .015 and abs(cy - h / 2) <= h * .03, f"flecha descentrada: centro ({cx:.1f},{cy:.1f}) en {w}x{h}"
+
+@test
 def rutinas_editar_desde_el_menu_y_volver_no_deja_el_menu_abierto(pg):
     seed(pg); tab(pg, "rutinas")
     pg.click('#routines-list [data-routine-menu="a"]'); pg.wait_for_timeout(100)

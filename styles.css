@@ -161,7 +161,7 @@ body[data-tab="hoy"] .streak { display: none; }   /* en Hoy la racha va en el an
 .nx-meta { margin-top: var(--s1); color: var(--muted); font-size: var(--t-sm); font-weight: 600; }
 .play { flex: none; width: 60px; height: 60px; display: grid; place-items: center; padding: 0; border: 0; border-radius: var(--r-full); background: var(--fire); color: var(--on-fire); box-shadow: 0 10px 24px -12px color-mix(in srgb, var(--fire) 80%, transparent); transition: transform var(--d-fast) var(--ease-out); }
 .play:active { transform: scale(.94); }
-.play .ico { width: 22px; height: 22px; margin-left: 3px; fill: currentColor; stroke: none; }
+.play .ico { width: 22px; height: 22px; fill: currentColor; stroke: none; }
 
 /* Frase: cita en cursiva */
 .quote { display: flex; gap: var(--s3); align-items: flex-start; }
