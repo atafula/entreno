@@ -55,8 +55,10 @@ function rsChartSvg(series, sel, name) {
   const marks = n === 1 ? [0] : n >= 5 ? [0, Math.floor((n - 1) / 2), n - 1] : [0, n - 1];
   marks.forEach(i => { g += `<text class="rs-x" x="${x(i).toFixed(1)}" y="${H - 8}" text-anchor="middle">${rsFecha(series[i].date, conAnio)}</text>`; });
   if (n > 1) g += `<polyline class="rs-line" points="${series.map((p, i) => `${x(i).toFixed(1)},${y(p.v).toFixed(1)}`).join(' ')}"/>`;
+  // Solo líneas: una guía vertical marca el entreno elegido; el círculo transparente solo sirve para tocar
   series.forEach((p, i) => {
-    g += `<g class="pt${p.pr ? ' pr' : ''}${i === sel ? ' sel' : ''}" data-i="${i}"><circle class="hit" cx="${x(i).toFixed(1)}" cy="${y(p.v).toFixed(1)}" r="16"/><circle cx="${x(i).toFixed(1)}" cy="${y(p.v).toFixed(1)}" r="${i === sel ? 7 : 5}"/></g>`;
+    const cx = x(i).toFixed(1), cy = y(p.v).toFixed(1);
+    g += `<g class="pt${p.pr ? ' pr' : ''}${i === sel ? ' sel' : ''}" data-i="${i}">${i === sel ? `<line class="mark" x1="${cx}" x2="${cx}" y1="${cy}" y2="${H - B}"/>` : ''}<circle class="hit" cx="${cx}" cy="${cy}" r="16"/></g>`;
   });
   return `<svg class="rs-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Progreso de ${esc(name)}">${g}</svg>`;
 }

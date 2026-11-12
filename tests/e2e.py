@@ -1823,13 +1823,15 @@ def progreso_series_por_ejercicio_ordenadas_sin_calentamiento(pg):
     assert len(pg.evaluate("exerciseSeries('Remo', 'rm')")) == 1 and pg.evaluate("exerciseSeries('Dominadas', 'rm')") == []
 
 @test
-def progreso_grafica_dibuja_linea_y_puntos_con_records(pg):
+def progreso_grafica_es_solo_linea_sin_puntos_y_marca_records(pg):
     seed(pg, sessions=PR_HIST); tab(pg, "rutinas"); abrir_rutina(pg, "a")
     assert "press de pecho" in pg.inner_text("#rs-chart-title").lower()
     assert pg.locator("#rs-chart svg .pt").count() == 4 and pg.locator("#rs-chart svg .rs-line").count() == 1
     assert pg.locator("#rs-chart svg .pt.pr").count() == 2, "récords: 2.º y 4.º entreno (el 3.º solo iguala)"
-    ys = pg.eval_on_selector_all("#rs-chart svg .pt circle:not(.hit)", "els => els.map(e => +e.getAttribute('cy'))")
-    xs = pg.eval_on_selector_all("#rs-chart svg .pt circle:not(.hit)", "els => els.map(e => +e.getAttribute('cx'))")
+    ys = pg.eval_on_selector_all("#rs-chart svg .pt .hit", "els => els.map(e => +e.getAttribute('cy'))")
+    xs = pg.eval_on_selector_all("#rs-chart svg .pt .hit", "els => els.map(e => +e.getAttribute('cx'))")
+    assert pg.locator("#rs-chart svg circle:not(.hit)").count() == 0, "la gráfica es solo línea: sin puntos visibles"
+    assert pg.locator("#rs-chart svg .mark").count() == 1, "una guía vertical marca el entreno elegido"
     assert xs == sorted(xs) and len(set(xs)) == 4, xs
     assert ys[3] == min(ys) and ys[0] == max(ys), ys          # el mejor, arriba; el peor, abajo
     assert pg.locator("#rs-chart .rs-y").count() >= 3 and pg.locator("#rs-chart .rs-x").count() >= 2, "ejes con etiquetas"
@@ -1859,7 +1861,7 @@ def progreso_cambia_de_metrica_y_de_ejercicio(pg):
     assert pg.get_attribute('[data-rs-ex="1"]', "aria-pressed") == "true" and pg.get_attribute('[data-rs-ex="0"]', "aria-pressed") == "false"
 
 @test
-def progreso_con_un_solo_entreno_dibuja_el_punto_sin_linea(pg):
+def progreso_con_un_solo_entreno_dibuja_solo_la_guia_sin_linea(pg):
     seed(pg, sessions=[psess("s1", "2026-10-01", pset("Press de pecho", 60, 5))]); tab(pg, "rutinas"); abrir_rutina(pg, "a")
     assert pg.locator("#rs-chart svg .pt").count() == 1 and pg.locator("#rs-chart svg .rs-line").count() == 0
     assert pg.locator("#rs-chart svg .pt.pr").count() == 0, "el primero no es récord: no hay nada que batir"

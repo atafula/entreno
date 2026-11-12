@@ -561,9 +561,8 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; }
 .rs-y, .rs-x { fill: var(--muted); font: 700 10px var(--ui); }
 .rs-line { fill: none; stroke: var(--fire); stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; }
 .pt { cursor: pointer; }
-.pt circle:not(.hit) { fill: var(--surface); stroke: var(--fire); stroke-width: 2.5; }
-.pt.pr circle:not(.hit) { fill: var(--fire); }
-.pt.sel circle:not(.hit) { stroke: var(--text); stroke-width: 3; }
+.pt .mark { stroke: var(--fire-2); stroke-width: 2; stroke-linecap: round; opacity: .55; }
+.pt.pr .mark { opacity: 1; }
 .pt .hit { fill: transparent; stroke: none; }
 .rs-read { min-height: 26px; margin-top: var(--s3); font: 600 var(--t-lg)/1.2 var(--display); }
 .rs-read b { font-weight: 600; }
