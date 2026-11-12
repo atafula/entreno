@@ -1,6 +1,6 @@
 # Forjado (PWA)
 
-App web instalable en iPhone para registrar entrenos, rutinas y caminatas. Estilo "papel": tipografía Fraunces y Manrope, esquinas redondeadas y acento naranja. El tema oscuro cálido es el predeterminado y el claro (crema) es la variante. Cuenta atrás del día, calendario de días entrenados y frases sin piedad.
+App web instalable en iPhone para registrar entrenos, rutinas y caminatas. Estilo "papel": tipografía Fraunces y Manrope, esquinas redondeadas y un solo tema, oscuro cálido con acento terracota. Racha semanal, cifras de la semana, siguiente rutina sugerida, calendario de días entrenados y frases sin piedad.
 
 ## Instalar en el iPhone
 
@@ -10,7 +10,8 @@ App web instalable en iPhone para registrar entrenos, rutinas y caminatas. Estil
 
 ## Notas
 
-- Tema: botón de ajustes de la cabecera → Apariencia: Automático, Claro u Oscuro (se guarda en el móvil).
+- Tema: solo oscuro (no hay selector).
+- Rutinas: «Te toca» destaca la que más tiempo lleva sin hacerse; el resto se empiezan con ▶. Editar, Duplicar y Borrar van en el menú ⋯ de cada tarjeta.
 - Los datos se guardan en el propio iPhone (localStorage). Si borras los datos de Safari, se pierden.
 - El GPS solo cuenta con la app abierta: iOS no permite ubicación en segundo plano a las webs.
 - Al cambiar archivos, sube la versión de `CACHE` en `sw.js` para forzar la actualización.
@@ -33,7 +34,7 @@ La app funciona sin wifi ni datos. El service worker (`sw.js`) guarda el código
 - Las librerías de Firebase se guardan si se puede; si fallan, no impiden instalar (la sincronización solo funciona con conexión).
 - Las fotos de los ejercicios (de un servidor externo) se guardan al verlas por primera vez, hasta 250, en una caché aparte que no se borra al subir de versión. Para poder guardarlas se piden con CORS; si el servidor no lo permite, se muestran igual pero no quedan disponibles sin red.
 - Fuentes autoalojadas: Fraunces y Manrope (licencia SIL OFL 1.1, ver `fonts/`).
-- Iconos en `icons/`: una «F» clara inclinada con una línea azul debajo, sobre el azul marino de la app (`--bg`). Fuente en `icons/icon.svg`; los PNG se generan con `rsvg-convert` (el «maskable» con el dibujo al 85 %).
+- Iconos en `icons/`: una «F» clara inclinada con una línea terracota debajo, sobre el fondo casi negro de la app (`--bg`). Fuente en `icons/icon.svg`; los PNG se generan con `rsvg-convert` (el «maskable» con el dibujo al 85 %).
 
 ## Funciones
 

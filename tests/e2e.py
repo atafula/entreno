@@ -46,7 +46,9 @@ def tab(pg, name): pg.click(f'[data-tab="tab-{name}"]')
 def db(pg): return pg.evaluate("JSON.parse(localStorage['entreno-v1'])")
 def abrir_rutina(pg, id): pg.click(f'[data-open-routine="{id}"]'); pg.wait_for_timeout(100)
 def empezar(pg, id): pg.click(f'#routines-list [data-start-routine="{id}"]')
-def editar_rutina(pg, id): pg.click(f'#routines-list [data-edit-routine="{id}"]')
+def editar_rutina(pg, id):
+    pg.click(f'#routines-list [data-routine-menu="{id}"]'); pg.wait_for_timeout(120)
+    pg.click(f'#routines-list [data-edit-routine="{id}"]')
 EXTRAS = ["Curl", "Remo", "Fondos", "Elevaciones", "Sentadilla", "Press"]  # búsquedas distintas, nombres distintos
 def anadir_del_selector(pg, buscar):
     """Entreno o entreno libre: «+ Añadir ejercicio» abre el mismo selector que el editor de rutinas."""
@@ -440,7 +442,7 @@ def ajustes_botones_y_secciones_con_separacion(pg):
     for a, b in [("#backup-export", "#backup-import"), ("#backup-import", "#backup-csv")]:
         gap = box(b)["y"] - (box(a)["y"] + box(a)["height"])
         assert gap >= 6, f"{a} y {b} están pegados ({gap}px)"
-    for nota, sig in [(".sec .note >> nth=0", "#backup-sec h4"), ("#backup-sec .note", "#account-sec h4")]:
+    for nota, sig in [("#backup-sec .note", "#account-sec h4")]:
         gap = box(sig)["y"] - (box(nota)["y"] + box(nota)["height"])
         assert gap >= 16, f"falta aire entre secciones antes de {sig} ({gap}px)"
 
@@ -487,14 +489,63 @@ def entreno_anterior_largo_cabe_en_su_columna(pg):
     assert r["textL"] >= r["colL"] - 0.5 and r["textR"] <= r["nextL"] - 4, f"el texto de ANTERIOR se sale de su columna: {r}"
 
 @test
+def rutinas_te_toca_destaca_la_que_mas_tiempo_lleva_sin_hacerse(pg):
+    seed(pg); tab(pg, "rutinas")
+    feat = pg.locator("#routines-list .routine.feat")
+    assert feat.count() == 1 and "PULL" in feat.inner_text(), "PUSH se hizo; PULL está sin estrenar"
+    assert pg.locator("#routines-list .routine").count() == 2, "las demás van debajo, sin repetir la destacada"
+    t = [x.strip() for x in pg.locator("#routines-list .rsec").all_inner_texts()]
+    assert t == ["Te toca", "Todas"], t
+    assert feat.locator(".fx li").count() == 1 and "Remo" in feat.locator(".fx").inner_text() and "1 × 10" in feat.locator(".fx").inner_text()
+    seed(pg, routines=ROUTINES[:1]); tab(pg, "rutinas")
+    assert pg.locator("#routines-list .rsec").count() == 1, "con una sola rutina no hace falta «Todas»"
+
+@test
+def rutinas_destacada_resume_ejercicios_y_cuantos_quedan(pg):
+    largo = [{"id": "z", "name": "LARGA", "exercises": [{"name": f"Ej {i}", "sets": [{"w": False, "kg": 10, "reps": 8}] * 3} for i in range(6)]}]
+    seed(pg, routines=largo, sessions=[]); tab(pg, "rutinas")
+    feat = pg.locator("#routines-list .routine.feat")
+    assert feat.locator(".fx li:not(.m)").count() == 3
+    assert "+3 ejercicios más" in feat.inner_text()
+    assert "18" in feat.locator(".meta").inner_text() and "6" in feat.locator(".meta").inner_text()
+
+@test
+def rutinas_menu_tres_puntos_editar_duplicar_y_borrar(pg):
+    seed(pg); tab(pg, "rutinas")
+    assert pg.locator("#routines-list [data-edit-routine]:visible").count() == 0, "cerrado: no se ven las acciones"
+    pg.click('#routines-list [data-routine-menu="a"]'); pg.wait_for_timeout(120)
+    assert [t.strip() for t in pg.locator("#routines-list .entry-menu button").all_inner_texts()] == ["Editar", "Duplicar", "Borrar"]
+    pg.click("#routines-list h3, #routines-list .rsec >> nth=0"); pg.wait_for_timeout(120)
+    assert pg.locator("#routines-list .entry-menu").count() == 0, "tocar fuera lo cierra"
+    pg.click('#routines-list [data-routine-menu="a"]'); pg.click('#routines-list [data-dup-routine="a"]'); pg.wait_for_timeout(200)
+    nombres = [r["name"] for r in db(pg)["routines"]]
+    assert nombres == ["PUSH", "PUSH (copia)", "PULL"], nombres
+    copia = db(pg)["routines"][1]
+    assert copia["id"] != "a" and copia["exercises"] == db(pg)["routines"][0]["exercises"]
+    pg.click('#routines-list [data-routine-menu="a"]'); pg.click('#routines-list [data-del-routine="a"]')
+    assert pg.inner_text('#routines-list [data-del-routine="a"]').strip() == "¿Seguro?", "pide un segundo toque"
+    assert len(db(pg)["routines"]) == 3
+    pg.click('#routines-list [data-del-routine="a"]'); pg.wait_for_timeout(200)
+    assert [r["name"] for r in db(pg)["routines"]] == ["PUSH (copia)", "PULL"]
+
+@test
+def rutinas_accesos_rapidos_en_dos_columnas(pg):
+    seed(pg); tab(pg, "rutinas")
+    pg.wait_for_timeout(450)   # la pestaña entra con una animación corta
+    a, b = pg.locator("#new-routine").bounding_box(), pg.locator("#free-workout").bounding_box()
+    assert abs(a["y"] - b["y"]) < 2 and a["x"] < b["x"] and abs(a["width"] - b["width"]) < 2, (a, b)
+    assert pg.inner_text("#new-routine").strip() == "Crear rutina" and pg.inner_text("#free-workout").strip() == "Entreno libre"
+
+@test
 def rutinas_vienen_compactas_con_resumen(pg):
     seed(pg); tab(pg, "rutinas")
-    card = pg.locator(".routine").first
+    card = pg.locator("#routines-list .routine.mini").first
     txt = card.inner_text().lower()
     assert "2 ejercicios" in txt and "4 series" in txt, txt
     assert pg.locator("#routines-list .rex").count() == 0, "los ejercicios van en la pantalla de detalle"
-    assert card.bounding_box()["height"] <= 190, f"tarjeta demasiado alta: {card.bounding_box()['height']}px"
-    assert [t.strip() for t in card.locator(".btn").all_inner_texts()] == ["Comenzar", "Editar"], "COMENZAR primero, y sin BORRAR (está en el editor)"
+    assert card.bounding_box()["height"] <= 150, f"tarjeta demasiado alta: {card.bounding_box()['height']}px"
+    assert card.locator(".btn").count() == 0 and card.locator(".play").count() == 1, "un solo botón: el play"
+    assert card.locator(".play").get_attribute("aria-label") == "Comenzar PUSH"
 
 @test
 def rutinas_borrar_confirmacion_cabe_en_el_boton(pg):
@@ -729,11 +780,11 @@ def la_app_se_llama_forjado(pg):
     assert m["name"] == "Forjado" and m["short_name"] == "Forjado"
 
 @test
-def icono_es_la_f_inclinada_sobre_azul_marino(pg):
+def icono_es_la_f_inclinada_sobre_fondo_calido_y_linea_terracota(pg):
     import math
     from PIL import Image
     cerca = lambda a, b: all(abs(x - y) <= 14 for x, y in zip(a, b))
-    FONDO, AZUL, CLARO = (12, 13, 16), (74, 99, 147), (232, 235, 241)   # --bg, --fire, --text (oscuro y poco saturado)
+    FONDO, ACENTO, CLARO = (15, 13, 12), (208, 135, 92), (243, 237, 232)   # --bg, --fire, --text
     inclina = lambda x, y: (x - math.tan(math.radians(12)) * (y - 70), y)  # skewX(-12) alrededor del centro
     for nombre, tam, k in [("apple-touch-icon", 180, 1), ("icon-192", 192, 1), ("icon-512", 512, 1), ("icon-maskable-512", 512, .85)]:
         im = Image.open(os.path.join(ROOT, "icons", nombre + ".png")).convert("RGB")
@@ -741,17 +792,17 @@ def icono_es_la_f_inclinada_sobre_azul_marino(pg):
             if f: x, y = inclina(x, y)
             x, y = 70 + (x - 70) * k, 70 + (y - 70) * k
             return im.getpixel((round(x / 140 * tam), round(y / 140 * tam)))
-        assert cerca(p(1, 1), FONDO), f"{nombre}: el fondo es el azul marino de la app, a sangre: {p(1, 1)}"
+        assert cerca(p(1, 1), FONDO), f"{nombre}: el fondo es el casi negro cálido de la app: {p(1, 1)}"
         assert cerca(p(53, 95, True), CLARO), f"{nombre}: el palo de la F es claro: {p(53, 95, True)}"
         assert cerca(p(85, 42, True), CLARO), f"{nombre}: el brazo de arriba es claro: {p(85, 42, True)}"
         assert cerca(p(85, 70, True), CLARO), f"{nombre}: el brazo de en medio es claro: {p(85, 70, True)}"
         assert cerca(p(85, 56, True), FONDO), f"{nombre}: entre los brazos se ve el fondo: {p(85, 56, True)}"
-        assert cerca(p(60, 115), AZUL), f"{nombre}: la línea azul bajo la F: {p(60, 115)}"
+        assert cerca(p(60, 115), ACENTO), f"{nombre}: la línea terracota bajo la F: {p(60, 115)}"
     fav = Image.open(os.path.join(ROOT, "icons", "favicon.png")).convert("RGB")
-    assert cerca(fav.getpixel((1, 1)), FONDO), "el favicon también es azul marino"
+    assert cerca(fav.getpixel((1, 1)), FONDO), "el favicon también lleva el fondo de la app"
     m = json.loads(open(os.path.join(ROOT, "manifest.webmanifest")).read())
-    assert m["background_color"].lower() == "#0c0d10" and m["theme_color"].lower() == "#0c0d10", "el color del manifiesto es el del icono"
-    assert 'content="#0c0d10"' in open(os.path.join(ROOT, "index.html"), encoding="utf-8").read()
+    assert m["background_color"].lower() == "#0f0d0c" and m["theme_color"].lower() == "#0f0d0c", "el color del manifiesto es el del icono"
+    assert 'content="#0f0d0c"' in open(os.path.join(ROOT, "index.html"), encoding="utf-8").read()
 
 @test
 def copia_restaurar_acepta_copias_antiguas_de_entreno(pg):
@@ -1704,12 +1755,14 @@ def rutina_tocar_la_tarjeta_abre_el_detalle_con_ejercicios(pg):
     abrir_rutina(pg, "a"); pg.keyboard.press("Escape"); pg.wait_for_timeout(100); assert not pg.is_visible("#rscreen")
 
 @test
-def rutina_botones_en_la_tarjeta_comenzar_primero_y_a_la_izquierda(pg):
+def rutina_destacada_tiene_un_solo_boton_comenzar_a_todo_el_ancho(pg):
     seed(pg); tab(pg, "rutinas")
     pg.wait_for_timeout(450)   # la lista entra con una animación corta
-    c, e = pg.locator('[data-start-routine="a"]').bounding_box(), pg.locator('[data-edit-routine="a"]').bounding_box()
-    assert c["x"] < e["x"] and abs(c["y"] - e["y"]) < 2, (c, e)
-    assert c["width"] > e["width"], "COMENZAR es el principal"
+    card = pg.locator("#routines-list .routine.feat")
+    assert card.count() == 1 and "PULL" in card.inner_text()
+    c, k = card.locator('[data-start-routine="b"]').bounding_box(), card.bounding_box()
+    assert c["width"] > k["width"] * .8, "COMENZAR ocupa el ancho"
+    assert card.locator(".btn").count() == 1, "sin botón Editar suelto: va en el menú"
     empezar(pg, "a"); assert pg.is_visible("#workout") and "PUSH" in pg.inner_text("#wk-in .wk-title").upper()
 
 @test
@@ -1824,6 +1877,34 @@ def historial_con_tres_ejercicios_o_menos_no_dice_mas_ejercicios(pg):
     assert "más" not in t and "detalle" in t, t
 
 @test
+def rutina_editor_barra_con_volver_y_guardar_arriba(pg):
+    seed(pg); tab(pg, "rutinas"); editar_rutina(pg, "a"); pg.wait_for_timeout(450)
+    v, g = pg.locator("#editor-cancel").bounding_box(), pg.locator("#routine-save-top").bounding_box()
+    assert abs((v["y"] + v["height"] / 2) - (g["y"] + g["height"] / 2)) < 2 and v["x"] < g["x"], (v, g)
+    assert pg.get_attribute("#editor-cancel", "aria-label") == "Volver" and pg.inner_text("#routine-save-top").strip() == "Guardar"
+    pg.fill("#routine-name", "EMPUJE"); pg.click("#routine-save-top"); pg.wait_for_timeout(300)
+    assert db(pg)["routines"][0]["name"] == "EMPUJE" and not pg.is_visible("#editor-card"), "guarda y cierra"
+
+@test
+def rutina_editor_nombre_grande_y_resumen(pg):
+    seed(pg); tab(pg, "rutinas"); editar_rutina(pg, "a"); pg.wait_for_timeout(450)
+    assert "Fraunces" in _rgb(pg, "#routine-name", "fontFamily") and float(_rgb(pg, "#routine-name", "fontSize").replace("px", "")) >= 28
+    assert pg.inner_text("#editor-hint").startswith("2 ejercicios · 4 series"), pg.inner_text("#editor-hint")
+    pg.click('#routine-exercises [data-act="addset"] >> nth=0'); pg.wait_for_timeout(150)
+    assert pg.inner_text("#editor-hint").startswith("2 ejercicios · 5 series"), pg.inner_text("#editor-hint")
+
+@test
+def rutina_editor_cada_ejercicio_es_una_tarjeta(pg):
+    seed(pg); tab(pg, "rutinas"); editar_rutina(pg, "a"); pg.wait_for_timeout(450)
+    bloques = pg.locator("#routine-exercises .exblock")
+    assert bloques.count() == 2
+    sup = pg.evaluate("getComputedStyle(document.documentElement).getPropertyValue('--surface').trim()")
+    for i in range(2):
+        cs = pg.evaluate("i => { const c = getComputedStyle(document.querySelectorAll('#routine-exercises .exblock')[i]); return [c.backgroundColor, c.borderTopLeftRadius]; }", i)
+        assert _contraste(cs[0], sup) < 1.05 and float(cs[1].replace("px", "")) >= 16, cs
+    assert _rgb(pg, "#editor-card", "backgroundColor") in ("rgba(0, 0, 0, 0)", "transparent"), "el editor es la página, sin caja alrededor"
+
+@test
 def rutina_borrar_no_se_pega_a_guardar(pg):
     seed(pg); tab(pg, "rutinas"); editar_rutina(pg, "a"); pg.wait_for_timeout(450)  # fin de la animación de entrada
     g, d = pg.locator("#routine-save").bounding_box(), pg.locator("#routine-delete").bounding_box()
@@ -1929,7 +2010,8 @@ def rutina_editor_mantener_cierra_series_y_permite_mover(pg):
     pg.mouse.move(x, y); pg.mouse.down(); pg.wait_for_timeout(700)
     assert "is-collapsed" in bloques.nth(0).get_attribute("class"), "al mantener, las series se cierran"
     assert "is-collapsed" in bloques.nth(1).get_attribute("class"), "al mantener, se compactan todos los ejercicios"
-    assert bloques.nth(0).evaluate("el => getComputedStyle(el).boxShadow") == "none", "sin borde azul al mover"
+    sombra = bloques.nth(0).evaluate("el => getComputedStyle(el).boxShadow")
+    assert "208, 135, 92" not in sombra and "74, 99, 147" not in sombra, f"sin borde de color al mover: {sombra}"
     assert pg.locator("#routine-exercises .excol-n").count() == 0, "sin texto de series al compactar"
     b0 = bloques.nth(0).bounding_box(); b1 = bloques.nth(1).bounding_box()
     dy = (b1["y"] + b1["height"] / 2) - (b0["y"] + b0["height"] / 2) + 12
@@ -2090,23 +2172,23 @@ def _var(pg, n): return pg.evaluate("n => getComputedStyle(document.documentElem
 def tema_oscuro_por_defecto(pg):
     seed(pg)
     pg.evaluate("localStorage.removeItem('entreno-tema')"); pg.reload(); pg.wait_for_timeout(300)
-    assert pg.evaluate("document.documentElement.dataset.theme") == "dark", "sin tema guardado, arranca en oscuro"
+    assert pg.evaluate("document.documentElement.dataset.theme") == "dark", "arranca en oscuro"
     bg = _rgb(pg, "body", "backgroundColor")
     assert _lum(bg) < .03, f"fondo oscuro: {bg}"
     assert bg != "rgb(0, 0, 0)" and _rgb(pg, "body", "color") != "rgb(255, 255, 255)", "ni negro ni blanco puros"
     meta = pg.get_attribute('meta[name="theme-color"]', "content")
     assert _contraste(meta, bg) < 1.02, f"la barra de estado tiene el color del fondo: {meta} / {bg}"
-    pg.click("#settings-btn"); pg.wait_for_timeout(300)
-    assert pg.get_attribute('[data-tema="dark"]', "aria-pressed") == "true"
     m = json.loads(open(os.path.join(ROOT, "manifest.webmanifest")).read())
     assert _lum(m["background_color"]) < .03, "la pantalla de arranque también es oscura"
 
 @test
-def tema_claro_colores_papel(pg):
+def tema_unico_oscuro_aunque_hubiera_claro_guardado(pg):
     seed(pg); _tema(pg, "light")
-    assert pg.evaluate("document.documentElement.dataset.theme") == "light"
-    assert _rgb(pg, "body", "backgroundColor") == "rgb(238, 242, 249)", _rgb(pg, "body", "backgroundColor")
-    assert _rgb(pg, ".card", "backgroundColor") == "rgb(255, 255, 255)", _rgb(pg, ".card", "backgroundColor")
+    assert pg.evaluate("document.documentElement.dataset.theme") == "dark", "ya no hay tema claro"
+    assert _lum(_rgb(pg, "body", "backgroundColor")) < .03, _rgb(pg, "body", "backgroundColor")
+    _tema(pg, "auto"); pg.emulate_media(color_scheme="light"); pg.wait_for_timeout(200)
+    assert _lum(_rgb(pg, "body", "backgroundColor")) < .03, "ni siquiera con el iPhone en modo claro"
+    assert pg.get_attribute('meta[name="theme-color"]', "content").lower() == "#0f0d0c"
 
 def _hue(c):
     import colorsys
@@ -2118,17 +2200,17 @@ def _rgb_t(c):
     return tuple(int(x) for x in re.findall(r"\d+", c)[:3])
 
 @test
-def azul_oscuro_fondo_azul_noche_y_acento_azul(pg):
+def terracota_fondo_calido_y_acento_terracota(pg):
     seed(pg)
-    assert _var(pg, "--bg").lower() == "#0c0d10", _var(pg, "--bg")
+    assert _var(pg, "--bg").lower() == "#0f0d0c", _var(pg, "--bg")
     for n in ["--bg", "--surface", "--surface-2", "--surface-3"]:
         h = _hue("rgb(%d,%d,%d)" % tuple(int(_var(pg, n).lstrip("#")[i:i + 2], 16) for i in (0, 2, 4)))
-        assert 205 <= h <= 235, f"{n} es azul, no marrón: tono {h:.0f}"
-    assert _var(pg, "--fire").lower() == "#4a6393", _var(pg, "--fire")
-    assert _var(pg, "--on-fire").lower() == "#ffffff"
-    pg.click('[data-tab="tab-rutinas"]') if False else tab(pg, "rutinas")
+        assert 0 <= h <= 40, f"{n} es cálido, no azul: tono {h:.0f}"
+    assert _var(pg, "--fire").lower() == "#d0875c", _var(pg, "--fire")
+    assert _var(pg, "--on-fire").lower() == "#1a0f09"
+    tab(pg, "rutinas")
     b = _rgb(pg, "[data-start-routine]", "backgroundColor")
-    assert 210 <= _hue(b) <= 230, f"el botón Comenzar es azul: {b}"
+    assert 15 <= _hue(b) <= 30, f"el botón Comenzar es terracota: {b}"
 
 @test
 def azul_fondo_liso_sin_degradado_ni_difuminado(pg):
@@ -2138,19 +2220,14 @@ def azul_fondo_liso_sin_degradado_ni_difuminado(pg):
         assert img == "none", f"{sel}: el fondo es liso, sin degradado: {img}"
     assert pg.evaluate("getComputedStyle(document.body, '::before').backgroundImage") in ("none", ""), "sin brillo detrás"
 
-@test
-def azul_claro_fondo_azulado_y_acento_azul(pg):
-    seed(pg); _tema(pg, "light")
-    assert _var(pg, "--fire").lower() == "#2563eb", _var(pg, "--fire")
-    assert _var(pg, "--fire-text").lower() == "#1d4ed8"
-    assert _contraste(_rgb(pg, "body", "color"), _rgb(pg, "body", "backgroundColor")) >= 7
+
 
 @test
-def azul_barra_de_estado_y_manifest_azul_noche(pg):
+def terracota_barra_de_estado_y_manifest_oscuros(pg):
     seed(pg)
-    assert pg.get_attribute('meta[name="theme-color"]', "content").lower() == "#0c0d10"
+    assert pg.get_attribute('meta[name="theme-color"]', "content").lower() == "#0f0d0c"
     m = json.loads(open(os.path.join(ROOT, "manifest.webmanifest")).read())
-    assert m["background_color"].lower() == "#0c0d10" and m["theme_color"].lower() == "#0c0d10", m
+    assert m["background_color"].lower() == "#0f0d0c" and m["theme_color"].lower() == "#0f0d0c", m
 
 @test
 def diseno_tokens_de_espaciado_radios_texto_y_movimiento(pg):
@@ -2165,18 +2242,16 @@ def diseno_tokens_de_espaciado_radios_texto_y_movimiento(pg):
         ms = float(_var(pg, n).replace("ms", "")); assert 150 <= ms <= 350, f"{n} = {ms} ms: entre 150 y 350"
 
 @test
-def diseno_contraste_aa_en_oscuro_y_claro(pg):
+def diseno_contraste_aa(pg):
     seed(pg)
-    for t in ["dark", "light"]:
-        _tema(pg, t)
-        v = lambda n: _var(pg, n)
-        pares = [("--text", "--bg"), ("--text", "--surface"), ("--text", "--surface-2"), ("--text-2", "--surface"),
-                 ("--muted", "--bg"), ("--muted", "--surface"), ("--muted", "--surface-2"),
-                 ("--fire-text", "--bg"), ("--fire-text", "--surface"), ("--fire-text", "--surface-2"),
-                 ("--on-fire", "--fire"), ("--acid-text", "--surface"), ("--acid-text", "--bg"), ("--warn-text", "--surface"), ("--on-acid", "--acid")]
-        for a, b in pares:
-            c = _contraste(v(a), v(b))
-            assert c >= 4.5, f"{t}: {a} sobre {b} = {c:.2f} (mínimo 4.5)"
+    v = lambda n: _var(pg, n)
+    pares = [("--text", "--bg"), ("--text", "--surface"), ("--text", "--surface-2"), ("--text-2", "--surface"),
+             ("--muted", "--bg"), ("--muted", "--surface"), ("--muted", "--surface-2"),
+             ("--fire-text", "--bg"), ("--fire-text", "--surface"), ("--fire-text", "--surface-2"),
+             ("--on-fire", "--fire"), ("--acid-text", "--surface"), ("--acid-text", "--bg"), ("--warn-text", "--surface"), ("--on-acid", "--acid")]
+    for a, b in pares:
+        c = _contraste(v(a), v(b))
+        assert c >= 4.5, f"{a} sobre {b} = {c:.2f} (mínimo 4.5)"
 
 @test
 def diseno_hoja_de_estilos_sin_valores_sueltos(pg):
@@ -2189,6 +2264,78 @@ def diseno_hoja_de_estilos_sin_valores_sueltos(pg):
     assert "clip-path: polygon" not in cuerpo and "skewX" not in cuerpo, "restos del estilo antiguo"
     assert re.search(r"\.btn:active[^{]*\{[^}]*scale\(\.97\)", css), "feedback al pulsar: escala 0.97"
     assert "font-display:swap" in open(os.path.join(ROOT, "fonts", "fonts.css")).read().replace(" ", "")
+
+# ---------- Hoy rediseñado: anillo de racha, semana L-D, cifras, siguiente rutina ----------
+def lunes(pg, k=0):
+    """Fecha local del lunes de esta semana + k días."""
+    return pg.evaluate("k => { const t = new Date(); t.setHours(12, 0, 0, 0); t.setDate(t.getDate() - (t.getDay() + 6) % 7 + k); return localDate(t); }", k)
+def ses(fecha, id, rutina="PUSH", sets=None):
+    return {"id": id, "date": fecha, "routine": rutina, "ts": 1, "sets": sets or [{"exercise": "Press de pecho", "reps": 10, "kg": 50, "w": False}]}
+
+@test
+def hoy_anillo_muestra_la_racha_en_semanas(pg):
+    pg.goto(URL)
+    seed(pg, sessions=[ses(off(pg, -7), "a"), ses(off(pg, 0), "b")])
+    assert pg.inner_text("#hero-ring-n") == "2"
+    assert "semanas" in pg.inner_text("#hero-ring").lower()
+    assert pg.inner_text("#hero-title") == "Racha de 2 semanas."
+    seed(pg, sessions=[ses(off(pg, 0), "b")])
+    assert pg.inner_text("#hero-title") == "Racha de 1 semana."
+    seed(pg, sessions=[], walks=[])
+    assert pg.inner_text("#hero-ring-n") == "0" and pg.inner_text("#hero-title") == "Empieza tu racha."
+
+@test
+def hoy_anillo_se_llena_con_los_dias_de_esta_semana(pg):
+    pg.goto(URL)
+    hoy = pg.evaluate("(new Date().getDay() + 6) % 7")
+    dias = sorted({0, hoy})
+    seed(pg, sessions=[ses(lunes(pg, d), f"s{d}") for d in dias])
+    p = float(pg.get_attribute("#hero-ring", "data-p"))
+    assert abs(p - len(dias) / 7) < 1e-6, (p, dias)
+
+@test
+def hoy_semana_va_de_lunes_a_domingo(pg):
+    seed(pg)
+    etiquetas = pg.evaluate("[...document.querySelectorAll('#week .day')].map(d => d.firstChild.textContent.trim())")
+    assert etiquetas == ["L", "M", "X", "J", "V", "S", "D"], etiquetas
+    hoy = pg.evaluate("(new Date().getDay() + 6) % 7")
+    clases = pg.evaluate("[...document.querySelectorAll('#week .day')].map(d => d.className)")
+    assert "today" in clases[hoy] and sum("today" in c for c in clases) == 1, clases
+    assert all("fut" in c for c in clases[hoy + 1:]) and not any("fut" in c for c in clases[:hoy + 1]), clases
+
+@test
+def hoy_cifras_de_esta_semana_comparadas_con_la_anterior(pg):
+    pg.goto(URL)
+    sets = [{"exercise": "Press de pecho", "reps": 10, "kg": 100, "w": False}]   # 1.000 kg por sesión
+    seed(pg, sessions=[ses(lunes(pg, 0), "a", sets=sets), ses(lunes(pg, -7), "b", sets=sets), ses(lunes(pg, -6), "c", sets=sets)],
+         walks=[{"id": "w", "date": lunes(pg, 0), "seconds": 900, "meters": 2400, "ts": 1}])
+    tiles = pg.locator("#wk-sum .st")
+    assert tiles.count() == 3
+    t = [x.strip() for x in tiles.all_inner_texts()]
+    assert t[0].startswith("1") and "entreno" in t[0] and "-1" in t[0], t[0]
+    assert "1.000" in t[1] and "kg" in t[1] and "-50%" in t[1], t[1]
+    assert "2,4" in t[2] and "km" in t[2] and "1 día" in t[2], t[2]
+
+@test
+def hoy_siguiente_rutina_es_la_que_mas_tiempo_lleva_sin_hacerse(pg):
+    pg.goto(URL)
+    seed(pg, sessions=[ses(off(pg, -1), "a", "PUSH"), ses(off(pg, -5), "b", "PULL")])
+    assert pg.is_visible("#next-routine")
+    assert "PULL" in pg.inner_text("#next-routine")
+    assert pg.locator('#next-routine [data-start-next="b"]').count() == 1
+    seed(pg, sessions=[ses(off(pg, -1), "a", "PUSH")])
+    assert "PULL" in pg.inner_text("#next-routine"), "una rutina sin estrenar va antes"
+    pg.click('#next-routine [data-start-next]'); pg.wait_for_timeout(500)
+    assert pg.is_visible("#workout") or pg.locator(".exblock").count() > 0, "el play empieza la rutina"
+    seed(pg, routines=[], sessions=[])
+    assert not pg.is_visible("#next-routine"), "sin rutinas no se muestra"
+
+@test
+def hoy_la_racha_va_en_el_anillo_y_no_en_la_cabecera(pg):
+    seed(pg)
+    assert not pg.is_visible("#streak"), "en Hoy la racha está en el anillo"
+    tab(pg, "rutinas"); pg.wait_for_timeout(200)
+    assert pg.is_visible("#streak"), "en las demás pestañas sigue arriba"
 
 # ---------- Fase 2: Hoy ----------
 @test
@@ -2372,12 +2519,10 @@ def hojas_el_foco_entra_en_la_hoja_y_vuelve_al_cerrar(pg):
     assert not pg.evaluate("document.body.classList.contains('sheet-open')")
 
 @test
-def ajustes_opciones_con_estado_accesible(pg):
+def ajustes_sin_selector_de_tema(pg):
     seed(pg); pg.click("#settings-btn"); pg.wait_for_timeout(450)
-    pg.click('[data-tema="light"]'); pg.wait_for_timeout(100)
-    assert pg.get_attribute('[data-tema="light"]', "aria-pressed") == "true" and pg.get_attribute('[data-tema="dark"]', "aria-pressed") == "false"
-    assert pg.evaluate("document.documentElement.dataset.theme") == "light"
-    assert pg.get_attribute('meta[name="theme-color"]', "content").lower() == "#eef2f9", "la barra de estado sigue al tema"
+    assert pg.locator("[data-tema]").count() == 0, "solo hay tema oscuro"
+    assert "Apariencia" not in pg.inner_text("#settings-sheet")
 
 @test
 def diseno_respeta_reduced_motion(pg):
@@ -2413,9 +2558,10 @@ def papel_fuentes_serif_y_manrope_cargadas(pg):
 @test
 def papel_textos_en_frase_no_en_mayusculas(pg):
     seed(pg); tab(pg, "rutinas")
-    assert pg.inner_text('#routines-list [data-start-routine="a"]').strip() == "Comenzar"
+    assert pg.inner_text('#routines-list [data-start-routine="b"]').strip() == "Comenzar"
+    pg.click('#routines-list [data-routine-menu="a"]'); pg.wait_for_timeout(120)
     assert pg.inner_text('#routines-list [data-edit-routine="a"]').strip() == "Editar"
-    assert pg.evaluate("getComputedStyle(document.querySelector('#routines-list [data-start-routine=\"a\"]')).textTransform") == "none"
+    assert pg.evaluate("getComputedStyle(document.querySelector('#routines-list [data-start-routine=\"b\"]')).textTransform") == "none"
     tab(pg, "hoy")
     assert pg.inner_text("#walk-start").strip() == "Empezar ya"
     assert pg.evaluate("getComputedStyle(document.querySelector('h1')).textTransform") == "none"

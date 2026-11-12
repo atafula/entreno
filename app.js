@@ -211,6 +211,8 @@ function render() {
   renderStreak();
   renderToday();
   renderWeek();
+  renderWeekSum();
+  renderNext();
   renderHistory();
   if (typeof rsRefresh === 'function') rsRefresh();
 }
@@ -243,10 +245,27 @@ function renderStreak() {
   lastStreak = n;
 }
 
+// Lunes (a mediodía, para no tropezar con los cambios de hora) de la semana de `d`, desplazado `k` semanas
+function lunesDe(d = new Date(), k = 0) {
+  const x = new Date(d); x.setHours(12, 0, 0, 0);
+  x.setDate(x.getDate() - (x.getDay() + 6) % 7 + 7 * k);
+  return x;
+}
+const masDias = (d, k) => { const x = new Date(d); x.setDate(x.getDate() + k); return x; };
 function renderToday() {
-  const done = activeDays().has(localDate());
+  const days = activeDays(), done = days.has(localDate());
   $('hero').classList.toggle('done', done);
   $('today-status').textContent = done ? 'Hoy cumpliste.' : 'Hoy no has hecho nada.';
+  // Anillo: la racha de semanas en el centro; el arco se llena con los días entrenados de esta semana
+  const n = rachaSemanas(days), lun = lunesDe();
+  let dias = 0;
+  for (let i = 0; i < 7; i++) if (days.has(localDate(masDias(lun, i)))) dias++;
+  $('hero-ring-n').textContent = n;
+  $('hero-ring-u').textContent = n === 1 ? 'semana' : 'semanas';
+  $('hero-ring').dataset.p = String(dias / 7);
+  $('hero-ring').setAttribute('aria-label', `Racha de ${plural(n, 'semana', 'semanas')}; ${plural(dias, 'día', 'días')} entrenados esta semana`);
+  $('hero-ring-bar').style.strokeDasharray = `${dias / 7 * 100} 100`;
+  $('hero-title').textContent = n ? `Racha de ${plural(n, 'semana', 'semanas')}.` : 'Empieza tu racha.';
   const lbl = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
   $('today-label').textContent = lbl;
   tickClock();
@@ -281,19 +300,62 @@ function computePRs() {
 let prMap = {};
 
 const CHECK_ICO = '<svg viewBox="0 0 24 24" class="ico"><path d="M5 13l4 4L19 7"/></svg>';
+// La semana de lunes a domingo: los días que faltan por llegar se ven apagados
+const DIAS_SEMANA = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 function renderWeek() {
-  const days = activeDays();
-  const today = new Date();
-  const out = [];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(today);
-    d.setDate(today.getDate() - i);
-    const key = localDate(d), on = days.has(key);
-    const label = d.toLocaleDateString('es-ES', { weekday: 'narrow' }).toUpperCase();
-    out.push(`<div class="day${on ? ' on' : ''}${i === 0 ? ' today' : ''}" style="--i:${6 - i}">${label}<i>${on ? CHECK_ICO : d.getDate()}</i></div>`);
-  }
-  $('week').innerHTML = out.join('');
+  const days = activeDays(), hoy = localDate(), lun = lunesDe();
+  $('week').innerHTML = DIAS_SEMANA.map((label, i) => {
+    const d = masDias(lun, i), key = localDate(d), on = days.has(key), fut = key > hoy;
+    return `<div class="day${on ? ' on' : ''}${key === hoy ? ' today' : ''}${fut ? ' fut' : ''}" style="--i:${i}">${label}<i>${on ? CHECK_ICO : d.getDate()}</i></div>`;
+  }).join('');
 }
+
+// Cifras de esta semana (lunes a hoy) frente a la semana anterior entera
+const fmtMiles = n => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+function renderWeekSum() {
+  const ini = localDate(lunesDe()), iniAnt = localDate(lunesDe(new Date(), -1));
+  const enSemana = (d, a, b) => d >= a && d < b;
+  const ses = db.sessions.filter(s => enSemana(s.date, ini, '9999')), sesAnt = db.sessions.filter(s => enSemana(s.date, iniAnt, ini));
+  const vol = l => l.reduce((a, s) => a + s.sets.reduce((b, x) => b + (x.reps || 0) * (x.kg || 0), 0), 0);
+  const camina = db.walks.filter(w => enSemana(w.date, ini, '9999'));
+  const km = camina.reduce((a, w) => a + (w.meters || 0), 0) / 1000, diasCam = new Set(camina.map(w => w.date)).size;
+  const dif = (a, b, pct) => {
+    if (!b) return '<em>esta semana</em>';
+    const v = pct ? Math.round((a - b) / b * 100) : a - b;
+    return `<em class="${v > 0 ? 'up' : v < 0 ? 'down' : ''}">${v > 0 ? '+' : ''}${v}${pct ? '%' : ''} vs anterior</em>`;
+  };
+  const v = vol(ses), vAnt = vol(sesAnt);
+  $('wk-sum').innerHTML = `
+    <div class="st"><b>${ses.length}</b><span>${ses.length === 1 ? 'entreno' : 'entrenos'}</span>${dif(ses.length, sesAnt.length)}</div>
+    <div class="st"><b>${fmtMiles(v)}<small>kg</small></b><span>volumen</span>${dif(v, vAnt, true)}</div>
+    <div class="st"><b>${km.toLocaleString('es-ES', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}<small>km</small></b><span>caminado</span><em>${plural(diasCam, 'día', 'días')}</em></div>`;
+}
+
+// Siguiente rutina: la que más tiempo lleva sin hacerse (las que no se han estrenado, primero)
+function ultimaVez(r) {
+  return db.sessions.filter(s => String(s.routine).toLowerCase() === String(r.name).toLowerCase()).map(s => s.date).sort().pop() || '';
+}
+function siguienteRutina() {
+  let mejor = null, fecha = null;
+  db.routines.forEach(r => { const f = ultimaVez(r); if (mejor === null || f < fecha) { mejor = r; fecha = f; } });
+  return mejor;
+}
+const PLAY_ICO = '<svg viewBox="0 0 24 24" class="ico play-ico"><path d="M7 4.5v15l13-7.5z"/></svg>';
+function renderNext() {
+  const r = siguienteRutina(), box = $('next-routine');
+  box.hidden = !r;
+  if (!r) { box.innerHTML = ''; return; }
+  const sets = r.exercises.reduce((n, e) => n + e.sets.length, 0), last = ultimaVez(r), grupos = gruposRutina(r);
+  box.innerHTML = `
+    <div class="nx-l">
+      <p class="lab">Siguiente rutina</p>
+      <b class="nx-name">${esc(r.name)}</b>
+      <p class="nx-meta">${plural(r.exercises.length, 'ejercicio', 'ejercicios')} · ${plural(sets, 'serie', 'series')} · ${last ? whenText(last) : 'Sin estrenar'}</p>
+      ${grupos.length ? `<div class="rtags">${grupos.map(g => `<span>${esc(g)}</span>`).join('')}</div>` : ''}
+    </div>
+    <button type="button" class="play" data-start-next="${r.id}" aria-label="Comenzar ${esc(r.name)}">${PLAY_ICO}</button>`;
+}
+$('next-routine').onclick = e => { const b = e.target.closest('[data-start-next]'); if (b) startWorkout(b.dataset.startNext); };
 
 // Bolsa barajada: ninguna frase se repite hasta haberlas visto todas (se recuerda entre sesiones)
 const BAG_KEY = 'entreno-frases';
@@ -485,11 +547,16 @@ function renderEditor() {
   $('editor-card').hidden = !open;
   $('new-routine').hidden = open;
   $('free-workout').hidden = open;
+  $('quick').hidden = open;
   $('editor-cancel').hidden = !open;
   $('routines-list').hidden = open;
   $('routine-save').textContent = draft.id ? 'Guardar cambios' : 'Guardar rutina';
   const del = $('routine-delete'); clearTimeout(del._t); del.classList.remove('armed'); del.textContent = 'Borrar rutina'; del.hidden = !draft.id;
   $('routine-name').value = draft.name;
+  const nSeries = draft.exercises.reduce((n, e) => n + e.sets.length, 0);
+  $('editor-hint').textContent = draft.exercises.length
+    ? `${plural(draft.exercises.length, 'ejercicio', 'ejercicios')} · ${plural(nSeries, 'serie', 'series')} · mantén pulsado un ejercicio para moverlo`
+    : 'Añade ejercicios con el botón de abajo.';
   const box = $('routine-exercises');
   box.innerHTML = draft.exercises.map((ex, i) => exBlockHtml(ex, i, 'draft')).join('');
   if (expandirAlSoltar) { expandirAlSoltar = false; expandirConAnimacion(box); }
@@ -548,24 +615,51 @@ function gruposRutina(r) {
   return partes.slice(0, 4);
 }
 
-function renderRoutines() {
-  $('routines-list').innerHTML = db.routines.map(r => {
-    const sets = r.exercises.reduce((n, e) => n + e.sets.length, 0);
-    const last = db.sessions.filter(s => String(s.routine).toLowerCase() === String(r.name).toLowerCase()).map(s => s.date).sort().pop();
-    const grupos = gruposRutina(r);
-    return `
-    <div class="card routine">
+// Menú ⋯ de cada rutina: Editar, Duplicar y Borrar (con segundo toque para confirmar)
+let menuRutina = null;
+const rutinaMenu = id => menuRutina === id
+  ? `<div class="entry-menu" role="menu"><button type="button" role="menuitem" data-edit-routine="${id}">Editar</button><button type="button" role="menuitem" data-dup-routine="${id}">Duplicar</button><button type="button" role="menuitem" class="danger" data-del-routine="${id}">Borrar</button></div>` : '';
+const rutinaMenuBtn = id => `<button type="button" class="more-btn" data-routine-menu="${id}" aria-label="Más opciones" aria-expanded="${menuRutina === id}">${DOTS_ICO}</button>`;
+function rutinaCard(r, feat) {
+  const sets = r.exercises.reduce((n, e) => n + e.sets.length, 0), last = ultimaVez(r), grupos = gruposRutina(r);
+  const cuando = last ? whenText(last) : 'Sin estrenar';
+  const tags = grupos.length ? `<div class="rtags">${grupos.map(g => `<span>${esc(g)}</span>`).join('')}</div>` : '';
+  if (!feat) return `
+    <div class="card routine mini">
       <button type="button" class="rhead" data-open-routine="${r.id}" aria-label="Abrir ${esc(r.name)}">
-        <span class="rtitle"><b>${esc(r.name)}</b><small>${plural(r.exercises.length, 'ejercicio', 'ejercicios')} · ${plural(sets, 'serie', 'series')} · ${last ? whenText(last) : 'Sin estrenar'}</small></span>
-        <svg viewBox="0 0 24 24" class="ico chev"><path d="M9 5l7 7-7 7"/></svg>
+        <span class="rtitle"><b>${esc(r.name)}</b><small>${plural(r.exercises.length, 'ejercicio', 'ejercicios')} · ${plural(sets, 'serie', 'series')} · ${cuando}</small></span>
       </button>
-      ${grupos.length ? `<div class="rtags">${grupos.map(g => `<span>${esc(g)}</span>`).join('')}</div>` : ''}
-      <div class="ractions">
-        <button type="button" class="btn primary" data-start-routine="${r.id}">Comenzar</button>
-        <button type="button" class="btn" data-edit-routine="${r.id}">Editar</button>
-      </div>
+      ${rutinaMenuBtn(r.id)}
+      <button type="button" class="play" data-start-routine="${r.id}" aria-label="Comenzar ${esc(r.name)}">${PLAY_ICO}</button>
+      ${tags}${rutinaMenu(r.id)}
     </div>`;
-  }).join('') || emptyHtml('rutinas', 'Aún no tienes rutinas', 'Pulsa «Crear rutina» para montar la primera, o empieza un «Entreno libre» y añade ejercicios sobre la marcha.');
+  const reps = e => { const w = e.sets.filter(x => !x.w), x = w[0] || e.sets[0]; return x ? `${(w.length || e.sets.length)} × ${x.reps || '–'}` : ''; };
+  const resto = r.exercises.length - 3;
+  const min = Math.max(5, Math.round(sets * 2.5 / 5) * 5);   // unos 2,5 min por serie con su descanso
+  return `
+    <div class="card routine feat">
+      <div class="rtop"><span class="badge">Siguiente</span>${rutinaMenuBtn(r.id)}</div>
+      <button type="button" class="rhead" data-open-routine="${r.id}" aria-label="Abrir ${esc(r.name)}">
+        <span class="rtitle"><b>${esc(r.name)}</b><small>${last ? `Última vez: ${cuando}` : cuando}</small></span>
+      </button>
+      <div class="meta"><div><b>${r.exercises.length}</b><span>${r.exercises.length === 1 ? 'ejercicio' : 'ejercicios'}</span></div><div><b>${sets}</b><span>series</span></div>${sets ? `<div><b>~${min}</b><span>min</span></div>` : ''}</div>
+      ${tags}
+      ${r.exercises.length ? `<ul class="fx">${r.exercises.slice(0, 3).map(e => `<li>${fotoMini(e)}<span>${esc(e.name)}</span><em>${reps(e)}</em></li>`).join('')}${resto > 0 ? `<li class="m">+${plural(resto, 'ejercicio más', 'ejercicios más')}</li>` : ''}</ul>` : ''}
+      <button type="button" class="btn primary wide" data-start-routine="${r.id}">Comenzar</button>
+      ${rutinaMenu(r.id)}
+    </div>`;
+}
+// Miniatura del ejercicio (su foto si la tiene; si no, sus iniciales)
+function fotoMini(e) {
+  const src = e.image || (typeof sinAcentos === 'function' ? (fotoDeEjercicio(e.name) || {}).image : '') || '';   // sinAcentos llega con backup.js
+  const ini = esc(String(e.name || '?').split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase());
+  return `<i class="fxi">${src ? `<img src="${esc(src)}" alt="" loading="lazy"${CORS()}>` : ini}</i>`;
+}
+function renderRoutines() {
+  const sig = siguienteRutina(), resto = db.routines.filter(r => r !== sig);
+  $('routines-list').innerHTML = sig
+    ? `<p class="rsec">Te toca</p>${rutinaCard(sig, true)}${resto.length ? `<p class="rsec">Todas</p>${resto.map(r => rutinaCard(r, false)).join('')}` : ''}`
+    : emptyHtml('rutinas', 'Aún no tienes rutinas', 'Pulsa «Crear rutina» para montar la primera, o empieza un «Entreno libre» y añade ejercicios sobre la marcha.');
 }
 
 const openEntries = new Set();           // entrenos con el detalle desplegado (solo en pantalla)
@@ -734,6 +828,7 @@ tabs.forEach(btn => {
     window.scrollTo(0, 0);
     document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.id === btn.dataset.tab));
     tabs.forEach(n => n.classList.toggle('active', n === btn));
+    document.body.dataset.tab = btn.dataset.tab.replace('tab-', '');
     moveIndicator();
     if (btn.dataset.tab === 'tab-historial')
       document.querySelectorAll('#stats .stat b').forEach(b => { const v = b.dataset.v, dec = (v.split('.')[1] || '').length; countUp(b, parseFloat(v), n => n.toFixed(dec)); });
@@ -756,6 +851,7 @@ $('free-workout').onclick = () => startFreeWorkout();
 $('new-routine').onclick = () => { creating = true; draft = newDraft(); renderEditor(); vibrate(8); window.scrollTo(0, 0); };
 $('editor-cancel').onclick = () => { draft = newDraft(); creating = false; renderEditor(); };
 
+$('routine-save-top').onclick = () => $('routine-save').click();
 $('routine-save').onclick = () => {
   const name = draft.name.trim();
   const exercises = draft.exercises
@@ -770,12 +866,38 @@ $('routine-save').onclick = () => {
   if (persist()) toast(edited ? 'Rutina actualizada.' : 'Rutina guardada. Ahora a trabajar.');
 };
 
+document.addEventListener('click', e => {      // tocar fuera del menú ⋯ de una rutina lo cierra
+  if (menuRutina && !e.target.closest('#routines-list .entry-menu, [data-routine-menu]')) { menuRutina = null; renderRoutines(); }
+});
 $('routines-list').onclick = e => {
   const start = e.target.closest('[data-start-routine]'), edit = e.target.closest('[data-edit-routine]'), open = e.target.closest('[data-open-routine]');
+  const dots = e.target.closest('[data-routine-menu]'), dup = e.target.closest('[data-dup-routine]'), del = e.target.closest('[data-del-routine]');
+  if (dots) { menuRutina = menuRutina === dots.dataset.routineMenu ? null : dots.dataset.routineMenu; vibrate(6); silencio = true; try { renderRoutines(); } finally { silencio = false; } return; }
+  if (dup) return duplicarRutina(dup.dataset.dupRoutine);
+  if (del) return borrarRutinaDelMenu(del);
   if (start) return startWorkout(start.dataset.startRoutine);
-  if (edit) return editRoutine(edit.dataset.editRoutine);
+  if (edit) { menuRutina = null; return editRoutine(edit.dataset.editRoutine); }
   if (open && typeof rsOpen === 'function') rsOpen(open.dataset.openRoutine);
 };
+function duplicarRutina(id) {
+  const i = db.routines.findIndex(x => x.id === id);
+  if (i < 0) return;
+  const r = db.routines[i];
+  db.routines.splice(i + 1, 0, { ...JSON.parse(JSON.stringify(r)), id: uid(), name: `${r.name} (copia)` });
+  menuRutina = null; vibrate(8);
+  if (persist()) toast('Rutina duplicada.');
+}
+function borrarRutinaDelMenu(b) {
+  if (!b.classList.contains('armed')) {
+    b.classList.add('armed'); b.textContent = '¿Seguro?'; vibrate([30, 40, 30]);
+    clearTimeout(b._t); b._t = setTimeout(() => { b.classList.remove('armed'); b.textContent = 'Borrar'; }, 3000);
+    return;
+  }
+  clearTimeout(b._t);
+  db.routines = db.routines.filter(r => r.id !== b.dataset.delRoutine);
+  menuRutina = null;
+  if (persist()) toast('Rutina borrada.');
+}
 function editRoutine(id) {
   const r = db.routines.find(x => x.id === id);
   if (!r) return;
@@ -939,12 +1061,9 @@ $('walk-finish').onclick = () => {
 
 $('walk-goal').oninput = updateGoalLabel;
 
-// ---------- Ajustes: tema ----------
-const THEME_KEY = 'entreno-tema';
-const THEME_BG = { light: '#eef2f9', dark: '#0c0d10' };
+// ---------- Almacenamiento seguro ----------
 const lsGet = k => { try { return localStorage.getItem(k); } catch { return null; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch { /* sin almacenamiento */ } };
-const lightMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: light)') : null;
 // Fotos de ejercicios: se piden con CORS para que el service worker pueda guardarlas y verse sin conexión.
 // Si el servidor no lo permite (o falla), se reintenta una vez sin CORS y se deja de pedir en esta sesión.
 let corsFotos = true;
@@ -958,29 +1077,8 @@ document.addEventListener('error', e => {
 
 const reduceMQ = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : null;
 
-function fadeTheme() {
-  if (reduceMQ && reduceMQ.matches) return;
-  const r = document.documentElement;
-  r.classList.add('theming');
-  clearTimeout(fadeTheme.t);
-  fadeTheme.t = setTimeout(() => r.classList.remove('theming'), 480);
-}
-// La barra del navegador toma el color del tema efectivo
-function syncThemeColor() {
-  const t = document.documentElement.dataset.theme;
-  const eff = t === 'auto' ? (lightMQ && lightMQ.matches ? 'light' : 'dark') : t;
-  document.querySelectorAll('meta[name="theme-color"]').forEach(m => { m.content = THEME_BG[eff] || THEME_BG.dark; });
-}
-function applyTheme(t, animate) {
-  const v = ['light', 'dark', 'auto'].includes(t) ? t : 'dark';
-  if (animate) fadeTheme();
-  document.documentElement.dataset.theme = v;
-  document.querySelectorAll('[data-tema]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.tema === v)));
-  syncThemeColor();
-}
-if (lightMQ && lightMQ.addEventListener) lightMQ.addEventListener('change', syncThemeColor);
-applyTheme(lsGet(THEME_KEY));
-document.querySelectorAll('[data-tema]').forEach(b => b.onclick = () => { lsSet(THEME_KEY, b.dataset.tema); applyTheme(b.dataset.tema, true); vibrate(8); });
+// Un solo tema (oscuro): se limpia lo que guardaban las versiones con tema claro
+try { localStorage.removeItem('entreno-tema'); } catch { /* sin almacenamiento */ }
 
 // ---------- Calendario de días entrenados ----------
 let calMonth = null, calSel = null, calView = 'mes';   // calMonth = 'AAAA-MM'
