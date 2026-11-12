@@ -655,7 +655,8 @@ function fotoMini(e) {
   const ini = esc(String(e.name || '?').split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase());
   return `<i class="fxi">${src ? `<img src="${esc(src)}" alt="" loading="lazy"${CORS()}>` : ini}</i>`;
 }
-function renderRoutines() {
+function renderRoutines(quieto = false) {
+  $('routines-list').classList.toggle('quiet', quieto || silencio);   // repintar por el menú no reanima las tarjetas
   const sig = siguienteRutina(), resto = db.routines.filter(r => r !== sig);
   $('routines-list').innerHTML = sig
     ? `<p class="rsec">Te toca</p>${rutinaCard(sig, true)}${resto.length ? `<p class="rsec">Todas</p>${resto.map(r => rutinaCard(r, false)).join('')}` : ''}`
@@ -784,8 +785,14 @@ $('history-list').addEventListener('input', e => {
   const d = editingEntry.draft, id = e.target.id;
   if (id === 'entry-date') d.date = e.target.value; else if (id === 'entry-min') d.min = e.target.value; else if (id === 'entry-km') d.km = e.target.value;
 });
-document.addEventListener('click', e => {      // tocar fuera del menú ⋯ lo cierra
-  if (menuEntry && !e.target.closest('.entry-menu, [data-menu]')) { menuEntry = null; renderHistory(); }
+// Quita el menú abierto sin repintar la lista: así el botón que se está tocando sigue ahí y su clic llega
+function cerrarMenus(lista, boton) {
+  document.querySelectorAll(`${lista} .entry-menu`).forEach(m => m.remove());
+  document.querySelectorAll(`${lista} ${boton}`).forEach(b => b.setAttribute('aria-expanded', 'false'));
+}
+// Tocar fuera del menú ⋯ lo cierra. Con «pointerdown»: iOS no lanza «click» al tocar una zona sin botón
+document.addEventListener('pointerdown', e => {
+  if (menuEntry && !e.target.closest('.entry-menu, [data-menu]')) { menuEntry = null; cerrarMenus('#history-list', '[data-menu]'); }
 });
 $('history-list').addEventListener('click', e => {
   const dots = e.target.closest('[data-menu]');
@@ -858,6 +865,7 @@ function renderHistory() {
   $('hist-filter').hidden = $('hist-chart').hidden = $('stats').hidden;
   document.querySelectorAll('[data-hfilter]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.hfilter === histFiltro)));
   renderHistChart();
+  $('hist-chart').classList.toggle('quiet', quiet);
   const pasa = i => histFiltro === 'todo' || (histFiltro === 'fuerza') === (i.kind === 'session');
   const shown = editingEntry ? items.filter(i => i.editing) : items.filter(pasa);
   // Agrupado por meses: cabecera con el nombre y lo que hubo (sin cabeceras mientras se edita)
@@ -931,13 +939,13 @@ $('routine-save').onclick = () => {
   if (persist()) toast(edited ? 'Rutina actualizada.' : 'Rutina guardada. Ahora a trabajar.');
 };
 
-document.addEventListener('click', e => {      // tocar fuera del menú ⋯ de una rutina lo cierra
-  if (menuRutina && !e.target.closest('#routines-list .entry-menu, [data-routine-menu]')) { menuRutina = null; renderRoutines(); }
+document.addEventListener('pointerdown', e => {      // tocar fuera del menú ⋯ de una rutina lo cierra (sin reanimar)
+  if (menuRutina && !e.target.closest('#routines-list .entry-menu, [data-routine-menu]')) { menuRutina = null; cerrarMenus('#routines-list', '[data-routine-menu]'); }
 });
 $('routines-list').onclick = e => {
   const start = e.target.closest('[data-start-routine]'), edit = e.target.closest('[data-edit-routine]'), open = e.target.closest('[data-open-routine]');
   const dots = e.target.closest('[data-routine-menu]'), dup = e.target.closest('[data-dup-routine]'), del = e.target.closest('[data-del-routine]');
-  if (dots) { menuRutina = menuRutina === dots.dataset.routineMenu ? null : dots.dataset.routineMenu; vibrate(6); silencio = true; try { renderRoutines(); } finally { silencio = false; } return; }
+  if (dots) { menuRutina = menuRutina === dots.dataset.routineMenu ? null : dots.dataset.routineMenu; vibrate(6); return renderRoutines(true); }
   if (dup) return duplicarRutina(dup.dataset.dupRoutine);
   if (del) return borrarRutinaDelMenu(del);
   if (start) return startWorkout(start.dataset.startRoutine);

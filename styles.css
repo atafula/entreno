@@ -234,7 +234,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; }
 /* ===== Rutinas ===== */
 #routines-list > *, #history-list > *, .stats > * { animation: rise var(--d-slow) var(--ease-out) backwards; }
 /* Repintados por una acción dentro de la pantalla (abrir detalle, menú): no vuelven a animar */
-#history-list.quiet > *, .stats.quiet > * { animation: none; }
+#history-list.quiet > *, #routines-list.quiet > *, .stats.quiet > *, .hchart.quiet .bar { animation: none; }
 #routines-list > *:nth-child(2), #history-list > *:nth-child(2), .stats > *:nth-child(2) { animation-delay: 40ms; }
 #routines-list > *:nth-child(3), #history-list > *:nth-child(3), .stats > *:nth-child(3) { animation-delay: 80ms; }
 #routines-list > *:nth-child(4), #history-list > *:nth-child(4) { animation-delay: 120ms; }

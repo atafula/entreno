@@ -528,6 +528,31 @@ def rutinas_menu_tres_puntos_editar_duplicar_y_borrar(pg):
     pg.click('#routines-list [data-del-routine="a"]'); pg.wait_for_timeout(200)
     assert [r["name"] for r in db(pg)["routines"]] == ["PUSH (copia)", "PULL"]
 
+_ANIMANDO = "sel => [...document.querySelectorAll(sel)].reduce((a, e) => a + e.getAnimations().filter(x => x.playState === 'running' && !e.closest('.entry-menu')).length, 0)"
+
+@test
+def rutinas_menu_no_reanima_y_se_cierra_tocando_fuera_en_iphone(pg):
+    seed(pg); tab(pg, "rutinas"); pg.wait_for_timeout(900)
+    pg.click('#routines-list [data-routine-menu="a"]'); pg.wait_for_timeout(30)
+    assert pg.evaluate(_ANIMANDO, "#routines-list, #routines-list *") == 0, "abrir el menú no reanima las tarjetas"
+    pg.wait_for_timeout(300)
+    pg.dispatch_event("h1", "pointerdown"); pg.wait_for_timeout(30)   # en iOS tocar una zona sin botón no lanza «click»
+    assert pg.locator("#routines-list .entry-menu").count() == 0, "tocar fuera lo cierra"
+    assert pg.evaluate(_ANIMANDO, "#routines-list, #routines-list *") == 0, "cerrarlo tampoco reanima"
+    pg.click('#routines-list [data-routine-menu="a"]'); pg.wait_for_timeout(200)
+    pg.click('#routines-list [data-start-routine="b"]'); pg.wait_for_timeout(500)
+    assert pg.is_visible("#workout"), "con el menú abierto, un toque en Comenzar empieza la rutina a la primera"
+
+@test
+def historial_menu_no_reanima_ni_el_grafico_y_se_cierra_en_iphone(pg):
+    seed(pg, sessions=SESIONES, walks=CAMINATAS); tab(pg, "historial"); pg.wait_for_timeout(1200)
+    pg.click('[data-menu="session:s2"]'); pg.wait_for_timeout(30)
+    assert pg.evaluate(_ANIMANDO, "#tab-historial, #tab-historial *") == 0, "abrir el menú no reanima nada"
+    pg.wait_for_timeout(300)
+    pg.dispatch_event("h1", "pointerdown"); pg.wait_for_timeout(30)
+    assert pg.locator("#history-list .entry-menu").count() == 0, "tocar fuera lo cierra"
+    assert pg.evaluate(_ANIMANDO, "#tab-historial, #tab-historial *") == 0, "cerrarlo tampoco reanima"
+
 @test
 def rutinas_accesos_rapidos_en_dos_columnas(pg):
     seed(pg); tab(pg, "rutinas")
@@ -1865,6 +1890,7 @@ def historial_grafico_de_las_ultimas_8_semanas(pg):
     assert barras.count() == 8 and "cur" in (barras.nth(7).get_attribute("class") or ""), "la última barra es esta semana"
     t = pg.inner_text("#hist-chart-head")
     assert "1.000" in t and "kg" in t and "+100%" in t, t
+    pg.wait_for_timeout(900)  # que termine la animación de entrada de las barras
     h = [b["height"] for b in [barras.nth(i).bounding_box() for i in (6, 7)]]
     assert abs(h[1] - 2 * h[0]) < 3, f"la altura sigue al volumen: {h}"
     pg.click('[data-hfilter="caminatas"]'); pg.wait_for_timeout(150)
