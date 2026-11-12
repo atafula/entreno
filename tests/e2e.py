@@ -1697,7 +1697,7 @@ def racha_semanal_se_muestra_en_el_marcador(pg):
     seed(pg, sessions=[{"id": "x", "date": off_days(pg, -7), "routine": "PUSH", "sets": [{"exercise": "A", "reps": 5, "kg": 10, "w": False}]},
                        {"id": "y", "date": off_days(pg, 0), "routine": "PUSH", "sets": [{"exercise": "A", "reps": 5, "kg": 10, "w": False}]}])
     assert pg.inner_text("#streak-n") == "2"
-    assert pg.inner_text("#streak small") == "Racha", pg.inner_text("#streak small")
+    assert pg.locator("#streak small").count() == 0 and "Racha" not in pg.inner_text("#streak"), "junto al número no hay texto, solo la llama"
 
 @test
 def racha_semanal_no_tiene_ajuste_de_descanso_en_ajustes(pg):
