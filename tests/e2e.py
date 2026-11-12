@@ -1843,6 +1843,56 @@ GRANDE = [{"id": "g1", "date": "2026-11-01", "routine": "PULL", "seconds": 3720,
     {"exercise": "Curl", "reps": 12, "kg": 15, "w": False}, {"exercise": "Face pull", "reps": 15, "kg": 20, "w": False}]}]
 
 @test
+def historial_filtro_todo_fuerza_y_caminatas(pg):
+    seed(pg, sessions=SESIONES, walks=CAMINATAS); tab(pg, "historial")
+    n = lambda: pg.locator("#history-list .entry").count()
+    assert n() == 3 and pg.get_attribute('[data-hfilter="todo"]', "aria-pressed") == "true"
+    pg.click('[data-hfilter="caminatas"]'); pg.wait_for_timeout(150)
+    assert n() == 1 and "Caminata" in pg.inner_text("#history-list") and pg.get_attribute('[data-hfilter="caminatas"]', "aria-pressed") == "true"
+    pg.click('[data-hfilter="fuerza"]'); pg.wait_for_timeout(150)
+    assert n() == 2 and "Caminata" not in pg.inner_text("#history-list")
+    pg.click('[data-hfilter="todo"]'); pg.wait_for_timeout(150)
+    assert n() == 3
+
+@test
+def historial_grafico_de_las_ultimas_8_semanas(pg):
+    pg.goto(URL)
+    mil = [{"exercise": "Press", "reps": 10, "kg": 100, "w": False}]
+    seed(pg, sessions=[ses(lunes(pg, 0), "a", sets=mil), ses(lunes(pg, -7), "b", sets=[{"exercise": "Press", "reps": 10, "kg": 50, "w": False}])],
+         walks=[{"id": "w", "date": lunes(pg, 0), "seconds": 900, "meters": 2400, "ts": 1}])
+    tab(pg, "historial")
+    barras = pg.locator("#hist-chart .bar")
+    assert barras.count() == 8 and "cur" in (barras.nth(7).get_attribute("class") or ""), "la última barra es esta semana"
+    t = pg.inner_text("#hist-chart-head")
+    assert "1.000" in t and "kg" in t and "+100%" in t, t
+    h = [b["height"] for b in [barras.nth(i).bounding_box() for i in (6, 7)]]
+    assert abs(h[1] - 2 * h[0]) < 3, f"la altura sigue al volumen: {h}"
+    pg.click('[data-hfilter="caminatas"]'); pg.wait_for_timeout(150)
+    t = pg.inner_text("#hist-chart-head")
+    assert "2,4" in t and "km" in t, t
+
+@test
+def historial_agrupado_por_meses_con_su_resumen(pg):
+    seed(pg, sessions=[sesion("2026-11-03", "a"), sesion("2026-11-01", "b"), sesion("2026-10-20", "c")],
+         walks=[{"id": "w", "date": "2026-10-21", "seconds": 600, "meters": 900, "ts": 1}]); tab(pg, "historial")
+    m = [x.strip() for x in pg.locator("#history-list .hmes").all_inner_texts()]
+    assert len(m) == 2 and m[0].startswith("Noviembre") and m[1].startswith("Octubre"), m
+    assert "2 entrenos" in m[0] and "caminata" not in m[0] and "1 entreno · 1 caminata" in m[1], m
+
+@test
+def historial_tarjeta_con_fecha_en_bloque_record_y_ritmo(pg):
+    seed(pg, sessions=[{"id": "v", "date": "2026-11-02", "routine": "PUSH", "ts": 1, "sets": [{"exercise": "Press de pecho", "reps": 8, "kg": 60, "w": False}]},
+                       {"id": "n", "date": "2026-11-09", "routine": "PUSH", "ts": 2, "sets": [{"exercise": "Press de pecho", "reps": 8, "kg": 65, "w": False}]}],
+         walks=[{"id": "w", "date": "2026-11-05", "seconds": 1500, "meters": 2420, "ts": 1}]); tab(pg, "historial")
+    nueva = pg.locator("#history-list .entry", has=pg.locator('[data-menu="session:n"]'))
+    assert nueva.locator(".hdate b").inner_text().strip() == "9"
+    assert "Récord" in nueva.locator(".hpr").inner_text() and "65" in nueva.locator(".hpr").inner_text()
+    assert pg.locator("#history-list .entry", has=pg.locator('[data-menu="session:v"]')).locator(".hpr").count() == 0
+    cam = pg.locator("#history-list .entry", has=pg.locator('[data-menu="walk:w"]'))
+    t = cam.inner_text()
+    assert "25 min" in t and "2,42 km" in t and "10:20" in t and "min/km" in t, t
+
+@test
 def historial_entreno_se_ve_compacto_con_resumen(pg):
     seed(pg, sessions=GRANDE); tab(pg, "historial")
     card = pg.locator("#history-list .entry").first

@@ -672,12 +672,38 @@ function sessionHtml(s) {
   const work = s.sets.length, open = openEntries.has(s.id);
   const stat = (k, v) => `<div><small>${k}</small><b>${v}</b></div>`;
   const rest = Math.max(0, groups.length - 3);
-  return `<div class="entry-head"><span class="tag">${esc(s.routine)}</span><small title="${esc(s.date)}">${whenText(s.date)}</small>${menuBtn('session', s.id)}</div>${entryMenu('session', s.id)}
-    <div class="hstats">${s.seconds ? stat('Tiempo', durText(s.seconds)) : ''}${vol ? stat('Volumen', `${vol.toLocaleString('es-ES')} kg`) : ''}${stat('Series', work)}</div>
+  return `<div class="entry-head">${fechaBloque(s.date)}<div class="htit"><span class="tag">${esc(s.routine)}</span><span class="hsub"><small title="${esc(s.date)}">${whenText(s.date)}</small>${horaDe(s.ts)}</span></div>${menuBtn('session', s.id)}</div>${entryMenu('session', s.id)}
+    <div class="hstats">${s.seconds ? stat('Tiempo', durText(s.seconds)) : ''}${vol ? stat('Volumen', `${fmtMiles(vol)} kg`) : ''}${stat('Series', work)}</div>
+    ${recordHtml(s, prs)}
     <div class="hsums"${open ? ' hidden' : ''}>${groups.slice(0, 3).map(g => { const n = g.sets.length; return `<div class="hsum"><b>${n}</b> ${n === 1 ? 'serie' : 'series'} · ${esc(g.name)}</div>`; }).join('')}</div>
     <div class="hdetail"${open ? '' : ' hidden'}>${groups.map(g => { let n = 0; return `<div class="hex"><b>${esc(g.name)}</b>${g.sets.map((x, j) =>
       `<div class="hset"><span class="hn${x.w ? ' w' : ''}">${x.w ? 'W' : ++n}</span><span>${x.kg ? x.kg + ' kg' : '—'}${prs.includes(g.idx[j]) ? '<i class="pr">PR</i>' : ''}</span><span>${x.reps} reps</span></div>`).join('')}</div>`; }).join('')}</div>
     <button type="button" class="hmore" data-toggle-entry="${s.id}" aria-expanded="${open}">${open ? 'Ver menos' : rest ? `Ver ${rest} ${rest === 1 ? 'ejercicio más' : 'ejercicios más'}` : 'Ver detalle'}</button>`;
+}
+
+// Bloque con el día del mes y «hoy», «ayer» o el día de la semana
+function fechaBloque(iso) {
+  const d = new Date(iso + 'T12:00:00'), w = whenText(iso);
+  const lab = w === 'Hoy' || w === 'Ayer' ? w.toLowerCase() : d.toLocaleDateString('es-ES', { weekday: 'short' }).replace('.', '');
+  return `<div class="hdate${w === 'Hoy' ? ' now' : ''}" aria-hidden="true"><b>${d.getDate()}</b><span>${lab}</span></div>`;
+}
+// Hora a la que se guardó (solo si hay marca de tiempo real)
+const horaDe = ts => ts > 1e12 ? `<span class="hhora"> · ${new Date(ts).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>` : '';
+const TROFEO_ICO = '<svg viewBox="0 0 24 24" class="ico" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4"/></svg>';
+// Franja de récord: el mejor de los batidos en el entreno y cuántos más hubo
+function recordHtml(s, prs) {
+  if (!prs.length) return '';
+  const sets = prs.map(i => s.sets[i]), mejor = sets.reduce((a, x) => (x.kg > a.kg ? x : a));
+  const otros = new Set(sets.map(x => x.exercise)).size - 1;
+  return `<div class="hpr">${TROFEO_ICO}<span>Récord en ${esc(mejor.exercise)} · ${String(mejor.kg).replace('.', ',')} kg × ${mejor.reps}${otros > 0 ? ` y ${otros} más` : ''}</span></div>`;
+}
+const CAMINA_ICO = '<svg viewBox="0 0 24 24" class="ico" aria-hidden="true"><path d="M13 4a1.5 1.5 0 1 0 0 .01M9 21l2-6 3 3v3M7 12l3-4 4 1 3 3M10 8l1 7"/></svg>';
+function walkHtml(w) {
+  const km = w.meters / 1000, min = Math.round(w.seconds / 60);
+  const pace = km > 0.05 ? Math.round(w.seconds / km) : 0;
+  const kpi = (k, v) => `<div><small>${k}</small><b>${v}</b></div>`;
+  return `<div class="entry-head"><div class="hdate walk" aria-hidden="true">${CAMINA_ICO}</div><div class="htit"><span class="tag walk-tag">Caminata</span><span class="hsub"><small title="${esc(w.date)}">${whenText(w.date)}</small>${horaDe(w.ts)}</span></div>${menuBtn('walk', w.id)}</div>${entryMenu('walk', w.id)}
+    <div class="hstats">${kpi('Tiempo', `${min} min`)}${kpi('Distancia', `${km.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} km`)}${pace ? kpi('min/km', `${Math.floor(pace / 60)}:${String(pace % 60).padStart(2, '0')}`) : ''}</div>`;
 }
 
 // Botón ⋯ de cada tarjeta del historial; al tocarlo se abre un menú con Editar y Borrar
@@ -780,6 +806,29 @@ $('history-list').addEventListener('click', e => {
   clearTimeout(b._t);
   b.dataset.delSession ? deleteEntry('session', b.dataset.delSession) : deleteEntry('walk', b.dataset.delWalk);
 });
+// Filtro del historial y gráfico de las últimas 8 semanas (volumen; con «Caminatas», km)
+let histFiltro = 'todo';
+document.querySelectorAll('[data-hfilter]').forEach(b => b.onclick = () => {
+  if (histFiltro === b.dataset.hfilter) return;
+  histFiltro = b.dataset.hfilter; vibrate(6); renderHistory();
+});
+function renderHistChart() {
+  const camina = histFiltro === 'caminatas', lun = lunesDe();
+  const semanas = [...Array(8)].map((_, k) => {
+    const ini = localDate(masDias(lun, 7 * (k - 7))), fin = localDate(masDias(lun, 7 * (k - 6)));
+    const v = camina
+      ? db.walks.filter(w => w.date >= ini && w.date < fin).reduce((a, w) => a + (w.meters || 0), 0) / 1000
+      : db.sessions.filter(s => s.date >= ini && s.date < fin).reduce((a, s) => a + s.sets.reduce((b, x) => b + (x.reps || 0) * (x.kg || 0), 0), 0);
+    return { v, ini };
+  });
+  const max = Math.max(...semanas.map(x => x.v), 1e-9), act = semanas[7].v, ant = semanas[6].v;
+  const total = camina ? `${act.toLocaleString('es-ES', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}<small>km</small>` : `${fmtMiles(act)}<small>kg</small>`;
+  const dif = ant ? Math.round((act - ant) / ant * 100) : null;
+  $('hist-chart-head').innerHTML = `<b>${total}</b>${dif === null ? '' : `<em class="${dif > 0 ? 'up' : dif < 0 ? 'down' : ''}">${dif > 0 ? '+' : ''}${dif}% vs semana pasada</em>`}<span>${camina ? 'Distancia' : 'Volumen'} por semana · últimas 8</span>`;
+  $('hist-bars').innerHTML = semanas.map((x, k) => `<i class="bar${k === 7 ? ' cur' : ''}" style="height:${Math.max(x.v / max * 100, 4)}%"></i>`).join('');
+  const et = ini => { const d = new Date(ini + 'T12:00:00'); return `${d.getDate()} ${MESES[d.getMonth()].slice(0, 3)}`; };
+  $('hist-bl').innerHTML = semanas.map((x, k) => `<span>${k === 0 || k === 4 ? et(x.ini) : k === 7 ? 'Esta' : ''}</span>`).join('');
+}
 function renderHistory() {
   const quiet = histQuiet || silencio; histQuiet = false;
   prMap = computePRs();
@@ -794,21 +843,37 @@ function renderHistory() {
 
   const items = [
     ...db.sessions.map(s => ({
-      date: s.date, ts: s.ts || 0,
+      date: s.date, ts: s.ts || 0, kind: 'session',
       editing: !!editingEntry && editingEntry.kind === 'session' && editingEntry.id === s.id,
       html: editingEntry && editingEntry.kind === 'session' && editingEntry.id === s.id ? entryEditorHtml('session', s) : sessionHtml(s)
     })),
     ...db.walks.map(w => ({
-      date: w.date, ts: w.ts || 0,
+      date: w.date, ts: w.ts || 0, kind: 'walk',
       editing: !!editingEntry && editingEntry.kind === 'walk' && editingEntry.id === w.id,
-      html: editingEntry && editingEntry.kind === 'walk' && editingEntry.id === w.id ? entryEditorHtml('walk', w) : `<div class="entry-head"><span class="tag walk-tag">Caminata</span><small title="${esc(w.date)}">${whenText(w.date)}</small>${menuBtn('walk', w.id)}</div>${entryMenu('walk', w.id)}
-        <ul><li><span>${Math.round(w.seconds / 60)} min</span><em>${(w.meters / 1000).toFixed(2)} km</em></li></ul>`
+      html: editingEntry && editingEntry.kind === 'walk' && editingEntry.id === w.id ? entryEditorHtml('walk', w) : walkHtml(w)
     }))
   ].sort((a, b) => b.date.localeCompare(a.date) || b.ts - a.ts);   // mismo día: el más reciente arriba
 
   $('stats').hidden = !!editingEntry || !items.length;                 // al editar solo se ve la entrada; sin datos, ni tres ceros
-  const shown = editingEntry ? items.filter(i => i.editing) : items;
-  $('history-list').innerHTML = shown.map(i => `<div class="card entry">${i.html}</div>`).join('')
+  $('hist-filter').hidden = $('hist-chart').hidden = $('stats').hidden;
+  document.querySelectorAll('[data-hfilter]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.hfilter === histFiltro)));
+  renderHistChart();
+  const pasa = i => histFiltro === 'todo' || (histFiltro === 'fuerza') === (i.kind === 'session');
+  const shown = editingEntry ? items.filter(i => i.editing) : items.filter(pasa);
+  // Agrupado por meses: cabecera con el nombre y lo que hubo (sin cabeceras mientras se edita)
+  let mes = null, html = '';
+  shown.forEach(i => {
+    const m = i.date.slice(0, 7);
+    if (!editingEntry && m !== mes) {
+      mes = m;
+      const del = shown.filter(x => x.date.startsWith(m)), ne = del.filter(x => x.kind === 'session').length, nc = del.length - ne;
+      const [y, mm] = m.split('-').map(Number), nombre = MESES[mm - 1][0].toUpperCase() + MESES[mm - 1].slice(1);
+      const partes = [ne ? plural(ne, 'entreno', 'entrenos') : '', nc ? plural(nc, 'caminata', 'caminatas') : ''].filter(Boolean).join(' · ');
+      html += `<div class="hmes"><h4>${nombre}${y !== new Date().getFullYear() ? ' ' + y : ''}</h4><span>${partes}</span></div>`;
+    }
+    html += `<div class="card entry">${i.html}</div>`;
+  });
+  $('history-list').innerHTML = html
     || emptyHtml('historial', 'Todavía no hay nada aquí', 'Empieza un entreno desde «Rutinas» o una caminata desde «Hoy» y aparecerá en esta lista.');
   $('history-list').classList.toggle('quiet', quiet);
 }

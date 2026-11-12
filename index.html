@@ -123,6 +123,16 @@
 
     <!-- HISTORIAL -->
     <section id="tab-historial" class="tab">
+      <div class="seg hfilter" id="hist-filter" role="group" aria-label="Filtrar historial">
+        <button type="button" data-hfilter="todo" aria-pressed="true">Todo</button>
+        <button type="button" data-hfilter="fuerza" aria-pressed="false">Fuerza</button>
+        <button type="button" data-hfilter="caminatas" aria-pressed="false">Caminatas</button>
+      </div>
+      <div class="card hchart" id="hist-chart">
+        <div class="ch" id="hist-chart-head"></div>
+        <div class="bars" id="hist-bars" aria-hidden="true"></div>
+        <div class="bl" id="hist-bl" aria-hidden="true"></div>
+      </div>
       <div class="stats" id="stats"></div>
       <div id="history-list"></div>
     </section>
