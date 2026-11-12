@@ -765,6 +765,17 @@ def ym(pg): return pg.evaluate("localDate().slice(0, 7)")
 def sesion(fecha, id="c", rutina="PUSH"): return {"id": id, "date": fecha, "routine": rutina, "sets": [{"exercise": "Press", "reps": 5, "kg": 10, "w": False}]}
 
 @test
+def historial_el_mismo_dia_el_ultimo_entreno_sale_arriba(pg):
+    pg.goto(URL)
+    hoy = pg.evaluate("localDate()")
+    a = {**sesion(hoy, "p1", "PRIMERO"), "ts": 1000}
+    b = {**sesion(hoy, "p2", "SEGUNDO"), "ts": 2000}
+    seed(pg, sessions=[a, b], walks=[{"id": "w1", "date": hoy, "seconds": 600, "meters": 800, "ts": 3000}])
+    tab(pg, "historial"); pg.wait_for_timeout(300)
+    orden = pg.evaluate("[...document.querySelectorAll('#history-list .entry')].map(e => e.innerText.includes('Caminata') ? 'caminata' : e.innerText.includes('SEGUNDO') ? 'segundo' : 'primero')")
+    assert orden == ["caminata", "segundo", "primero"], orden
+
+@test
 def calendario_se_abre_al_tocar_la_semana_y_se_cierra(pg):
     seed(pg)
     assert not pg.is_visible("#cal-sheet")

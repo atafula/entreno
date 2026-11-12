@@ -700,17 +700,17 @@ function renderHistory() {
 
   const items = [
     ...db.sessions.map(s => ({
-      date: s.date,
+      date: s.date, ts: s.ts || 0,
       editing: !!editingEntry && editingEntry.kind === 'session' && editingEntry.id === s.id,
       html: editingEntry && editingEntry.kind === 'session' && editingEntry.id === s.id ? entryEditorHtml('session', s) : sessionHtml(s)
     })),
     ...db.walks.map(w => ({
-      date: w.date,
+      date: w.date, ts: w.ts || 0,
       editing: !!editingEntry && editingEntry.kind === 'walk' && editingEntry.id === w.id,
       html: editingEntry && editingEntry.kind === 'walk' && editingEntry.id === w.id ? entryEditorHtml('walk', w) : `<div class="entry-head"><span class="tag walk-tag">Caminata</span><small title="${esc(w.date)}">${whenText(w.date)}</small>${menuBtn('walk', w.id)}</div>${entryMenu('walk', w.id)}
         <ul><li><span>${Math.round(w.seconds / 60)} min</span><em>${(w.meters / 1000).toFixed(2)} km</em></li></ul>`
     }))
-  ].sort((a, b) => b.date.localeCompare(a.date));
+  ].sort((a, b) => b.date.localeCompare(a.date) || b.ts - a.ts);   // mismo día: el más reciente arriba
 
   $('stats').hidden = !!editingEntry || !items.length;                 // al editar solo se ve la entrada; sin datos, ni tres ceros
   const shown = editingEntry ? items.filter(i => i.editing) : items;
