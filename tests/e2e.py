@@ -531,6 +531,14 @@ def rutinas_menu_tres_puntos_editar_duplicar_y_borrar(pg):
 _ANIMANDO = "sel => [...document.querySelectorAll(sel)].reduce((a, e) => a + e.getAnimations().filter(x => x.playState === 'running' && !e.closest('.entry-menu')).length, 0)"
 
 @test
+def rutinas_editar_desde_el_menu_y_volver_no_deja_el_menu_abierto(pg):
+    seed(pg); tab(pg, "rutinas")
+    pg.click('#routines-list [data-routine-menu="a"]'); pg.wait_for_timeout(100)
+    pg.click('#routines-list [data-edit-routine="a"]'); pg.wait_for_timeout(200)
+    pg.click('#editor-cancel'); pg.wait_for_timeout(300)
+    assert pg.locator("#routines-list .entry-menu").count() == 0, "al volver del editor el menú sigue abierto"
+
+@test
 def rutinas_menu_no_reanima_y_se_cierra_tocando_fuera_en_iphone(pg):
     seed(pg); tab(pg, "rutinas"); pg.wait_for_timeout(900)
     pg.click('#routines-list [data-routine-menu="a"]'); pg.wait_for_timeout(30)

@@ -800,7 +800,7 @@ $('history-list').addEventListener('click', e => {
   const more = e.target.closest('[data-toggle-entry]');
   if (more) { const id = more.dataset.toggleEntry; openEntries.has(id) ? openEntries.delete(id) : openEntries.add(id); vibrate(6); histQuiet = true; return renderHistory(); }
   const ed = e.target.closest('[data-edit-session], [data-edit-walk]');
-  if (ed) { menuEntry = null; return startEditEntry(ed.dataset.editSession ? 'session' : 'walk', ed.dataset.editSession || ed.dataset.editWalk); }
+  if (ed) { menuEntry = null; cerrarMenus('#history-list', '[data-menu]'); return startEditEntry(ed.dataset.editSession ? 'session' : 'walk', ed.dataset.editSession || ed.dataset.editWalk); }
   if (e.target.closest('#entry-cancel')) { editingEntry = null; return renderHistory(); }
   if (e.target.closest('#entry-save')) return saveEditEntry();
   const b = e.target.closest('[data-del-session], [data-del-walk]');
@@ -949,7 +949,7 @@ $('routines-list').onclick = e => {
   if (dup) return duplicarRutina(dup.dataset.dupRoutine);
   if (del) return borrarRutinaDelMenu(del);
   if (start) return startWorkout(start.dataset.startRoutine);
-  if (edit) { menuRutina = null; return editRoutine(edit.dataset.editRoutine); }
+  if (edit) { menuRutina = null; cerrarMenus('#routines-list', '[data-routine-menu]'); return editRoutine(edit.dataset.editRoutine); }
   if (open && typeof rsOpen === 'function') rsOpen(open.dataset.openRoutine);
 };
 function duplicarRutina(id) {
