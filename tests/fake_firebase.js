@@ -30,7 +30,7 @@
     collection: colRef,
     batch() {
       const ops = [];
-      return { set(ref, data, opts) { ops.push(() => ref.set(data, opts)); }, delete(ref) { ops.push(() => ref.delete()); }, commit() { ops.forEach(f => f()); return Promise.resolve(); } };
+      return { set(ref, data, opts) { ops.push(() => ref.set(data, opts)); }, delete(ref) { ops.push(() => ref.delete()); }, commit() { if (window.__fakeDeny) return Promise.reject({ code: 'permission-denied' }); ops.forEach(f => f()); return Promise.resolve(); } };
     }
   };
   const authCbs = [];

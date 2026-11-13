@@ -41,6 +41,13 @@ def seed(pg, routines=ROUTINES, sessions=HISTORY, walks=None, fb=None, prev_uid=
     pg.wait_for_timeout(300)
 
 def cloud(pg): return pg.evaluate("JSON.parse(sessionStorage.getItem('fake-cloud') || '{}')")
+def rutinas_nube(c, uid="U1"):
+    """Las rutinas que hay en la nube (un documento por rutina), en su orden."""
+    docs = [dict(v, id=k.rsplit("/", 1)[1]) for k, v in c.items() if k.startswith(f"users/{uid}/rutinas/")]
+    return sorted(docs, key=lambda d: d.get("pos", 0))
+def doc_rutina(r, **extra):
+    d = {k: v for k, v in r.items() if k != "id"}
+    return dict(d, **extra)
 
 def tab(pg, name): pg.click(f'[data-tab="tab-{name}"]')
 def db(pg): return pg.evaluate("JSON.parse(localStorage['entreno-v1'])")
@@ -288,13 +295,17 @@ def sync_login_sube_los_datos_locales(pg):
     seed(pg, walks=[{"id": "w1", "date": "2026-11-02", "seconds": 1200, "meters": 1500}], fb={})
     iniciar_sesion(pg)
     c = cloud(pg)
-    assert [r["name"] for r in c["users/U1"]["rutinas"]] == ["PUSH", "PULL"], c.keys()
+    assert [r["name"] for r in rutinas_nube(c)] == ["PUSH", "PULL"], c.keys()
+    assert c["users/U1"].get("rutinasV2") is True, "queda marcado que las rutinas ya van una a una"
+    assert all("id" not in v for k, v in c.items() if "/rutinas/" in k), "el id va en la ruta, no dentro"
+    assert all(r["rev"] >= 1 and r["upd"] > 0 for r in rutinas_nube(c)), rutinas_nube(c)
     assert "users/U1/sesiones/s" in c and c["users/U1/sesiones/s"]["routine"] == "PUSH" and "id" not in c["users/U1/sesiones/s"]
     assert c["users/U1/caminatas/w1"]["meters"] == 1500
 
 @test
 def sync_login_baja_los_datos_de_la_nube(pg):
-    cl = {"users/U1": {"rutinas": [{"id": "z", "name": "NUBE", "exercises": [{"name": "Dominadas", "sets": [{"w": False, "kg": "", "reps": 8}]}]}], "rutinasTs": 5},
+    cl = {"users/U1": {"rutinasV2": True},
+          "users/U1/rutinas/z": {"name": "NUBE", "exercises": [{"name": "Dominadas", "sets": [{"w": False, "kg": "", "reps": 8}]}], "rev": 1, "upd": 5, "pos": 1},
           "users/U1/sesiones/n1": {"date": "2026-10-30", "routine": "NUBE", "sets": [{"exercise": "Dominadas", "reps": 8, "kg": 0, "w": False}], "seconds": 60},
           "users/U1/caminatas/n2": {"date": "2026-10-31", "seconds": 600, "meters": 800}}
     seed(pg, routines=[], sessions=[], fb={"cloud": cl})
@@ -319,13 +330,13 @@ def sync_rutina_nueva_sube_a_la_nube(pg):
     pg.fill("#picker-search", "Sentadilla"); pg.wait_for_timeout(200)
     pg.locator("#picker-list .picker-custom").click(); pg.wait_for_timeout(300)
     pg.click("#routine-save"); pg.wait_for_timeout(900)
-    assert [r["name"] for r in cloud(pg)["users/U1"]["rutinas"]] == ["PUSH", "PULL", "LEG"]
+    assert [r["name"] for r in rutinas_nube(cloud(pg))] == ["PUSH", "PULL", "LEG"]
 
 @test
 def sync_borrar_rutina_se_propaga(pg):
     seed(pg, fb={"logged": True}); tab(pg, "rutinas"); editar_rutina(pg, "b")
     pg.click("#routine-delete"); pg.click("#routine-delete"); pg.wait_for_timeout(900)
-    assert [r["id"] for r in cloud(pg)["users/U1"]["rutinas"]] == ["a"]
+    assert [r["id"] for r in rutinas_nube(cloud(pg))] == ["a"]
 
 @test
 def sync_entreno_terminado_sube_a_la_nube(pg):
@@ -335,23 +346,69 @@ def sync_entreno_terminado_sube_a_la_nube(pg):
     assert len(nuevas) == 1 and nuevas[0]["sets"][0]["exercise"] == "Remo"
 
 @test
-def sync_la_nube_mas_reciente_gana_en_rutinas(pg):
+def sync_migra_el_bloque_antiguo_de_rutinas_sin_perder_ninguna(pg):
     cl = {"users/U1": {"rutinas": [{"id": "z", "name": "NUBE", "exercises": []}], "rutinasTs": 9999999999999}}
-    seed(pg, fb={"logged": True, "cloud": cl}); pg.wait_for_timeout(600)
-    assert [r["name"] for r in db(pg)["routines"]] == ["NUBE"]
+    seed(pg, fb={"logged": True, "cloud": cl}); pg.wait_for_timeout(1000)
+    assert sorted(r["name"] for r in db(pg)["routines"]) == ["NUBE", "PULL", "PUSH"], "se juntan las de la nube y las locales"
+    c = cloud(pg)
+    assert sorted(r["name"] for r in rutinas_nube(c)) == ["NUBE", "PULL", "PUSH"], "cada una pasa a su propio documento"
+    assert c["users/U1"].get("rutinasV2") is True
 
 @test
-def sync_local_antiguo_sin_marca_no_pisa_la_nube(pg):
-    cl = {"users/U1": {"rutinas": [{"id": "z", "name": "NUBE", "exercises": []}], "rutinasTs": 7}}
-    seed(pg, fb={"logged": True, "cloud": cl}); pg.wait_for_timeout(700)
-    assert [r["name"] for r in db(pg)["routines"]] == ["NUBE"], "lo que ya está en la nube manda sobre datos locales sin fecha"
+def sync_lo_local_sin_marca_no_pisa_una_rutina_de_la_nube(pg):
+    cl = {"users/U1": {"rutinasV2": True}, "users/U1/rutinas/a": doc_rutina(ROUTINES[0], name="A-NUBE", rev=2, upd=7, pos=1)}
+    seed(pg, fb={"logged": True, "cloud": cl}); pg.wait_for_timeout(900)
+    assert [r["name"] for r in db(pg)["routines"] if r["id"] == "a"] == ["A-NUBE"]
 
 @test
-def sync_lo_local_mas_reciente_gana_en_rutinas(pg):
-    cl = {"users/U1": {"rutinas": [{"id": "z", "name": "VIEJA", "exercises": []}], "rutinasTs": 1}}
-    seed(pg, fb={"logged": True, "cloud": cl}, meta={"routinesTs": 5000}); pg.wait_for_timeout(900)
-    assert [r["name"] for r in db(pg)["routines"]] == ["PUSH", "PULL"]
-    assert [r["name"] for r in cloud(pg)["users/U1"]["rutinas"]] == ["PUSH", "PULL"]
+def sync_rutinas_editadas_en_dos_dispositivos_se_conservan_las_dos(pg):
+    a, b = ROUTINES
+    cl = {"users/U1": {"rutinasV2": True},
+          "users/U1/rutinas/a": doc_rutina(a, name="A-NUBE", rev=3, upd=10, pos=1),
+          "users/U1/rutinas/b": doc_rutina(b, rev=1, upd=5, pos=2)}
+    local = [dict(a, rev=1, upd=5, pos=1), dict(b, name="B-LOCAL", rev=2, upd=20, pos=2)]
+    seed(pg, routines=local, fb={"logged": True, "cloud": cl}); pg.wait_for_timeout(1000)
+    assert {r["id"]: r["name"] for r in db(pg)["routines"]} == {"a": "A-NUBE", "b": "B-LOCAL"}, "aquí se ve lo de la nube y lo local"
+    assert {r["id"]: r["name"] for r in rutinas_nube(cloud(pg))} == {"a": "A-NUBE", "b": "B-LOCAL"}, "y la nube se queda con las dos ediciones"
+
+@test
+def sync_gana_la_version_con_mas_revisiones_aunque_su_reloj_vaya_mal(pg):
+    a, b = ROUTINES
+    cl = {"users/U1": {"rutinasV2": True},
+          "users/U1/rutinas/a": doc_rutina(a, name="NUBE-A", rev=2, upd=9999999999999, pos=1),    # reloj de la nube adelantado
+          "users/U1/rutinas/b": doc_rutina(b, name="NUBE-B", rev=5, upd=1, pos=2)}               # reloj de la nube atrasado
+    local = [dict(a, name="LOCAL-A", rev=3, upd=1000, pos=1), dict(b, name="LOCAL-B", rev=4, upd=9999999999998, pos=2)]
+    seed(pg, routines=local, fb={"logged": True, "cloud": cl}); pg.wait_for_timeout(1000)
+    assert {r["id"]: r["name"] for r in db(pg)["routines"]} == {"a": "LOCAL-A", "b": "NUBE-B"}, "manda la revisión más alta, no la hora"
+    assert {r["id"]: r["name"] for r in rutinas_nube(cloud(pg))} == {"a": "LOCAL-A", "b": "NUBE-B"}
+
+@test
+def sync_gana_la_sesion_con_mas_revisiones_aunque_su_reloj_vaya_mal(pg):
+    s2 = {"id": "s2", "date": "2026-11-03", "routine": "PULL", "sets": [{"exercise": "Remo", "reps": 10, "kg": 30, "w": False}]}
+    nube = {k: v for k, v in s2.items() if k != "id"}
+    cl = {"users/U1": {"rutinasV2": True}, "users/U1/sesiones/s2": dict(nube, sets=[{"exercise": "Remo", "reps": 10, "kg": 77, "w": False}], rev=4, upd=1)}
+    seed(pg, sessions=[dict(s2, rev=2, upd=9999999999999)], fb={"logged": True, "cloud": cl}); pg.wait_for_timeout(900)
+    assert db(pg)["sessions"][0]["sets"][0]["kg"] == 77
+
+@test
+def sync_borrar_rutina_en_otro_dispositivo_la_quita_aqui(pg):
+    a, b = ROUTINES
+    cl = {"users/U1": {"rutinasV2": True}, "users/U1/rutinas/a": doc_rutina(a, rev=1, upd=5, pos=1)}
+    seed(pg, fb={"logged": True, "cloud": cl}, meta={"syncedIds": {"sesiones": [], "caminatas": [], "rutinas": ["a", "b"]}}); pg.wait_for_timeout(900)
+    assert [r["id"] for r in db(pg)["routines"]] == ["a"], "b ya no está en la nube: se borró en otro dispositivo"
+
+@test
+def sync_las_rutinas_conservan_su_orden(pg):
+    a, b = ROUTINES
+    cl = {"users/U1": {"rutinasV2": True}, "users/U1/rutinas/a": doc_rutina(a, rev=1, upd=5, pos=2), "users/U1/rutinas/b": doc_rutina(b, rev=1, upd=5, pos=1)}
+    seed(pg, routines=[], sessions=[], fb={"logged": True, "cloud": cl}); pg.wait_for_timeout(900)
+    assert [r["id"] for r in db(pg)["routines"]] == ["b", "a"]
+
+@test
+def sync_si_la_nube_rechaza_los_datos_avisa_de_las_reglas(pg):
+    pg.add_init_script("window.__fakeDeny = true")
+    seed(pg, fb={"logged": True}); pg.wait_for_timeout(900)
+    assert "reglas" in pg.inner_text("#toast").lower(), pg.inner_text("#toast")
 
 # ---------- Copia de seguridad ----------
 def copia(routines=None, sessions=None, walks=None, app="forja", **extra):
@@ -427,7 +484,7 @@ def copia_restaurar_se_sube_a_la_nube(pg):
     nueva = {"id": "z", "name": "LEG", "exercises": []}
     restaurar(pg, copia(routines=[nueva], sessions=[ses])); pg.wait_for_timeout(900)
     c = cloud(pg)
-    assert "users/U1/sesiones/s2" in c and "LEG" in [r["name"] for r in c["users/U1"]["rutinas"]]
+    assert "users/U1/sesiones/s2" in c and "LEG" in [r["name"] for r in rutinas_nube(c)]
 
 @test
 def copia_el_apartado_se_ve_en_ajustes(pg):
@@ -708,8 +765,8 @@ def sync_borrado_hecho_sin_sesion_no_resucita_al_entrar(pg):
 
 @test
 def sync_borrado_en_otro_dispositivo_se_aplica_aqui(pg):
-    cl = {"users/U1": {"rutinas": [], "rutinasTs": 1}, "users/U1/sesiones/s": HISTORY and {k: v for k, v in HISTORY[0].items() if k != "id"}}
-    seed(pg, sessions=SESIONES, fb={"logged": True, "cloud": cl}, meta={"syncedIds": {"sesiones": ["s", "s2"], "caminatas": []}}); pg.wait_for_timeout(900)
+    cl = {"users/U1": {"rutinasV2": True}, "users/U1/sesiones/s": HISTORY and {k: v for k, v in HISTORY[0].items() if k != "id"}}
+    seed(pg, sessions=SESIONES, fb={"logged": True, "cloud": cl}, meta={"syncedIds": {"sesiones": ["s", "s2"], "caminatas": [], "rutinas": []}}); pg.wait_for_timeout(900)
     assert [x["id"] for x in db(pg)["sessions"]] == ["s"], "s2 ya no está en la nube: se borró en otro dispositivo"
 
 # ---------- Editar del historial ----------
@@ -801,7 +858,7 @@ def sync_editar_entreno_actualiza_la_nube(pg):
 @test
 def sync_la_edicion_de_otro_dispositivo_se_aplica_aqui(pg):
     nube = {"date": "2026-11-03", "routine": "PULL", "sets": [{"exercise": "Remo", "reps": 10, "kg": 77, "w": False}], "upd": 9999999999999}
-    cl = {"users/U1": {"rutinas": [], "rutinasTs": 1}, "users/U1/sesiones/s2": nube}
+    cl = {"users/U1": {"rutinasV2": True}, "users/U1/sesiones/s2": nube}
     seed(pg, sessions=SESIONES, fb={"logged": True, "cloud": cl}); pg.wait_for_timeout(900)
     assert [x for x in db(pg)["sessions"] if x["id"] == "s2"][0]["sets"][0]["kg"] == 77
 
@@ -3141,6 +3198,93 @@ def ios_la_web_empieza_debajo_de_la_barra_de_estado(pg):
     assert ".ignoresSafeArea(.keyboard)" in app, "el teclado no encoge la pantalla"
     assert "Pantalla()\n                .ignoresSafeArea()" not in app, "arriba la web no se mete bajo la hora y la isla dinámica"
     assert ".background(Color(red: 14 / 255, green: 11 / 255, blue: 20 / 255).ignoresSafeArea())" in app, "la franja de la barra de estado lleva el fondo de la app"
+
+# ---------- Rutinas enlazadas por identificador, no por nombre ----------
+def _tarjeta(pg, id): return pg.locator(f'#routines-list .routine:has([data-start-routine="{id}"])')
+
+@test
+def rutina_renombrar_no_pierde_su_historial(pg):
+    sesiones = [ses("2026-11-01", "s1", "PUSH"), ses("2026-11-05", "s2", "push")]     # antiguas: solo el nombre
+    seed(pg, sessions=sesiones); tab(pg, "rutinas"); editar_rutina(pg, "a")
+    pg.fill("#routine-name", "Empuje"); pg.click("#routine-save"); pg.wait_for_timeout(300)
+    d = db(pg)
+    assert all(s["routineId"] == "a" and s["routine"] == "Empuje" for s in d["sessions"]), d["sessions"]
+    assert all(s["rev"] >= 1 and s["upd"] > 0 for s in d["sessions"]), "se marcan como cambiadas para que suban a la nube"
+    assert "Sin estrenar" not in _tarjeta(pg, "a").inner_text(), _tarjeta(pg, "a").inner_text()
+
+@test
+def rutina_el_entreno_guarda_el_id_de_su_rutina_y_el_libre_no(pg):
+    seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
+    pg.locator(".wrow .chk").first.click(); pg.click("#wk-finish"); pg.click("#finish-save"); pg.wait_for_timeout(400)
+    assert db(pg)["sessions"][-1]["routineId"] == "a"
+    pg.click("#summary-done"); pg.wait_for_timeout(400); tab(pg, "rutinas")
+    pg.click("#free-workout"); pg.wait_for_timeout(300)
+    anadir_del_selector(pg, "Press")
+    pg.locator('#workout input[data-f="reps"]').first.fill("6"); pg.locator("#workout .chk").first.click(); pg.click("#wk-finish"); pg.click("#finish-save"); pg.wait_for_timeout(400)
+    libre = [x for x in db(pg)["sessions"] if x["routine"] == "Entreno libre"]
+    assert len(libre) == 1 and "routineId" not in libre[0], libre     # Firestore no admite campos undefined
+
+@test
+def rutina_el_enlace_por_id_manda_sobre_el_nombre(pg):
+    seed(pg, sessions=[dict(ses("2026-11-01", "s", "PULL"), routineId="a")]); tab(pg, "rutinas")
+    assert "Sin estrenar" not in _tarjeta(pg, "a").inner_text(), "el entreno está enlazado a PUSH aunque diga PULL"
+    assert "Sin estrenar" in _tarjeta(pg, "b").inner_text(), "PULL no hereda un entreno que es de otra rutina por llamarse igual"
+
+@test
+def ejercicio_renombrar_arrastra_su_historial(pg):
+    seed(pg); tab(pg, "rutinas"); editar_rutina(pg, "a")
+    pg.locator("#routine-exercises .exname").first.fill("Press banca"); pg.click("#routine-save"); pg.wait_for_timeout(300)
+    s = db(pg)["sessions"][0]
+    assert s["sets"][0]["exercise"] == "Press banca" and s["rev"] >= 1 and s["upd"] > 0, s
+
+@test
+def ejercicio_renombrar_no_toca_el_historial_si_otra_rutina_lo_sigue_usando(pg):
+    otra = dict(ROUTINES[1], exercises=[{"name": "Press de pecho", "sets": [{"w": False, "kg": 30, "reps": 10}]}])
+    seed(pg, routines=[ROUTINES[0], otra]); tab(pg, "rutinas"); editar_rutina(pg, "a")
+    pg.locator("#routine-exercises .exname").first.fill("Press banca"); pg.click("#routine-save"); pg.wait_for_timeout(300)
+    assert db(pg)["sessions"][0]["sets"][0]["exercise"] == "Press de pecho"
+
+@test
+def copia_conserva_el_enlace_y_las_revisiones(pg):
+    pg.goto(URL)
+    s = pg.evaluate("s => cleanSession(s)", dict(ses("2026-11-01", "s"), routineId="a", rev=3, upd=9))
+    assert s["routineId"] == "a" and s["rev"] == 3 and s["upd"] == 9, s
+    r = pg.evaluate("r => cleanRoutine(r)", dict(ROUTINES[0], pos=2.5, rev=4, upd=8))
+    assert r["pos"] == 2.5 and r["rev"] == 4 and r["upd"] == 8, r
+
+@test
+def plan_semanal_dos_rutinas_el_mismo_dia_salen_las_dos_en_hoy(pg):
+    pg.goto(URL); d = _dow(pg)
+    seed(pg, routines=_plan(pg, {"a": [d], "b": [d]}), sessions=[])
+    assert pg.locator("#next-routine [data-start-next]").count() == 2, pg.inner_text("#next-routine")
+    t = pg.inner_text("#next-routine")
+    assert "PUSH" in t and "PULL" in t
+    tab(pg, "rutinas")
+    assert pg.locator("#routines-list .routine.feat").count() == 2, "Te toca enseña las dos"
+
+@test
+def plan_semanal_hoy_solo_enseña_las_que_faltan(pg):
+    pg.goto(URL); d = _dow(pg)
+    hecha = dict(ses(off(pg, 0), "x", "PUSH"), routineId="a")
+    seed(pg, routines=_plan(pg, {"a": [d], "b": [d]}), sessions=[hecha])
+    assert pg.locator('#next-routine [data-start-next="b"]').count() == 1 and pg.locator('#next-routine [data-start-next="a"]').count() == 0
+    seed(pg, routines=_plan(pg, {"a": [d], "b": [d]}), sessions=[hecha, dict(ses(off(pg, 0), "y", "PULL"), routineId="b")])
+    assert "hecho" in pg.inner_text("#next-routine").lower() and pg.locator("#next-routine [data-start-next]").count() == 0
+
+@test
+def rutinas_las_tarjetas_muestran_los_dias_que_tocan(pg):
+    seed(pg, routines=_plan(pg, {"a": [0, 3], "b": [1, 2, 4]})); tab(pg, "rutinas")
+    assert "L·J" in _tarjeta(pg, "a").inner_text() or "L·J" in pg.inner_text("#routines-list"), pg.inner_text("#routines-list")
+    assert "M·X·V" in pg.inner_text("#routines-list")
+
+@test
+def plan_editor_avisa_si_otra_rutina_toca_el_mismo_dia(pg):
+    seed(pg, routines=_plan(pg, {"a": [2]})); tab(pg, "rutinas"); editar_rutina(pg, "b")
+    assert not pg.is_visible("#days-note")
+    pg.click('#routine-days [data-day="2"]'); pg.wait_for_timeout(100)
+    assert pg.is_visible("#days-note") and "PUSH" in pg.inner_text("#days-note"), "avisa de que ese día ya toca PUSH"
+    pg.click('#routine-days [data-day="2"]'); pg.click('#routine-days [data-day="4"]'); pg.wait_for_timeout(100)
+    assert not pg.is_visible("#days-note")
 
 @test
 def ios_puente_no_estorba_en_la_web(pg):

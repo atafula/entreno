@@ -1,6 +1,7 @@
 // ---------- Cuenta y sincronización (Firebase: Google + Firestore), igual que la app de finanzas ----------
 // Primero lo local (funciona sin conexión ni cuenta); con sesión, todo se copia a la nube y se baja lo de otros dispositivos.
-// Nube: users/{uid} -> {rutinas, rutinasTs} · users/{uid}/sesiones/{id} · users/{uid}/caminatas/{id}
+// Nube: users/{uid} -> {rutinasV2} · users/{uid}/rutinas/{id} · users/{uid}/sesiones/{id} · users/{uid}/caminatas/{id}
+// Cada documento lleva `rev` (contador de cambios) y `upd` (hora): gana el de más `rev`, así no importa el reloj de cada aparato.
 const FIREBASE_CONFIG = {
   apiKey: 'AIzaSyDBl3KDT96i6l35XZIKxqkyNccSdvJFuag',
   authDomain: 'entreno-31153.firebaseapp.com',
@@ -11,11 +12,10 @@ const FIREBASE_CONFIG = {
 };
 const UID_KEY = 'entreno-uid';
 const cfg = window.ENTRENO_FIREBASE_CONFIG || FIREBASE_CONFIG;   // los tests inyectan su propia config
-let fdb = null, fauth = null, fuser = null, cloudIds = { sesiones: new Map(), caminatas: new Map() };   // id -> marca `upd` que hay en la nube
-let unsubs = [], pushT = null, pending = false;
+let fdb = null, fauth = null, fuser = null, cloudIds = { sesiones: new Map(), caminatas: new Map(), rutinas: new Map() };   // id -> {rev, upd} que hay en la nube
+let unsubs = [], pushT = null, rootLeido = false, nubeV2 = false, leidas = new Set();
 
 const saveLocal = () => guardarLocal();
-const routinesSig = () => JSON.stringify(db.routines);
 // Un aviso de la nube solo repinta si trajo algo distinto, y sin reanimar la pantalla
 const firma = () => JSON.stringify([db.routines, db.sessions, db.walks]);
 const renderSiCambio = antes => { if (firma() !== antes) renderSilencioso(); };
@@ -33,67 +33,91 @@ function setAccountUI() {
 // Lo que cambia en local se sube (con un pequeño retraso para agrupar cambios)
 function syncPush() {
   if (!fuser || !fdb) return;
-  if (db.routinesSig !== routinesSig()) { db.routinesSig = routinesSig(); db.routinesTs = Date.now(); saveLocal(); }
   clearTimeout(pushT);
   pushT = setTimeout(pushNow, 250);
 }
+// ¿Es `a` más nueva que `b`? Manda el contador de revisiones; la hora solo desempata (así un reloj mal puesto no pisa nada)
+const newer = (a, b) => (a.rev || 0) !== (b.rev || 0) ? (a.rev || 0) > (b.rev || 0) : (a.upd || 0) > (b.upd || 0);
+const COLS = [['sesiones', 'sessions'], ['caminatas', 'walks'], ['rutinas', 'routines']];
+const porSubir = (name, item) => { const c = cloudIds[name].get(item.id); return c === undefined || newer(item, c); };
+let avisado = false;
+function falloNube(err) {
+  if (err && err.code === 'permission-denied' && !avisado) {
+    avisado = true;
+    toast('La nube rechaza los datos: publica las reglas nuevas de Firestore (archivo firestore.rules).');
+  }
+}
 function pushNow() {
-  if (!fuser || !fdb) return;
+  // antes de subir nada hay que haber leído la nube entera (si no, lo local pisaría versiones más nuevas)
+  if (!fuser || !fdb || !rootLeido || leidas.size < COLS.length) return;
   const root = fdb.collection('users').doc(fuser.uid);
   const b = fdb.batch();
-  if (db.routinesTs) b.set(root, { rutinas: db.routines, rutinasTs: db.routinesTs }, { merge: true });
-  ['sesiones', 'caminatas'].forEach(name => db.deleted[name].forEach(id => b.delete(root.collection(name).doc(id))));
-  [['sesiones', db.sessions], ['caminatas', db.walks]].forEach(([name, list]) => {
-    list.forEach(item => {
-      if (!item.id) return;
-      const inCloud = cloudIds[name].get(item.id);
-      if (inCloud !== undefined && (item.upd || 0) <= inCloud) return;       // la nube ya tiene esta versión
+  let tocado = false;
+  if (!nubeV2) { b.set(root, { rutinasV2: true }, { merge: true }); nubeV2 = true; }
+  COLS.forEach(([name, key]) => {
+    db.deleted[name].forEach(id => b.delete(root.collection(name).doc(id)));
+    db[key].forEach(item => {
+      if (!item.id || !porSubir(name, item)) return;
+      if (!item.rev) { tocar(item); tocado = true; }
       const { id, ...data } = item;
-      b.set(root.collection(name).doc(id), data);
-      cloudIds[name].set(id, item.upd || 0);
+      b.set(root.collection(name).doc(id), JSON.parse(JSON.stringify(data)));
+      cloudIds[name].set(id, { rev: item.rev || 0, upd: item.upd || 0 });
     });
   });
-  b.commit().catch(() => { /* se reintenta en el siguiente cambio */ });
+  if (tocado) saveLocal();
+  b.commit().catch(falloNube);
+}
+
+// Orden de las rutinas y punto de partida para detectar cambios propios tras traer algo de la nube
+function ajustarRutinas() {
+  ordenarRutinas();
+  db.routineSigs = {}; db.routines.forEach(r => { db.routineSigs[r.id] = { s: sigRutina(r), rev: r.rev || 0 }; });
 }
 
 function listenCloud(user) {
   stopListen();
   const root = fdb.collection('users').doc(user.uid);
   unsubs.push(root.onSnapshot(snap => {
+    if (snap.metadata && snap.metadata.fromCache && !snap.exists) return;   // sin red no sabemos si hay rutinas antiguas
     const antes = firma();
     const d = snap.exists ? snap.data() : null;
-    if (d && Array.isArray(d.rutinas) && (d.rutinasTs || 0) > (db.routinesTs || 0)) {
-      db.routines = d.rutinas.map(normRoutine); db.routinesTs = d.rutinasTs; db.routinesSig = routinesSig();
-      saveLocal(); renderSiCambio(antes);
-    } else if (!d && db.routines.length) {
-      if (!db.routinesTs) db.routinesTs = Date.now();
-      db.routinesSig = routinesSig(); saveLocal(); pushNow();
-    } else if (d && (d.rutinasTs || 0) < (db.routinesTs || 0)) pushNow();
-  }, () => { /* sin permisos o sin red: se sigue en local */ }));
-  [['sesiones', 'sessions'], ['caminatas', 'walks']].forEach(([name, key]) => {
+    rootLeido = true; nubeV2 = !!(d && d.rutinasV2);
+    if (!nubeV2) {
+      // Nube antigua: las rutinas iban juntas en un bloque. Se juntan con las locales y pasan a un documento cada una
+      const tengo = new Set(db.routines.map(r => r.id));
+      (d && Array.isArray(d.rutinas) ? d.rutinas : []).map(normRoutine)
+        .filter(r => r.id && !tengo.has(r.id) && !db.deleted.rutinas.includes(r.id)).forEach(r => db.routines.push(r));
+      ajustarRutinas(); saveLocal(); renderSiCambio(antes);
+      pushNow();
+    }
+  }, falloNube));
+  COLS.forEach(([name, key]) => {
     unsubs.push(root.collection(name).onSnapshot(snap => {
       if (snap.metadata && snap.metadata.fromCache) return;
       const antes = firma();
-      const cloud = new Map(snap.docs.map(x => [x.id, x.data().upd || 0]));
-      cloudIds[name] = cloud;
+      const cloud = new Map(snap.docs.map(x => [x.id, { rev: x.data().rev || 0, upd: x.data().upd || 0 }]));
+      cloudIds[name] = cloud; leidas.add(name);
       const synced = new Set(db.syncedIds[name]);
       // Borrado en otro dispositivo: estaba en la nube la última vez y ya no
       db[key] = db[key].filter(x => !(synced.has(x.id) && !cloud.has(x.id)));
       const pendingDel = new Set(db.deleted[name]);
       db.deleted[name] = db.deleted[name].filter(id => cloud.has(id));   // los ya borrados de la nube se olvidan
       db.syncedIds[name] = [...cloud.keys()];
-      // Editado en otro dispositivo: la versión de la nube es más nueva
-      db[key] = db[key].map(x => { const c = snap.docs.find(d => d.id === x.id); return c && (c.data().upd || 0) > (x.upd || 0) ? { id: x.id, ...c.data() } : x; });
+      // Editado en otro dispositivo: gana la versión con más revisiones
+      const docs = new Map(snap.docs.map(x => [x.id, x.data()]));
+      const norm = x => key === 'routines' ? normRoutine(x) : x;
+      db[key] = db[key].map(x => { const c = docs.get(x.id); return c && newer(c, x) ? norm({ id: x.id, ...c }) : x; });
       const have = new Set(db[key].map(x => x.id));
-      const add = snap.docs.filter(x => !have.has(x.id) && !pendingDel.has(x.id)).map(x => ({ id: x.id, ...x.data() }));
+      const add = snap.docs.filter(x => !have.has(x.id) && !pendingDel.has(x.id)).map(x => norm({ id: x.id, ...x.data() }));
       if (add.length) db[key] = [...db[key], ...add];
-      db[key].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : (a.ts || 0) - (b.ts || 0)));
+      if (key === 'routines') ajustarRutinas();
+      else db[key].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : (a.ts || 0) - (b.ts || 0)));
       saveLocal(); renderSiCambio(antes);
-      if (db.deleted[name].length || db[key].some(x => !cloud.has(x.id) || (x.upd || 0) > cloud.get(x.id))) pushNow();
-    }, () => { /* sin permisos o sin red */ }));
+      if (!nubeV2 || db.deleted[name].length || db[key].some(x => porSubir(name, x))) pushNow();
+    }, falloNube));
   });
 }
-function stopListen() { unsubs.forEach(u => { try { u(); } catch { /* nada */ } }); unsubs = []; clearTimeout(pushT); }
+function stopListen() { rootLeido = false; leidas = new Set(); unsubs.forEach(u => { try { u(); } catch { /* nada */ } }); unsubs = []; clearTimeout(pushT); }
 
 (function initSync() {
   if (!window.firebase || !cfg.apiKey || cfg.apiKey === 'REEMPLAZA') { $('account-sec').hidden = true; return; }
@@ -126,12 +150,12 @@ function stopListen() { unsubs.forEach(u => { try { u(); } catch { /* nada */ } 
   fauth.onAuthStateChanged(user => {
     fuser = user;
     setAccountUI();
-    if (!user) { stopListen(); return; }                  // al cerrar sesión se sigue en local
+    if (!user) { stopListen(); rootLeido = false; return; }                  // al cerrar sesión se sigue en local
     const prev = lsGet(UID_KEY);
     if (prev && prev !== user.uid) {                      // otra cuenta: no mezclar datos
-      db.routines = []; db.sessions = []; db.walks = []; delete db.routinesTs; delete db.routinesSig;
-      db.deleted = { sesiones: [], caminatas: [] }; db.syncedIds = { sesiones: [], caminatas: [] };
-      cloudIds = { sesiones: new Map(), caminatas: new Map() };
+      db.routines = []; db.sessions = []; db.walks = []; db.routineSigs = {};
+      db.deleted = { sesiones: [], caminatas: [], rutinas: [] }; db.syncedIds = { sesiones: [], caminatas: [], rutinas: [] };
+      cloudIds = { sesiones: new Map(), caminatas: new Map(), rutinas: new Map() }; rootLeido = false; nubeV2 = false; leidas = new Set();
       saveLocal(); render();
     }
     lsSet(UID_KEY, user.uid);

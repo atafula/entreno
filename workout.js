@@ -223,7 +223,7 @@ function finishWorkout() {
   wk.exercises.forEach(ex => ex.sets.forEach(s => { if (s.done && num(s.reps) > 0) sets.push({ exercise: ex.name, reps: num(s.reps), kg: num(s.kg), w: !!s.w }); }));
   if (!sets.length) return discardWorkout();          // sin series completas no hay entreno: se descarta
   const segundos = Math.floor((Date.now() - wk.start) / 1000);
-  db.sessions.push({ id: uid(), date: localDate(), routine: wk.name, sets, seconds: segundos, ts: Date.now() });
+  db.sessions.push({ id: uid(), date: localDate(), routine: wk.name, ...(wk.routineId ? { routineId: wk.routineId } : {}), sets, seconds: segundos, ts: Date.now() });
   salud('fuerza', segundos);
   const prs = wk.exercises.reduce((a, ex) => a + ex.sets.filter(s => s.done && s.pr).length, 0);
   wk = null; saveLive();

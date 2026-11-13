@@ -15,7 +15,9 @@ function cleanRoutine(r) {
   });
   // Días de la semana en que toca (0 = lunes … 6 = domingo), sin repetir y ordenados
   const days = (Array.isArray(r.days) ? r.days : []).filter(d => Number.isInteger(d) && d >= 0 && d <= 6);
-  return { id: r.id, name: r.name, exercises, days: [...new Set(days)].sort((a, b) => a - b) };
+  const out = { id: r.id, name: r.name, exercises, days: [...new Set(days)].sort((a, b) => a - b) };
+  ['pos', 'rev', 'upd'].forEach(k => { if (isNum(r[k])) out[k] = r[k]; });
+  return out;
 }
 function cleanSession(s) {
   if (!s || !isStr(s.id, 80) || !s.id || !isDate(s.date) || !isStr(s.routine, 100) || !Array.isArray(s.sets)) return null;
@@ -25,12 +27,17 @@ function cleanSession(s) {
   const out = { id: s.id, date: s.date, routine: s.routine, sets };
   if (isNum(s.seconds)) out.seconds = s.seconds;
   if (isNum(s.ts)) out.ts = s.ts;
+  if (isStr(s.routineId, 80) && s.routineId) out.routineId = s.routineId;     // la rutina a la que pertenece el entreno
+  if (isNum(s.rev)) out.rev = s.rev;
+  if (isNum(s.upd)) out.upd = s.upd;
   return out;
 }
 function cleanWalk(w) {
   if (!w || !isStr(w.id, 80) || !w.id || !isDate(w.date) || !isNum(w.seconds) || !isNum(w.meters)) return null;
   const out = { id: w.id, date: w.date, seconds: w.seconds, meters: w.meters };
   if (isNum(w.ts)) out.ts = w.ts;
+  if (isNum(w.rev)) out.rev = w.rev;
+  if (isNum(w.upd)) out.upd = w.upd;
   return out;
 }
 
@@ -44,7 +51,9 @@ function parseBackup(text) {
 
 // Se mezcla con lo que hay (no se borra nada); si un id ya existe, se sustituye por el de la copia.
 function mergeBackup(c) {
-  const merge = (cur, inc) => { const m = new Map(cur.map(x => [x.id, x])); inc.forEach(x => m.set(x.id, x)); return [...m.values()]; };
+  // Lo restaurado sustituye al del mismo id y cuenta como un cambio nuevo (si no, la nube lo pisaría con su versión)
+  const igual = (a, b) => JSON.stringify({ ...a, rev: 0, upd: 0 }) === JSON.stringify({ ...b, rev: 0, upd: 0 });
+  const merge = (cur, inc) => { const m = new Map(cur.map(x => [x.id, x])); inc.forEach(x => { const old = m.get(x.id); if (old && !isNum(x.pos) && isNum(old.pos)) x.pos = old.pos; if (old && !igual(old, x)) tocar(x, old.rev || 0); m.set(x.id, x); }); return [...m.values()]; };
   [['sesiones', c.sessions], ['caminatas', c.walks]].forEach(([n, l]) => {      // lo restaurado ya no cuenta como borrado
     const ids = new Set(l.map(x => x.id)); db.deleted[n] = db.deleted[n].filter(id => !ids.has(id));
   });
@@ -121,7 +130,6 @@ $('backup-file').onchange = async e => {
     const c = parseBackup(await f.text());
     await vincularCatalogo(c.routines);
     mergeBackup(c);
-    if (c.routines.length) { db.routinesTs = Date.now(); delete db.routinesSig; }   // para que la nube la tome como lo más reciente
     if (persist()) toast(`Copia restaurada: ${c.routines.length} rutinas, ${c.sessions.length} entrenos, ${c.walks.length} caminatas`);
   } catch { toast('Ese archivo no es una copia de Forja'); }
   e.target.value = '';

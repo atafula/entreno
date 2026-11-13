@@ -119,7 +119,10 @@ if (!db || typeof db !== 'object' || Array.isArray(db)) {
 try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {}); } catch { /* nada */ }
 // Las rutinas antiguas solo tenían nombres de ejercicio: se convierten al formato con series
 function normRoutine(r) {
+  const extra = {};
+  ['pos', 'rev', 'upd'].forEach(k => { if (Number.isFinite(r[k])) extra[k] = r[k]; });   // orden y versión (para sincronizar)
   return {
+    ...extra,
     id: r.id, name: r.name, days: [...new Set((r.days || []).filter(d => Number.isInteger(d) && d >= 0 && d <= 6))].sort((a, b) => a - b),
     exercises: (r.exercises || []).map(e => typeof e === 'string'
       ? { name: e, sets: [] }
@@ -127,8 +130,32 @@ function normRoutine(r) {
   };
 }
 db.routines = (db.routines || []).map(normRoutine);
-db.deleted = db.deleted || { sesiones: [], caminatas: [] };        // borrados pendientes de propagar a la nube
-db.syncedIds = db.syncedIds || { sesiones: [], caminatas: [] };  // ids que había en la nube la última vez
+// Versiones: cada rutina, entreno y caminata lleva `rev`, un contador que sube en cada cambio, y `upd`, la hora del cambio.
+// Al sincronizar gana el `rev` más alto, no la hora: así un móvil con el reloj mal puesto no pisa datos más nuevos.
+const tocar = (x, base = 0) => { x.rev = Math.max(x.rev || 0, base) + 1; x.upd = Date.now(); };
+const sigRutina = r => JSON.stringify([r.name, r.days, r.pos, r.exercises]);
+// Las rutinas tienen un orden (`pos`, admite decimales para colar una entre dos) que viaja con ellas a la nube
+function ordenarRutinas() {
+  let max = 0;
+  db.routines.forEach(r => { if (Number.isFinite(r.pos)) max = Math.max(max, r.pos); });
+  db.routines.forEach(r => { if (!Number.isFinite(r.pos)) r.pos = ++max; });
+  db.routines.sort((a, b) => a.pos - b.pos);
+}
+// Detecta las rutinas cambiadas desde la última vez (editadas, nuevas, restauradas) y les sube el `rev`
+function marcarRutinas() {
+  ordenarRutinas();
+  const antes = db.routineSigs, ahora = {};
+  db.routines.forEach(r => {
+    const p = antes && antes[r.id], s = sigRutina(r);
+    if (antes && (!p || p.s !== s)) tocar(r, p ? p.rev : 0);
+    ahora[r.id] = { s: sigRutina(r), rev: r.rev || 0 };
+  });
+  db.routineSigs = ahora;
+}
+ordenarRutinas();
+db.deleted = { sesiones: [], caminatas: [], rutinas: [], ...(db.deleted || {}) };        // borrados pendientes de propagar a la nube
+db.syncedIds = { sesiones: [], caminatas: [], rutinas: [], ...(db.syncedIds || {}) };  // ids que había en la nube la última vez
+if (!db.routineSigs) { db.routineSigs = {}; db.routines.forEach(r => { db.routineSigs[r.id] = { s: sigRutina(r), rev: r.rev || 0 }; }); }   // punto de partida: nada cambiado
 let walk = null;
 let lastStreak = null;
 let lastPhrase = -1;
@@ -138,7 +165,7 @@ function guardarLocal() {
   try { localStorage.setItem(KEY, JSON.stringify(db)); return true; }
   catch { toast('No se pudo guardar en el móvil'); return false; }
 }
-const persist = () => { const ok = guardarLocal(); render(); if (typeof syncPush === 'function') syncPush(); return ok; };
+const persist = () => { marcarRutinas(); const ok = guardarLocal(); render(); if (typeof syncPush === 'function') syncPush(); return ok; };
 const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
 const localDate = (d = new Date()) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -334,13 +361,19 @@ function renderWeekSum() {
 }
 
 // Siguiente rutina: la que más tiempo lleva sin hacerse (las que no se han estrenado, primero)
-function ultimaVez(r) {
-  return db.sessions.filter(s => String(s.routine).toLowerCase() === String(r.name).toLowerCase()).map(s => s.date).sort().pop() || '';
-}
+// Un entreno es de una rutina por su id; los antiguos (sin id) se reconocen por el nombre
+const esDe = (s, r) => s.routineId ? s.routineId === r.id : String(s.routine).toLowerCase() === String(r.name).toLowerCase();
+function ultimaVez(r) { return db.sessions.filter(s => esDe(s, r)).map(s => s.date).sort().pop() || ''; }
+const ultimaVezEn = (r, fecha) => db.sessions.some(s => s.date === fecha && esDe(s, r));
 // Qué rutina toca: la que has asignado a cada día de la semana. Si no has asignado ninguna, la que más tiempo lleva sin hacerse
 const diaSemana = (d = new Date()) => (d.getDay() + 6) % 7;
 const hayPlan = () => db.routines.some(r => (r.days || []).length);
-const rutinaDelDia = dow => db.routines.find(r => (r.days || []).includes(dow)) || null;
+const rutinasDelDia = dow => db.routines.filter(r => (r.days || []).includes(dow));   // puede tocar más de una el mismo día
+const rutinaDelDia = dow => rutinasDelDia(dow)[0] || null;
+const hechaEn = (r, fecha) => ultimaVezEn(r, fecha);
+const diasTexto = r => (r.days || []).map(i => DIAS_LETRA[i]).join('·');
+// Las rutinas destacadas en «Te toca»: las de hoy según el plan, o la más antigua sin plan
+const rutinasDeHoy = () => hayPlan() ? rutinasDelDia(diaSemana()) : [masAntigua()].filter(Boolean);
 function masAntigua() {
   let mejor = null, fecha = null;
   db.routines.forEach(r => { const f = ultimaVez(r); if (mejor === null || f < fecha) { mejor = r; fecha = f; } });
@@ -357,13 +390,29 @@ function renderNext() {
   const box = $('next-routine');
   box.hidden = !db.routines.length;
   if (!db.routines.length) { box.innerHTML = ''; return; }
-  const hecho = db.sessions.some(s => s.date === localDate()), plan = hayPlan();
+  const hoy = localDate(), hecho = db.sessions.some(s => s.date === hoy), plan = hayPlan();
   const proxima = plan ? proximaDelPlan() : null;
   const aviso = (lab, titulo, meta) => { box.innerHTML = `<div class="nx-l"><p class="lab">${lab}</p><b class="nx-name">${titulo}</b>${meta ? `<p class="nx-meta">${meta}</p>` : ''}</div>`; };
   const siguiente = proxima ? `${esc(proxima.r.name)} ${cuando(proxima.k)}` : '';
-  if (hecho) return aviso('Hoy', 'Hoy ya está hecho.', siguiente ? `Siguiente: ${siguiente}` : '');
-  const r = plan ? rutinaDelDia(diaSemana()) : masAntigua();
-  if (!r) return aviso('Hoy', 'Hoy descansas.', siguiente ? `Siguiente: ${siguiente}` : '');
+  const delDia = plan ? rutinasDelDia(diaSemana()) : [];
+  // Con plan, las que ya se hicieron hoy se quitan; cuando no queda ninguna, «Hoy ya está hecho»
+  const faltan = plan ? delDia.filter(r => !hechaEn(r, hoy)) : [masAntigua()].filter(Boolean);
+  box.classList.toggle('multi', faltan.length > 1);
+  if (plan ? (delDia.length && !faltan.length) || (!delDia.length && hecho) : hecho) return aviso('Hoy', 'Hoy ya está hecho.', siguiente ? `Siguiente: ${siguiente}` : '');
+  if (!faltan.length) return aviso('Hoy', 'Hoy descansas.', siguiente ? `Siguiente: ${siguiente}` : '');
+  const fila = r => {
+    const sets = r.exercises.reduce((n, e) => n + e.sets.length, 0), last = ultimaVez(r), grupos = gruposRutina(r);
+    return `<div class="nx-row">
+      <div class="nx-l">
+        <b class="nx-name">${esc(r.name)}</b>
+        <p class="nx-meta">${plural(r.exercises.length, 'ejercicio', 'ejercicios')} · ${plural(sets, 'serie', 'series')} · ${last ? whenText(last) : 'Sin estrenar'}</p>
+        ${grupos.length ? `<div class="rtags">${grupos.map(g => `<span>${esc(g)}</span>`).join('')}</div>` : ''}
+      </div>
+      <button type="button" class="play" data-start-next="${r.id}" aria-label="Comenzar ${esc(r.name)}">${PLAY_ICO}</button>
+    </div>`;
+  };
+  if (faltan.length > 1) { box.innerHTML = `<p class="lab">Toca hoy</p>${faltan.map(fila).join('')}`; return; }
+  const r = faltan[0];
   const sets = r.exercises.reduce((n, e) => n + e.sets.length, 0), last = ultimaVez(r), grupos = gruposRutina(r);
   box.innerHTML = `
     <div class="nx-l">
@@ -574,6 +623,7 @@ function renderEditor() {
   const del = $('routine-delete'); clearTimeout(del._t); del.classList.remove('armed'); del.textContent = 'Borrar rutina'; del.hidden = !draft.id;
   $('routine-name').value = draft.name;
   $('routine-days').innerHTML = DIAS_LETRA.map((l, i) => `<button type="button" data-day="${i}" aria-pressed="${draft.days.includes(i)}" aria-label="${DIAS_NOMBRE[i]}">${l}</button>`).join('');
+  avisoDias();
   const nSeries = draft.exercises.reduce((n, e) => n + e.sets.length, 0);
   $('editor-hint').textContent = draft.exercises.length
     ? `${plural(draft.exercises.length, 'ejercicio', 'ejercicios')} · ${plural(nSeries, 'serie', 'series')} · mantén pulsado un ejercicio para moverlo`
@@ -643,12 +693,12 @@ const rutinaMenu = id => menuRutina === id
 const rutinaMenuBtn = id => `<button type="button" class="more-btn" data-routine-menu="${id}" aria-label="Más opciones" aria-expanded="${menuRutina === id}">${DOTS_ICO}</button>`;
 function rutinaCard(r, feat) {
   const sets = r.exercises.reduce((n, e) => n + e.sets.length, 0), last = ultimaVez(r), grupos = gruposRutina(r);
-  const cuando = last ? whenText(last) : 'Sin estrenar';
+  const cuando = last ? whenText(last) : 'Sin estrenar', dias = diasTexto(r);
   const tags = grupos.length ? `<div class="rtags">${grupos.map(g => `<span>${esc(g)}</span>`).join('')}</div>` : '';
   if (!feat) return `
     <div class="card routine mini">
       <button type="button" class="rhead" data-open-routine="${r.id}" aria-label="Abrir ${esc(r.name)}">
-        <span class="rtitle"><b>${esc(r.name)}</b><small>${plural(r.exercises.length, 'ejercicio', 'ejercicios')} · ${plural(sets, 'serie', 'series')} · ${cuando}</small></span>
+        <span class="rtitle"><b>${esc(r.name)}</b><small>${plural(r.exercises.length, 'ejercicio', 'ejercicios')} · ${plural(sets, 'serie', 'series')} · ${cuando}${dias ? ` · ${dias}` : ''}</small></span>
       </button>
       ${rutinaMenuBtn(r.id)}
       <button type="button" class="play" data-start-routine="${r.id}" aria-label="Comenzar ${esc(r.name)}">${PLAY_ICO}</button>
@@ -661,7 +711,7 @@ function rutinaCard(r, feat) {
     <div class="card routine feat">
       <div class="rtop"><span class="badge">Siguiente</span>${rutinaMenuBtn(r.id)}</div>
       <button type="button" class="rhead" data-open-routine="${r.id}" aria-label="Abrir ${esc(r.name)}">
-        <span class="rtitle"><b>${esc(r.name)}</b><small>${last ? `Última vez: ${cuando}` : cuando}</small></span>
+        <span class="rtitle"><b>${esc(r.name)}</b><small>${last ? `Última vez: ${cuando}` : cuando}${dias ? ` · ${dias}` : ''}</small></span>
       </button>
       <div class="meta"><div><b>${r.exercises.length}</b><span>${r.exercises.length === 1 ? 'ejercicio' : 'ejercicios'}</span></div><div><b>${sets}</b><span>series</span></div>${sets ? `<div><b>~${min}</b><span>min</span></div>` : ''}</div>
       ${tags}
@@ -678,11 +728,11 @@ function fotoMini(e) {
 }
 function renderRoutines(quieto = false) {
   $('routines-list').classList.toggle('quiet', quieto || silencio);   // repintar por el menú no reanima las tarjetas
-  const sig = (hayPlan() ? rutinaDelDia(diaSemana()) : masAntigua()), resto = db.routines.filter(r => r !== sig);
-  // Con plan semanal, «Te toca» es la de hoy (si hoy es de descanso, no hay destacada)
+  const sig = rutinasDeHoy(), resto = db.routines.filter(r => !sig.includes(r));
+  // Con plan semanal, «Te toca» son las de hoy (si hoy es de descanso, no hay destacada)
   $('routines-list').innerHTML = !db.routines.length
     ? emptyHtml('rutinas', 'Aún no tienes rutinas', 'Pulsa «Crear rutina» para montar la primera, o empieza un «Entreno libre» y añade ejercicios sobre la marcha.')
-    : `${sig ? `<p class="rsec">Te toca</p>${rutinaCard(sig, true)}` : ''}${resto.length ? `<p class="rsec">${sig ? 'Todas' : 'Tus rutinas'}</p>${resto.map(r => rutinaCard(r, false)).join('')}` : ''}`;
+    : `${sig.length ? `<p class="rsec">Te toca</p>${sig.map(r => rutinaCard(r, true)).join('')}` : ''}${resto.length ? `<p class="rsec">${sig.length ? 'Todas' : 'Tus rutinas'}</p>${resto.map(r => rutinaCard(r, false)).join('')}` : ''}`;
 }
 
 const openEntries = new Set();           // entrenos con el detalle desplegado (solo en pantalla)
@@ -789,7 +839,7 @@ function saveEditEntry() {
     if (!min) { shake($('entry-save')); return toast('Pon los minutos'); }
     e.seconds = Math.round(min * 60); e.meters = Math.round(km * 1000);
   }
-  e.date = date; e.upd = Date.now();
+  e.date = date; tocar(e);
   editingEntry = null;
   if (persist()) toast('Cambios guardados.');
 }
@@ -939,7 +989,7 @@ $('routine-days').addEventListener('click', e => {
   const b = e.target.closest('[data-day]'); if (!b) return;
   const i = +b.dataset.day, on = !draft.days.includes(i);
   draft.days = on ? [...draft.days, i].sort((a, c) => a - c) : draft.days.filter(d => d !== i);
-  b.setAttribute('aria-pressed', String(on)); vibrate(6);
+  b.setAttribute('aria-pressed', String(on)); vibrate(6); avisoDias();
 });
 $('add-exercise').onclick = () => {
   if (typeof openPicker === 'function') {
@@ -961,13 +1011,50 @@ $('routine-save').onclick = () => {
   if (!name || !exercises.length) { shake($('routine-save')); return toast('Nombre y ejercicios. Completa la rutina.'); }
   const mine = db.routines.find(r => r.id === draft.id);
   const days = [...draft.days];
-  if (mine) { mine.name = name; mine.exercises = exercises; mine.days = days; } else db.routines.push({ id: uid(), name, exercises, days });
+  const cambios = draft.exercises.filter(ex => ex.orig && ex.name.trim() && ex.name.trim() !== ex.orig).map(ex => ({ de: ex.orig, a: ex.name.trim() }));
+  if (mine) {
+    if (name !== mine.name) enlazarEntrenos(mine.id, mine.name, name);
+    renombrarEjercicios(mine.id, cambios, exercises);
+    mine.name = name; mine.exercises = exercises; mine.days = days;
+  } else db.routines.push({ id: uid(), name, exercises, days });
   const edited = !!mine;
   draft = newDraft(); creating = false;
   renderEditor();
   if (persist()) toast(edited ? 'Rutina actualizada.' : 'Rutina guardada. Ahora a trabajar.');
 };
 
+// Renombrar una rutina o un ejercicio no pierde su historial: los entrenos se enlazan a la rutina por su id
+// (los antiguos, que solo tenían el nombre, se enlazan ahora) y las series cambian de nombre con el ejercicio
+function enlazarEntrenos(id, viejo, nuevo) {
+  const v = String(viejo).toLowerCase();
+  db.sessions.forEach(s => {
+    if (s.routineId ? s.routineId !== id : String(s.routine).toLowerCase() !== v) return;
+    s.routineId = id; s.routine = nuevo; tocar(s);
+  });
+}
+function renombrarEjercicios(rutinaId, cambios, nuevos) {
+  cambios.forEach(({ de, a }) => {
+    // si otra rutina (o otro ejercicio de esta) sigue usando el nombre viejo, no era un renombrado: el historial se queda como está
+    const sigue = nuevos.some(e => e.name === de) || db.routines.some(r => r.id !== rutinaId && r.exercises.some(e => e.name === de));
+    if (sigue) return;
+    db.sessions.forEach(s => {
+      let cambio = false;
+      s.sets.forEach(x => { if (x.exercise === de) { x.exercise = a; cambio = true; } });
+      if (cambio) tocar(s);
+    });
+  });
+}
+// Avisa si en alguno de los días elegidos ya toca otra rutina (ese día saldrán las dos)
+function avisoDias() {
+  const nota = $('days-note'), cruces = [];
+  draft.days.forEach(d => { const otras = db.routines.filter(r => r.id !== draft.id && (r.days || []).includes(d)); if (otras.length) cruces.push(`${DIAS_NOMBRE[d]} ya toca ${otras.map(r => r.name).join(' y ')}`); });
+  nota.hidden = !cruces.length;
+  nota.textContent = cruces.length ? `${cruces.join('; ')}: ese día saldrán las dos.` : '';
+}
+function borrarRutina(id) {
+  db.routines = db.routines.filter(r => r.id !== id);
+  if (lsGet('entreno-uid') && !db.deleted.rutinas.includes(id)) db.deleted.rutinas.push(id);   // para que no vuelva desde la nube
+}
 document.addEventListener('pointerdown', e => {      // tocar fuera del menú ⋯ de una rutina lo cierra (sin reanimar)
   if (menuRutina && !e.target.closest('#routines-list .entry-menu, [data-routine-menu]')) { menuRutina = null; cerrarMenus('#routines-list', '[data-routine-menu]'); }
 });
@@ -985,7 +1072,9 @@ function duplicarRutina(id) {
   const i = db.routines.findIndex(x => x.id === id);
   if (i < 0) return;
   const r = db.routines[i];
-  db.routines.splice(i + 1, 0, { ...JSON.parse(JSON.stringify(r)), id: uid(), name: `${r.name} (copia)` });
+  const sig = db.routines[i + 1], copia = { ...JSON.parse(JSON.stringify(r)), id: uid(), name: `${r.name} (copia)`, pos: sig ? (r.pos + sig.pos) / 2 : r.pos + 1 };
+  delete copia.rev; delete copia.upd;      // es una rutina nueva: empieza sin versión
+  db.routines.splice(i + 1, 0, copia);
   menuRutina = null; vibrate(8);
   if (persist()) toast('Rutina duplicada.');
 }
@@ -996,14 +1085,14 @@ function borrarRutinaDelMenu(b) {
     return;
   }
   clearTimeout(b._t);
-  db.routines = db.routines.filter(r => r.id !== b.dataset.delRoutine);
+  borrarRutina(b.dataset.delRoutine);
   menuRutina = null;
   if (persist()) toast('Rutina borrada.');
 }
 function editRoutine(id) {
   const r = db.routines.find(x => x.id === id);
   if (!r) return;
-  draft = { id: r.id, name: r.name, days: [...(r.days || [])], exercises: r.exercises.map(ex => ({ name: ex.name, image: ex.image || '', ejId: ex.ejId || '', sets: (ex.sets.length ? ex.sets : [blankSet(), blankSet(), blankSet()]).map(s => ({ w: !!s.w, kg: s.kg === '' ? '' : String(s.kg), reps: s.reps === '' ? '' : String(s.reps) })) })) };
+  draft = { id: r.id, name: r.name, days: [...(r.days || [])], exercises: r.exercises.map(ex => ({ orig: ex.name, name: ex.name, image: ex.image || '', ejId: ex.ejId || '', sets: (ex.sets.length ? ex.sets : [blankSet(), blankSet(), blankSet()]).map(s => ({ w: !!s.w, kg: s.kg === '' ? '' : String(s.kg), reps: s.reps === '' ? '' : String(s.reps) })) })) };
   renderEditor();
   window.scrollTo(0, 0);
 }
@@ -1019,8 +1108,7 @@ $('routine-delete').onclick = () => {
     return;
   }
   clearTimeout(del._t);
-  const id = draft.id;
-  db.routines = db.routines.filter(r => r.id !== id);
+  borrarRutina(draft.id);
   draft = newDraft(); creating = false;
   renderEditor();
   if (persist()) toast('Rutina borrada.');
