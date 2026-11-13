@@ -2988,6 +2988,12 @@ def ios_proyecto_xtool_completo(pg):
     assert info.get("NSHealthUpdateUsageDescription") and info.get("NSHealthShareUsageDescription"), "textos de permiso de Salud"
     ent = plistlib.load(open(os.path.join(IOS, "Forjado.entitlements"), "rb"))
     assert ent["com.apple.developer.healthkit"] is True and "entitlementsPath: Forjado.entitlements" in y, ent
+    # Firebase Auth exige http(s): la app se sirve a sí misma en http://localhost (servidor local solo en el propio iPhone)
+    assert info["NSAppTransportSecurity"]["NSAllowsLocalNetworking"] is True, "permite cargar http://localhost"
+    srv = open(os.path.join(IOS, "Sources", "Forjado", "ServidorLocal.swift"), encoding="utf-8").read()
+    assert "NWListener" in srv and ".loopback" in srv, "el servidor solo escucha dentro del iPhone"
+    vc = open(os.path.join(IOS, "Sources", "Forjado", "WebViewController.swift"), encoding="utf-8").read()
+    assert "ServidorLocal" in vc and "willEnterForegroundNotification" in vc, "arranca el servidor y lo recupera al volver a la app"
     im = Image.open(os.path.join(IOS, "AppIcon.png"))
     assert im.size == (1024, 1024) and im.mode == "RGB", f"icono 1024 sin transparencia: {im.size} {im.mode}"
     assert all(abs(a - b) <= 14 for a, b in zip(im.getpixel((5, 5)), (14, 11, 20))), "el icono lleva el fondo de la app"

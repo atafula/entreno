@@ -78,7 +78,7 @@ cd ios && xtool dev
 ```
 
 - `puente.js` sustituye `navigator.vibrate`, `navigator.geolocation`, `navigator.wakeLock` y `downloadFile` por mensajes a Swift (`Puente.swift`). La web no cambia: fuera de la app el puente no se carga.
-- Los archivos se sirven en `forjado://app/` (`Archivos.swift`), sin service worker: ya van dentro de la app y funcionan sin conexión.
+- Los archivos se sirven en `http://localhost:48723` con un servidor mínimo que solo escucha dentro del iPhone (`ServidorLocal.swift`): Firebase Auth solo funciona en páginas http/https. Si no pudiera arrancar, la app se carga desde `forjado://app/` (`Archivos.swift`) y funciona igual, pero sin sincronizar. Sin service worker: los archivos ya van dentro de la app y funcionan sin conexión. El puerto es fijo porque los datos guardados van ligados a él.
 - Los datos de la app nativa son nuevos (no comparte almacenamiento con la web instalada desde Safari). Para traerlos: en la web, Ajustes → Descargar copia; en la app, Ajustes → Restaurar copia.
 - **Sincronizar con Google** usa tu mismo Firebase (`entreno-31153`) y los mismos datos que la web. Google no deja iniciar sesión dentro de una vista web, así que lo hace iOS (`GoogleLogin.swift`, OAuth con PKCE en la hoja segura de iOS) y la web entra con `signInWithCredential`. Hay que configurarlo una vez:
   1. Firebase → Configuración del proyecto → Añadir app → **iOS**, con el ID de paquete `com.atafula.forjado`.

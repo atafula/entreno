@@ -6,7 +6,7 @@ import WebKit
 /// Recibe los mensajes de puente.js y hace lo que una web no puede: vibrar, GPS con la pantalla apagada,
 /// mantener la pantalla encendida y compartir archivos.
 @MainActor
-final class Puente: NSObject, WKScriptMessageHandler, CLLocationManagerDelegate {
+final class Puente: NSObject, WKScriptMessageHandler, @preconcurrency CLLocationManagerDelegate {   // CoreLocation avisa en el hilo principal: el gestor se crea en él
     weak var webView: WKWebView?
     private weak var pantalla: UIViewController?
 

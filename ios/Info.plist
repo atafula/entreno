@@ -16,6 +16,11 @@
 	<string>Forjado guarda tus entrenos y caminatas en Salud.</string>
 	<key>NSHealthShareUsageDescription</key>
 	<string>Forjado usa Salud para guardar tus entrenos y caminatas.</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>
