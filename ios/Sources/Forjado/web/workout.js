@@ -9,7 +9,16 @@ let wkTimer = null, wkLock = null, wkAudio = null, wkMini = false;
 const restMap = () => { try { return JSON.parse(lsGet(REST_KEY) || '{}'); } catch { return {}; } };
 const restOf = name => { const m = restMap(); return name in m ? m[name] : 120; };
 const saveRest = (name, s) => { const m = restMap(); m[name] = s; lsSet(REST_KEY, JSON.stringify(m)); };
-const saveLive = () => lsSet(LIVE_KEY, wk ? JSON.stringify(wk) : '');
+// En la app de iOS, el fin del descanso se programa como notificación: suena aunque el móvil esté bloqueado.
+// Se avisa solo cuando cambia (empieza, +15/−15, se salta o acaba el entreno); cada cambio en el entreno pasa por saveLive
+let avisoDescanso = null;
+function avisarDescanso() {
+  const fin = wk?.rest?.end ?? null;
+  if (fin === avisoDescanso) return;
+  avisoDescanso = fin;
+  try { window.webkit?.messageHandlers?.forjado?.postMessage({ t: 'descanso', fin, ejercicio: wk?.exercises?.[wk.cur]?.name || '' }); } catch { /* fuera de la app */ }
+}
+const saveLive = () => { lsSet(LIVE_KEY, wk ? JSON.stringify(wk) : ''); avisarDescanso(); };
 const clockLong = s => { const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60; return h ? `${h}:${String(m).padStart(2, '0')}:${String(x).padStart(2, '0')}` : `${m}:${String(x).padStart(2, '0')}`; };
 const restLabel = s => s ? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}` : 'NO';
 const wkVolume = () => Math.round(wk.exercises.reduce((a, ex) => a + ex.sets.reduce((b, s) => b + (s.done ? num(s.reps) * num(s.kg) : 0), 0), 0));

@@ -68,6 +68,7 @@ La misma app, empaquetada como app nativa en Swift para compilarla con [xtool](h
 - **GPS con la pantalla apagada** en las caminatas (CoreLocation en segundo plano).
 - **Pantalla encendida** durante el entreno y las caminatas.
 - **Apple Salud:** cada entreno de fuerza y cada caminata terminada (no las rendidas) se guardan en Salud como entreno, la caminata con su distancia. Solo escribe, no lee nada. Necesita el permiso `healthkit` (`ios/Forjado.entitlements`).
+- **Fin del descanso con el móvil bloqueado:** cada vez que el descanso empieza, cambia (+15/−15) o se cancela, la web se lo dice a iOS (`Descanso.swift`), que programa una notificación local a esa hora. Con la app abierta no se muestra: ya suena la propia app.
 - **Descargar copia / CSV** abre la hoja de compartir de iOS (Guardar en Archivos, AirDrop…).
 
 Compilar e instalar en el iPhone conectado:
@@ -81,8 +82,8 @@ cd ios && xtool dev
 - Los archivos se sirven en `http://localhost:48723` con un servidor mínimo que solo escucha dentro del iPhone (`ServidorLocal.swift`): Firebase Auth solo funciona en páginas http/https. Si no pudiera arrancar, la app se carga desde `forjado://app/` (`Archivos.swift`) y funciona igual, pero sin sincronizar. Sin service worker: los archivos ya van dentro de la app y funcionan sin conexión. El puerto es fijo porque los datos guardados van ligados a él.
 - Los datos de la app nativa son nuevos (no comparte almacenamiento con la web instalada desde Safari). Para traerlos: en la web, Ajustes → Descargar copia; en la app, Ajustes → Restaurar copia.
 - **Sincronizar con Google** usa tu mismo Firebase (`entreno-31153`) y los mismos datos que la web. Google no deja iniciar sesión dentro de una vista web, así que lo hace iOS (`GoogleLogin.swift`, OAuth con PKCE en la hoja segura de iOS) y la web entra con `signInWithCredential`. Hay que configurarlo una vez:
-  1. Firebase → Configuración del proyecto → Añadir app → **iOS**, con el ID de paquete `com.atafula.forjado`.
+  1. Firebase → Configuración del proyecto → Añadir app → **iOS**, con el ID de paquete `com.atafula.forjado.app`.
   2. Descarga `GoogleService-Info.plist` y ejecuta `python3 ios/configurar_google.py ruta/al/GoogleService-Info.plist` (pone el cliente en `ios/Info.plist`).
   3. Si Google da error al entrar, revisa en Google Cloud → Credenciales que la clave de API no esté limitada a ciertos sitios web.
-- El identificador es `com.atafula.forjado` (`ios/xtool.yml`); el icono, `ios/AppIcon.png`, sale de `icons/icon.svg` a 1024 px sin transparencia.
+- El identificador es `com.atafula.forjado.app` (`ios/xtool.yml`); el icono, `ios/AppIcon.png`, sale de `icons/icon.svg` a 1024 px sin transparencia, y los pequeños de `ios/Iconos/` (Salud, Ajustes, notificaciones) del mismo SVG.
 - Los tests `ios_*` comprueban que la copia de la web está al día y que el puente funciona.

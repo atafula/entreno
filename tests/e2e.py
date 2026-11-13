@@ -2994,6 +2994,15 @@ def ios_proyecto_xtool_completo(pg):
     assert "NWListener" in srv and ".loopback" in srv, "el servidor solo escucha dentro del iPhone"
     vc = open(os.path.join(IOS, "Sources", "Forjado", "WebViewController.swift"), encoding="utf-8").read()
     assert "ServidorLocal" in vc and "willEnterForegroundNotification" in vc, "arranca el servidor y lo recupera al volver a la app"
+    # Iconos pequeños (Salud, Ajustes, notificaciones): iOS no los saca del de 1024 si solo hay CFBundleIconFile
+    archivos = info["CFBundleIcons"]["CFBundlePrimaryIcon"]["CFBundleIconFiles"]
+    for base, pt in [("AppIcon20x20", 20), ("AppIcon29x29", 29), ("AppIcon40x40", 40), ("AppIcon60x60", 60)]:
+        assert base in archivos, archivos
+        for k in (2, 3):
+            f = f"Iconos/{base}@{k}x.png"
+            assert f in y, f"{f} va en resources de xtool.yml"
+            ic = Image.open(os.path.join(IOS, f))
+            assert ic.size == (pt * k, pt * k) and ic.mode == "RGB", (f, ic.size, ic.mode)
     im = Image.open(os.path.join(IOS, "AppIcon.png"))
     assert im.size == (1024, 1024) and im.mode == "RGB", f"icono 1024 sin transparencia: {im.size} {im.mode}"
     assert all(abs(a - b) <= 14 for a, b in zip(im.getpixel((5, 5)), (14, 11, 20))), "el icono lleva el fondo de la app"
@@ -3087,7 +3096,7 @@ def ios_google_configurar_con_el_plist_de_firebase(pg):
     shutil.copy(os.path.join(IOS, "Info.plist"), os.path.join(tmp, "Info.plist"))
     g = os.path.join(tmp, "GoogleService-Info.plist")
     plistlib.dump({"CLIENT_ID": "229443527410-abc.apps.googleusercontent.com", "REVERSED_CLIENT_ID": "com.googleusercontent.apps.229443527410-abc",
-                   "BUNDLE_ID": "com.atafula.forjado", "PROJECT_ID": "entreno-31153"}, open(g, "wb"))
+                   "BUNDLE_ID": "com.atafula.forjado.app", "PROJECT_ID": "entreno-31153"}, open(g, "wb"))
     r = subprocess.run([sys.executable, os.path.join(IOS, "configurar_google.py"), g, os.path.join(tmp, "Info.plist")], capture_output=True, text=True)
     assert r.returncode == 0, r.stderr
     info = plistlib.load(open(os.path.join(tmp, "Info.plist"), "rb"))
@@ -3096,6 +3105,34 @@ def ios_google_configurar_con_el_plist_de_firebase(pg):
     plistlib.dump({"CLIENT_ID": "x", "REVERSED_CLIENT_ID": "y", "BUNDLE_ID": "otra.app", "PROJECT_ID": "otro"}, open(g, "wb"))
     r = subprocess.run([sys.executable, os.path.join(IOS, "configurar_google.py"), g, os.path.join(tmp, "Info.plist")], capture_output=True, text=True)
     assert r.returncode != 0 and "entreno-31153" in r.stderr, "avisa si el plist es de otro proyecto"
+
+@test
+def ios_descanso_avisa_con_el_movil_bloqueado(pg):
+    _puente(pg); seed(pg); tab(pg, "rutinas"); empezar(pg, "a"); pg.wait_for_timeout(1200)
+    pg.locator(".wrow .chk").nth(1).click(); pg.wait_for_timeout(150)
+    m = _msgs(pg, "descanso")
+    assert len(m) == 1 and m[-1]["fin"] and abs(m[-1]["fin"] - pg.evaluate("wk.rest.end")) < 5, m
+    assert m[-1]["ejercicio"] == "Press de pecho", "el aviso dice de qué ejercicio es el descanso"
+    pg.click("#rest-plus"); pg.wait_for_timeout(100)
+    assert _msgs(pg, "descanso")[-1]["fin"] == pg.evaluate("wk.rest.end"), "+15 s reprograma el aviso"
+    n = len(_msgs(pg, "descanso"))
+    pg.wait_for_timeout(1100)
+    assert len(_msgs(pg, "descanso")) == n, "el reloj corriendo no manda nada nuevo"
+    pg.click("#rest-skip"); pg.wait_for_timeout(100)
+    assert _msgs(pg, "descanso")[-1]["fin"] is None, "saltar el descanso cancela el aviso"
+
+@test
+def ios_descanso_terminar_el_entreno_cancela_el_aviso(pg):
+    _puente(pg); seed(pg); tab(pg, "rutinas"); empezar(pg, "a"); pg.wait_for_timeout(1200)
+    pg.locator(".wrow .chk").nth(1).click(); pg.wait_for_timeout(150)
+    pg.click("#wk-finish"); pg.click("#finish-save"); pg.wait_for_timeout(300)
+    assert _msgs(pg, "descanso")[-1]["fin"] is None
+
+@test
+def ajustes_nota_de_copia_corta(pg):
+    seed(pg); abrir_ajustes(pg)
+    t = pg.inner_text("#backup-sec .note")
+    assert len(t) <= 60 and "no se borra" in t, f"nota demasiado larga ({len(t)}): {t}"
 
 @test
 def ios_puente_no_estorba_en_la_web(pg):

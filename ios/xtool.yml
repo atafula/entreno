@@ -1,6 +1,16 @@
 version: 1
-bundleID: com.atafula.forjado
+bundleID: com.atafula.forjado.app
 product: Forjado
 infoPath: Info.plist
 iconPath: AppIcon.png
 entitlementsPath: Forjado.entitlements
+# Iconos pequeños para Salud, Ajustes y notificaciones (van en la raíz de la app)
+resources:
+  - Iconos/AppIcon20x20@2x.png
+  - Iconos/AppIcon20x20@3x.png
+  - Iconos/AppIcon29x29@2x.png
+  - Iconos/AppIcon29x29@3x.png
+  - Iconos/AppIcon40x40@2x.png
+  - Iconos/AppIcon40x40@3x.png
+  - Iconos/AppIcon60x60@2x.png
+  - Iconos/AppIcon60x60@3x.png

@@ -1,12 +1,13 @@
 import CoreLocation
 import HealthKit
 import UIKit
+import UserNotifications
 import WebKit
 
 /// Recibe los mensajes de puente.js y hace lo que una web no puede: vibrar, GPS con la pantalla apagada,
 /// mantener la pantalla encendida y compartir archivos.
 @MainActor
-final class Puente: NSObject, WKScriptMessageHandler, @preconcurrency CLLocationManagerDelegate {   // CoreLocation avisa en el hilo principal: el gestor se crea en él
+final class Puente: NSObject, WKScriptMessageHandler, @preconcurrency CLLocationManagerDelegate, @preconcurrency UNUserNotificationCenterDelegate {   // CoreLocation avisa en el hilo principal: el gestor se crea en él
     weak var webView: WKWebView?
     private weak var pantalla: UIViewController?
 
@@ -20,6 +21,13 @@ final class Puente: NSObject, WKScriptMessageHandler, @preconcurrency CLLocation
         gps.desiredAccuracy = kCLLocationAccuracyBest
         gps.activityType = .fitness
         gps.pausesLocationUpdatesAutomatically = false
+        UNUserNotificationCenter.current().delegate = self
+    }
+
+    // Con la app abierta no hace falta el aviso: ya suena y vibra la propia app
+    func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification,
+                                withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        completionHandler([])
     }
 
     func userContentController(_ controlador: WKUserContentController, didReceive mensaje: WKScriptMessage) {
@@ -35,6 +43,9 @@ final class Puente: NSObject, WKScriptMessageHandler, @preconcurrency CLLocation
             if let tipo = m["kind"] as? String, let ini = (m["start"] as? NSNumber)?.doubleValue, let fin = (m["end"] as? NSNumber)?.doubleValue {
                 Salud.guardar(caminata: tipo == "caminata", desde: Date(timeIntervalSince1970: ini / 1000), hasta: Date(timeIntervalSince1970: fin / 1000), metros: (m["meters"] as? NSNumber)?.doubleValue ?? 0)
             }
+        case "descanso":
+            let fin = (m["fin"] as? NSNumber).map { Date(timeIntervalSince1970: $0.doubleValue / 1000) }
+            Descanso.programar(fin: fin, ejercicio: m["ejercicio"] as? String ?? "")
         case "google":
             iniciarGoogle()
         case "guardar":
