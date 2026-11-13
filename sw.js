@@ -1,5 +1,5 @@
 // Sube la versión cuando cambies archivos para que el móvil descargue la nueva copia.
-const CACHE = 'entreno-v152';
+const CACHE = 'entreno-v153';
 const IMG_CACHE = 'entreno-img';   // fotos de ejercicios: no se borra al subir de versión
 const IMG_MAX = 250;               // máximo de fotos guardadas (se van borrando las más antiguas)
 const IMG_HOSTS = ['pump-app.s3.eu-west-2.amazonaws.com'];

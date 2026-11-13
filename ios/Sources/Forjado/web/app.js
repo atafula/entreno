@@ -1462,7 +1462,7 @@ function setSettings(open) {
 }
 $('settings-btn').onclick = () => setSettings(true);
 $('settings-close').onclick = () => setSettings(false);
-$('scrim').onclick = () => { setSettings(false); setCal(false); closeSummary(); closeFinish(); if (typeof closePicker === 'function') closePicker(); if (typeof closeDetail === 'function') closeDetail(); };
+$('scrim').onclick = () => { setSettings(false); setCal(false); closeFinish(); if (typeof closePicker === 'function') closePicker(); if (typeof closeDetail === 'function') closeDetail(); };
 // ---------- Hojas inferiores: foco, bloqueo del fondo, Escape y arrastrar para cerrar ----------
 const sheets = [...document.querySelectorAll('.sheet')];
 const openSheets = () => sheets.filter(s => s.classList.contains('show'));

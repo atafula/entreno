@@ -237,10 +237,8 @@ function finishWorkout(o = {}) {
   $('rest').hidden = true;
   wkOpen(false);
   persist();
-  // Primero la animación de entreno terminado y, cuando acaba, el resumen
-  celebrate('Entreno terminado');
-  const last = db.sessions.find(s => s.ts === ts && s.sets === sets);
-  setTimeout(() => showSummary(last, prs), 2100);
+  // Solo la animación de entreno terminado (con los récords, si los hubo); no hay resumen después
+  celebrate('Entreno terminado', prs ? `${prs} ${prs === 1 ? 'récord nuevo' : 'récords nuevos'}` : undefined);
 }
 
 function discardWorkout() {
@@ -354,29 +352,6 @@ $('rest-ok').onclick = () => {
 };
 $('scrim').addEventListener('click', () => { if ($('rest-sheet').classList.contains('show')) cerrarRueda(); });
 
-// Resumen al terminar: duración, volumen, series y mejor serie de cada ejercicio
-function showSummary(session, prs) {
-  const sets = session.sets, vol = sets.reduce((a, x) => a + x.kg * x.reps, 0), byEx = [];
-  sets.forEach(x => {
-    let e = byEx.find(b => b.name === x.exercise);
-    if (!e) byEx.push(e = { name: x.exercise, n: 0, best: null });
-    e.n++;
-    if (!e.best || x.kg > e.best.kg || (x.kg === e.best.kg && x.reps > e.best.reps)) e.best = x;
-  });
-  $('summary-sub').textContent = `${session.routine}${prs ? ` · ${prs} ${prs === 1 ? 'récord' : 'récords'}` : ''}`;
-  $('summary-time').textContent = clockLong(session.seconds);
-  countUp($('summary-vol'), Math.round(vol), n => `${Math.round(n)} kg`);
-  countUp($('summary-series'), sets.length);
-  $('summary-list').innerHTML = byEx.map(e => `<div class="sum-ex"><b>${esc(e.name)}</b><span>${e.n} ${e.n === 1 ? 'serie' : 'series'} · mejor ${e.best.kg} kg × ${e.best.reps}</span></div>`).join('');
-  $('summary-sheet').classList.add('show'); $('summary-sheet').setAttribute('aria-hidden', 'false');
-  $('scrim').classList.add('show');
-  vibrate([40, 30, 80]);
-}
-function closeSummary() {
-  $('summary-sheet').classList.remove('show'); $('summary-sheet').setAttribute('aria-hidden', 'true');
-  $('scrim').classList.remove('show');
-}
-$('summary-done').onclick = closeSummary;
 
 function bindWorkout() {
   const root = $('workout');

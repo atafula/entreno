@@ -167,7 +167,7 @@ def entreno_sin_series_terminar_descarta_directo(pg):
 def entreno_se_ve_en_el_historial(pg):
     seed(pg); tab(pg, "rutinas"); empezar(pg, "b")
     pg.locator(".wrow .chk").first.click(); pg.click("#wk-finish"); pg.click("#finish-save"); pg.wait_for_timeout(2300)
-    pg.click("#summary-done"); pg.wait_for_timeout(500)
+    pg.wait_for_timeout(300)
     tab(pg, "historial")
     assert "PULL" in pg.inner_text("#history-list")
 
@@ -210,7 +210,6 @@ def entreno_terminar_guarda_nombre_fecha_y_descripcion(pg):
     s = db(pg)["sessions"][-1]
     assert s["routine"] == "Pecho pesado" and s["routineId"] == "a" and s["date"] == "2026-11-10" and s["nota"] == "Muy bien, subí peso.", s
     assert not pg.is_visible("#workout") and not pg.is_visible("#finish-sheet")
-    pg.wait_for_selector("#summary-sheet.show", timeout=5000)
 
 @test
 def entreno_terminar_actualiza_los_valores_de_la_rutina(pg):
@@ -1845,8 +1844,8 @@ def records_avisan_en_el_entreno_en_vivo(pg):
     pg.fill('#workout [data-ex="0"][data-set="2"][data-f="kg"]', "45"); pg.fill('#workout [data-ex="0"][data-set="2"][data-f="reps"]', "10")
     pg.locator(".wrow .chk").nth(2).click()
     assert pg.locator(".wrow .pr").count() == 1, "igualar el récord de este mismo entreno no es otro récord"
-    pg.click("#wk-finish"); pg.click("#finish-save"); pg.wait_for_selector("#summary-sheet.show", timeout=5000)
-    assert "1 récord" in pg.inner_text("#summary-sub").lower(), pg.inner_text("#summary-sub")
+    pg.click("#wk-finish"); pg.click("#finish-save"); pg.wait_for_timeout(300)
+    assert "1 récord" in pg.inner_text("#cel-sub").lower(), "la animación de fin cuenta los récords: " + pg.inner_text("#cel-sub")
 
 @test
 def records_el_calentamiento_y_la_primera_vez_no_cuentan(pg):
@@ -2353,7 +2352,7 @@ def entreno_el_calentamiento_si_cuenta_en_volumen_y_series(pg):
     assert pg.inner_text("#wk-sets") == "2" and pg.inner_text("#wk-vol").replace(".", "") == "590"
     pg.click("#wk-finish"); pg.click("#finish-save"); pg.wait_for_timeout(300)
     assert len(db(pg)["sessions"][-1]["sets"]) == 2
-    pg.click("#summary-done"); pg.wait_for_timeout(500)
+    pg.wait_for_timeout(300)
     tab(pg, "historial")
     assert "590" in pg.locator("#history-list .hstats").first.inner_text(), "el historial suma también el calentamiento"
 
@@ -2717,14 +2716,6 @@ def contadores_suben_despacio_en_historial_y_resumen(pg):
     assert pg.inner_text("#stats .stat b") != "24", "a los 450 ms el número aún está subiendo (no tarda ~300 ms)"
     pg.wait_for_timeout(1300)
     assert pg.inner_text("#stats .stat b") == "24", "y llega al total"
-    # resumen al acabar la rutina
-    pg.evaluate("localStorage.clear()"); seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
-    f = pg.locator("#wk-in .exblock:not([hidden])").first.locator(".wrow:not(.whead)").nth(1)
-    f.locator('input[data-f="kg"]').fill("50"); f.locator('input[data-f="reps"]').fill("10"); f.locator('[data-act="done"]').click(); pg.wait_for_timeout(150)
-    pg.click("#wk-finish"); pg.click("#finish-save"); pg.wait_for_selector("#summary-sheet.show", timeout=5000); pg.wait_for_timeout(450)
-    assert pg.inner_text("#summary-vol") != "500 kg", "el volumen del resumen tampoco sube tan rápido"
-    pg.wait_for_timeout(1300)
-    assert pg.inner_text("#summary-vol") == "500 kg"
 
 @test
 def historial_sin_cuenta_con_reduced_motion(pg):
@@ -2733,18 +2724,6 @@ def historial_sin_cuenta_con_reduced_motion(pg):
     pg.evaluate(_OBS, "#stats .stat b"); tab(pg, "historial"); pg.wait_for_timeout(500)
     assert pg.inner_text("#stats .stat b") == "24" and len(set(pg.evaluate("window.__vals"))) <= 1, pg.evaluate("window.__vals")
 
-@test
-def resumen_los_numeros_cuentan_hasta_el_total(pg):
-    seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
-    f = pg.locator("#wk-in .exblock").first.locator(".wrow:not(.whead)").nth(1)
-    f.locator('input[data-f="kg"]').fill("50"); f.locator('input[data-f="reps"]').fill("10"); f.locator('[data-act="done"]').click(); pg.wait_for_timeout(150)
-    pg.evaluate(_OBS, "#summary-vol")
-    pg.click("#wk-finish"); pg.click("#finish-save"); pg.wait_for_selector("#summary-sheet.show", timeout=5000); pg.wait_for_timeout(1700)
-    vals = pg.evaluate("window.__vals")
-    assert pg.inner_text("#summary-vol") == "500 kg", pg.inner_text("#summary-vol")
-    assert len(set(vals)) >= 4 and vals[-1] == "500 kg", f"el volumen sube hasta el total: {vals}"
-
-# ---------- Fase 6: Ajustes y hojas ----------
 def _dedo(pg, sel, dy, pasos=8):
     """Arrastre vertical con dedo real (eventos táctiles por CDP) desde el centro de sel."""
     r = pg.locator(sel).bounding_box(); x, y = r["x"] + r["width"] / 2, r["y"] + 14
@@ -2963,76 +2942,18 @@ def papel_serie_completada_banda_verde_suave_hasta_el_borde(pg):
     assert cs(hecha.locator("input").first, "color") == cs(otra.locator("input").first, "color"), "los números mantienen el color normal"
 
 
-# ---------- Resumen al terminar el entreno ----------
-def _termina_con_una_serie(pg, kg="50", reps="10"):
-    f = pg.locator("#wk-in .exblock").first.locator(".wrow:not(.whead)").nth(1)
-    f.locator('input[data-f="kg"]').fill(kg); f.locator('input[data-f="reps"]').fill(reps)
-    f.locator('[data-act="done"]').click(); pg.wait_for_timeout(150)
-    pg.click("#wk-finish"); pg.click("#finish-save"); pg.wait_for_selector("#summary-sheet.show", timeout=5000)
-
+# ---------- Al terminar: solo la animación, sin resumen ----------
 @test
-def entreno_terminar_muestra_animacion_y_luego_resumen(pg):
+def entreno_terminar_muestra_la_animacion_y_no_hay_resumen(pg):
     seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
     pg.locator(".wrow .chk").nth(1).click()
     pg.click("#wk-finish"); pg.click("#finish-save"); pg.wait_for_timeout(300)
-    assert pg.get_attribute("#celebrate", "class").count("show") == 1, "primero la animación de entreno terminado"
+    assert pg.get_attribute("#celebrate", "class").count("show") == 1, "la animación de entreno terminado"
     assert pg.inner_text("#cel-msg").strip() == "Entreno terminado", pg.inner_text("#cel-msg")
-    assert not pg.is_visible("#summary-sheet"), "el resumen no tapa la animación"
-    pg.wait_for_selector("#summary-sheet.show", timeout=5000)
-    assert pg.get_attribute("#celebrate", "class").count("show") == 0, "la animación termina antes del resumen"
+    assert pg.locator("#summary-sheet").count() == 0, "ya no existe el resumen «¡Bien hecho!»"
+    pg.wait_for_timeout(2600)
+    assert pg.get_attribute("#celebrate", "class").count("show") == 0 and "show" not in pg.get_attribute("#scrim", "class"), "al acabar la animación no sale nada encima"
 
-@test
-def resumen_aparece_al_terminar_con_datos_del_entreno(pg):
-    seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
-    _termina_con_una_serie(pg)
-    pg.wait_for_selector("#summary-sheet.show", timeout=5000)
-    assert pg.is_visible("#summary-sheet"), "al terminar se abre el resumen"
-    assert pg.get_attribute("#summary-sheet", "aria-hidden") == "false"
-    pg.wait_for_function("document.getElementById('summary-vol').textContent.trim() === '500 kg'", timeout=3000)  # fin del conteo animado
-    txt = pg.inner_text("#summary-sheet")
-    assert "¡Bien hecho!" in txt and "PUSH" in txt
-    assert "Duración" in txt and "Volumen" in txt and "Series" in txt
-    assert "500 kg" in txt, f"volumen de la sesión (50 × 10): {txt!r}"
-    assert pg.locator("#summary-list .sum-ex").count() == 1, "solo los ejercicios con series hechas"
-    assert "50 kg × 10" in pg.inner_text("#summary-list .sum-ex"), "mejor serie del ejercicio"
-    assert pg.get_attribute("#summary-sheet", "class").count("show") == 1
-
-@test
-def resumen_se_cierra_con_listo_y_con_el_fondo(pg):
-    seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
-    _termina_con_una_serie(pg)
-    pg.click("#summary-done"); pg.wait_for_timeout(450)
-    assert not pg.is_visible("#summary-sheet"), "Listo cierra el resumen"
-    tab(pg, "rutinas"); empezar(pg, "a")
-    _termina_con_una_serie(pg)
-    pg.click("#scrim", position={"x": 5, "y": 5}); pg.wait_for_timeout(450)
-    assert not pg.is_visible("#summary-sheet"), "tocar fuera también cierra el resumen"
-
-@test
-def resumen_no_aparece_si_el_entreno_se_descarta(pg):
-    seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
-    pg.click("#wk-finish"); pg.wait_for_timeout(400)
-    assert not pg.is_visible("#summary-sheet"), "sin series hechas no hay resumen"
-    assert pg.is_visible("#toast") or "Entrenamiento descartado." in pg.content()
-
-@test
-def resumen_suma_todas_las_series_y_mejor_serie_por_ejercicio(pg):
-    seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
-    ex = pg.locator("#wk-in .exblock").first
-    pg.locator('#workout [data-act="addset"]').first.click(); pg.wait_for_timeout(120)
-    for i, (kg, reps) in enumerate([("40", "10"), ("60", "8"), ("55", "12")], start=1):
-        f = ex.locator(".wrow:not(.whead)").nth(i)
-        f.locator('input[data-f="kg"]').fill(kg); f.locator('input[data-f="reps"]').fill(reps)
-        f.locator('[data-act="done"]').click(); pg.wait_for_timeout(120)
-    pg.click("#wk-finish"); pg.click("#finish-save"); pg.wait_for_selector("#summary-sheet.show", timeout=5000)
-    assert "Series" in pg.inner_text("#summary-sheet")
-    pg.wait_for_timeout(1400)   # los números cuentan hasta el total (1,1 s)
-    assert pg.inner_text("#summary-sheet .sum-series").strip() == "3", "cuenta las series hechas"
-    assert "60 kg × 8" in pg.inner_text("#summary-list .sum-ex"), "la mejor serie es la de más kg"
-    assert pg.inner_text("#summary-sheet .sum-vol").replace(" ", "").startswith("1540"), "1540 kg = 400 + 480 + 660"
-
-
-# ---------- Picker de ejercicios ----------
 @test
 def picker_ejercicios_se_abre_al_anadir_ejercicio(pg):
     seed(pg); tab(pg, "rutinas")
@@ -3270,7 +3191,7 @@ def rutina_el_entreno_guarda_el_id_de_su_rutina_y_el_libre_no(pg):
     seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
     pg.locator(".wrow .chk").first.click(); pg.click("#wk-finish"); pg.click("#finish-save"); pg.wait_for_timeout(400)
     assert db(pg)["sessions"][-1]["routineId"] == "a"
-    pg.click("#summary-done"); pg.wait_for_timeout(400); tab(pg, "rutinas")
+    tab(pg, "rutinas")
     pg.click("#free-workout"); pg.wait_for_timeout(300)
     anadir_del_selector(pg, "Press")
     pg.locator('#workout input[data-f="reps"]').first.fill("6"); pg.locator("#workout .chk").first.click(); pg.click("#wk-finish"); pg.click("#finish-save"); pg.wait_for_timeout(400)
