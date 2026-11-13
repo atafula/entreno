@@ -6,8 +6,11 @@ import SwiftUI
 struct ForjadoApp: App {
     var body: some Scene {
         WindowGroup {
+            // Arriba la web empieza debajo de la hora y la isla dinámica (como en la web instalada); solo se
+            // extiende bajo el borde de abajo, donde la web deja su propio margen para la barra de inicio
             Pantalla()
-                .ignoresSafeArea()
+                .ignoresSafeArea(.container, edges: .bottom)
+                .ignoresSafeArea(.keyboard)
                 .background(Color(red: 14 / 255, green: 11 / 255, blue: 20 / 255).ignoresSafeArea())
                 .preferredColorScheme(.dark)
                 .statusBarHidden(false)

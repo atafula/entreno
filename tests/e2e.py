@@ -3135,6 +3135,14 @@ def ajustes_nota_de_copia_corta(pg):
     assert len(t) <= 60 and "no se borra" in t, f"nota demasiado larga ({len(t)}): {t}"
 
 @test
+def ios_la_web_empieza_debajo_de_la_barra_de_estado(pg):
+    app = open(os.path.join(IOS, "Sources", "Forjado", "ForjadoApp.swift"), encoding="utf-8").read()
+    assert ".ignoresSafeArea(.container, edges: .bottom)" in app, "solo se extiende bajo el borde de abajo (barra de inicio)"
+    assert ".ignoresSafeArea(.keyboard)" in app, "el teclado no encoge la pantalla"
+    assert "Pantalla()\n                .ignoresSafeArea()" not in app, "arriba la web no se mete bajo la hora y la isla dinámica"
+    assert ".background(Color(red: 14 / 255, green: 11 / 255, blue: 20 / 255).ignoresSafeArea())" in app, "la franja de la barra de estado lleva el fondo de la app"
+
+@test
 def ios_puente_no_estorba_en_la_web(pg):
     seed(pg)
     assert pg.evaluate("typeof window.__forjadoGps") == "undefined", "la web normal no carga el puente"
