@@ -258,6 +258,11 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; }
 .ed-bar .btn { margin: 0; min-height: 42px; padding: 0 var(--s5); border-radius: var(--r-full); }
 #routine-name { height: auto; margin: var(--s3) 0 var(--s2); padding: var(--s1) 2px var(--s2); border-radius: var(--r-sm) var(--r-sm) 0 0; background: transparent; box-shadow: inset 0 -1.5px 0 var(--fire); font: 600 2.125rem/1.15 var(--display); }
 #routine-name:focus { box-shadow: inset 0 -2.5px 0 var(--fire); }
+.ed-lab { margin: var(--s4) 2px var(--s2); color: var(--muted); font: 700 var(--t-sm)/1 var(--ui); }
+.ed-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--s2); margin-bottom: var(--s3); }
+.ed-days button { height: var(--control); border: 0; border-radius: var(--r-md); background: var(--surface-2); color: var(--muted); font: 700 var(--t-md)/1 var(--ui); transition: transform var(--d-fast) var(--ease-out), background var(--d-fast); }
+.ed-days button:active { transform: scale(.94); }
+.ed-days button[aria-pressed="true"] { background: var(--fire); color: var(--on-fire); }
 .ed-hint { margin: 0 2px var(--s5); color: var(--muted); font-size: var(--t-sm); font-weight: 600; }
 #routine-exercises .exblock { margin: 0 0 var(--s3); padding: var(--s4); border-radius: var(--r-lg); background: var(--surface); box-shadow: var(--shadow-1); }
 #routine-exercises .exhead { margin-bottom: var(--s3); }

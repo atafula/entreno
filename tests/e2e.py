@@ -2433,6 +2433,61 @@ def hoy_siguiente_rutina_es_la_que_mas_tiempo_lleva_sin_hacerse(pg):
     seed(pg, routines=[], sessions=[])
     assert not pg.is_visible("#next-routine"), "sin rutinas no se muestra"
 
+def _dow(pg): return pg.evaluate("(new Date().getDay() + 6) % 7")
+def _plan(pg, dias):
+    """dias: {id de rutina: [días 0=lunes..6=domingo]}"""
+    rs = [dict(r, days=dias.get(r["id"], [])) for r in ROUTINES]
+    return rs
+
+@test
+def plan_semanal_hoy_muestra_la_rutina_asignada_a_hoy(pg):
+    pg.goto(URL); d = _dow(pg)
+    seed(pg, routines=_plan(pg, {"a": [(d + 1) % 7], "b": [d]}), sessions=[ses(off(pg, -2), "x", "PUSH")])
+    t = pg.inner_text("#next-routine")
+    assert "PULL" in t and pg.locator('#next-routine [data-start-next="b"]').count() == 1, "hoy toca la asignada a hoy, no la más antigua"
+    assert "hoy" in t.lower()
+
+@test
+def plan_semanal_dia_sin_rutina_es_descanso_y_dice_cual_toca_despues(pg):
+    pg.goto(URL); d = _dow(pg)
+    seed(pg, routines=_plan(pg, {"a": [(d + 1) % 7]}), sessions=[])
+    t = pg.inner_text("#next-routine").lower()
+    assert "descans" in t and "push" in t and "mañana" in t, t
+    assert pg.locator("#next-routine [data-start-next]").count() == 0, "en descanso no hay botón de empezar"
+
+@test
+def plan_semanal_tras_entrenar_hoy_muestra_hoy_ya_esta_hecho(pg):
+    pg.goto(URL); d = _dow(pg)
+    seed(pg, routines=_plan(pg, {"a": [d], "b": [(d + 2) % 7]}), sessions=[ses(off(pg, 0), "x", "PUSH")])
+    t = pg.inner_text("#next-routine").lower()
+    assert "hecho" in t and "pull" in t, t
+    assert pg.locator("#next-routine [data-start-next]").count() == 0
+
+@test
+def plan_semanal_sin_dias_asignados_sigue_el_criterio_de_la_mas_antigua(pg):
+    pg.goto(URL)
+    seed(pg, sessions=[ses(off(pg, -1), "a", "PUSH"), ses(off(pg, -5), "b", "PULL")])
+    assert "PULL" in pg.inner_text("#next-routine") and pg.locator("#next-routine [data-start-next]").count() == 1
+
+@test
+def plan_semanal_el_editor_asigna_dias_y_se_guardan(pg):
+    seed(pg); tab(pg, "rutinas"); pg.click('#routines-list [data-routine-menu="a"]'); pg.wait_for_timeout(100); pg.click('#routines-list [data-edit-routine="a"]'); pg.wait_for_timeout(200)
+    assert pg.locator("#routine-days [data-day]").count() == 7
+    pg.click('#routine-days [data-day="0"]'); pg.click('#routine-days [data-day="3"]')
+    assert pg.get_attribute('#routine-days [data-day="0"]', "aria-pressed") == "true"
+    pg.click('#routine-days [data-day="3"]'); pg.click('#routine-days [data-day="5"]')
+    pg.click("#routine-save"); pg.wait_for_timeout(300)
+    assert [r for r in db(pg)["routines"] if r["id"] == "a"][0]["days"] == [0, 5]
+    assert pg.locator("#routines-list [data-routine-menu]").count() == 2, "tras guardar la lista sigue ahí (aunque hoy no toque ninguna)"
+    pg.click('#routines-list [data-routine-menu="a"]'); pg.wait_for_timeout(100); pg.click('#routines-list [data-edit-routine="a"]'); pg.wait_for_timeout(200)
+    assert pg.get_attribute('#routine-days [data-day="5"]', "aria-pressed") == "true" and pg.get_attribute('#routine-days [data-day="3"]', "aria-pressed") == "false"
+
+@test
+def plan_semanal_los_dias_sobreviven_a_la_copia_de_seguridad(pg):
+    pg.goto(URL)
+    r = pg.evaluate("r => cleanRoutine(r)", dict(ROUTINES[0], days=[1, 4, 4, 9, "x"]))
+    assert r["days"] == [1, 4], r
+
 @test
 def hoy_la_racha_va_en_el_anillo_y_no_en_la_cabecera(pg):
     seed(pg)

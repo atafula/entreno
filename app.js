@@ -120,7 +120,7 @@ try { if (navigator.storage && navigator.storage.persist) navigator.storage.pers
 // Las rutinas antiguas solo tenían nombres de ejercicio: se convierten al formato con series
 function normRoutine(r) {
   return {
-    id: r.id, name: r.name,
+    id: r.id, name: r.name, days: [...new Set((r.days || []).filter(d => Number.isInteger(d) && d >= 0 && d <= 6))].sort((a, b) => a - b),
     exercises: (r.exercises || []).map(e => typeof e === 'string'
       ? { name: e, sets: [] }
       : { name: e.name, image: e.image || '', ejId: e.ejId || '', sets: (e.sets || []).map(s => ({ w: !!s.w, kg: s.kg || '', reps: s.reps || '' })) })
@@ -335,20 +335,37 @@ function renderWeekSum() {
 function ultimaVez(r) {
   return db.sessions.filter(s => String(s.routine).toLowerCase() === String(r.name).toLowerCase()).map(s => s.date).sort().pop() || '';
 }
-function siguienteRutina() {
+// Qué rutina toca: la que has asignado a cada día de la semana. Si no has asignado ninguna, la que más tiempo lleva sin hacerse
+const diaSemana = (d = new Date()) => (d.getDay() + 6) % 7;
+const hayPlan = () => db.routines.some(r => (r.days || []).length);
+const rutinaDelDia = dow => db.routines.find(r => (r.days || []).includes(dow)) || null;
+function masAntigua() {
   let mejor = null, fecha = null;
   db.routines.forEach(r => { const f = ultimaVez(r); if (mejor === null || f < fecha) { mejor = r; fecha = f; } });
   return mejor;
 }
+// Próximo día con rutina asignada, contando desde mañana: { r, k } con k = días que faltan
+function proximaDelPlan() {
+  for (let k = 1; k <= 7; k++) { const r = rutinaDelDia(diaSemana(masDias(new Date(), k))); if (r) return { r, k }; }
+  return null;
+}
+const cuando = k => k === 1 ? 'mañana' : `el ${DIAS_NOMBRE[diaSemana(masDias(new Date(), k))]}`;
 const PLAY_ICO = '<svg viewBox="0 0 24 24" class="ico play-ico"><path d="M8 4.5v15L20 12z"/></svg>';
 function renderNext() {
-  const r = siguienteRutina(), box = $('next-routine');
-  box.hidden = !r;
-  if (!r) { box.innerHTML = ''; return; }
+  const box = $('next-routine');
+  box.hidden = !db.routines.length;
+  if (!db.routines.length) { box.innerHTML = ''; return; }
+  const hecho = db.sessions.some(s => s.date === localDate()), plan = hayPlan();
+  const proxima = plan ? proximaDelPlan() : null;
+  const aviso = (lab, titulo, meta) => { box.innerHTML = `<div class="nx-l"><p class="lab">${lab}</p><b class="nx-name">${titulo}</b>${meta ? `<p class="nx-meta">${meta}</p>` : ''}</div>`; };
+  const siguiente = proxima ? `${esc(proxima.r.name)} ${cuando(proxima.k)}` : '';
+  if (hecho) return aviso('Hoy', 'Hoy ya está hecho.', siguiente ? `Siguiente: ${siguiente}` : '');
+  const r = plan ? rutinaDelDia(diaSemana()) : masAntigua();
+  if (!r) return aviso('Hoy', 'Hoy descansas.', siguiente ? `Siguiente: ${siguiente}` : '');
   const sets = r.exercises.reduce((n, e) => n + e.sets.length, 0), last = ultimaVez(r), grupos = gruposRutina(r);
   box.innerHTML = `
     <div class="nx-l">
-      <p class="lab">Siguiente rutina</p>
+      <p class="lab">${plan ? 'Toca hoy' : 'Siguiente rutina'}</p>
       <b class="nx-name">${esc(r.name)}</b>
       <p class="nx-meta">${plural(r.exercises.length, 'ejercicio', 'ejercicios')} · ${plural(sets, 'serie', 'series')} · ${last ? whenText(last) : 'Sin estrenar'}</p>
       ${grupos.length ? `<div class="rtags">${grupos.map(g => `<span>${esc(g)}</span>`).join('')}</div>` : ''}
@@ -538,7 +555,8 @@ function bindSets(box, getExs, rerender) {
 }
 
 // ----- Editor de rutinas -----
-const newDraft = () => ({ id: null, name: '', exercises: [] });
+const newDraft = () => ({ id: null, name: '', days: [], exercises: [] });
+const DIAS_LETRA = ['L', 'M', 'X', 'J', 'V', 'S', 'D'], DIAS_NOMBRE = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
 let creating = false;
 let draft = newDraft();
 function renderEditor() {
@@ -553,6 +571,7 @@ function renderEditor() {
   $('routine-save').textContent = draft.id ? 'Guardar cambios' : 'Guardar rutina';
   const del = $('routine-delete'); clearTimeout(del._t); del.classList.remove('armed'); del.textContent = 'Borrar rutina'; del.hidden = !draft.id;
   $('routine-name').value = draft.name;
+  $('routine-days').innerHTML = DIAS_LETRA.map((l, i) => `<button type="button" data-day="${i}" aria-pressed="${draft.days.includes(i)}" aria-label="${DIAS_NOMBRE[i]}">${l}</button>`).join('');
   const nSeries = draft.exercises.reduce((n, e) => n + e.sets.length, 0);
   $('editor-hint').textContent = draft.exercises.length
     ? `${plural(draft.exercises.length, 'ejercicio', 'ejercicios')} · ${plural(nSeries, 'serie', 'series')} · mantén pulsado un ejercicio para moverlo`
@@ -657,10 +676,11 @@ function fotoMini(e) {
 }
 function renderRoutines(quieto = false) {
   $('routines-list').classList.toggle('quiet', quieto || silencio);   // repintar por el menú no reanima las tarjetas
-  const sig = siguienteRutina(), resto = db.routines.filter(r => r !== sig);
-  $('routines-list').innerHTML = sig
-    ? `<p class="rsec">Te toca</p>${rutinaCard(sig, true)}${resto.length ? `<p class="rsec">Todas</p>${resto.map(r => rutinaCard(r, false)).join('')}` : ''}`
-    : emptyHtml('rutinas', 'Aún no tienes rutinas', 'Pulsa «Crear rutina» para montar la primera, o empieza un «Entreno libre» y añade ejercicios sobre la marcha.');
+  const sig = (hayPlan() ? rutinaDelDia(diaSemana()) : masAntigua()), resto = db.routines.filter(r => r !== sig);
+  // Con plan semanal, «Te toca» es la de hoy (si hoy es de descanso, no hay destacada)
+  $('routines-list').innerHTML = !db.routines.length
+    ? emptyHtml('rutinas', 'Aún no tienes rutinas', 'Pulsa «Crear rutina» para montar la primera, o empieza un «Entreno libre» y añade ejercicios sobre la marcha.')
+    : `${sig ? `<p class="rsec">Te toca</p>${rutinaCard(sig, true)}` : ''}${resto.length ? `<p class="rsec">${sig ? 'Todas' : 'Tus rutinas'}</p>${resto.map(r => rutinaCard(r, false)).join('')}` : ''}`;
 }
 
 const openEntries = new Set();           // entrenos con el detalle desplegado (solo en pantalla)
@@ -913,6 +933,12 @@ tabs.forEach(btn => {
 bindSets($('routine-exercises'), () => draft.exercises, renderEditor);
 bindExDrag($('routine-exercises'), () => draft.exercises, renderEditor);
 $('routine-name').addEventListener('input', e => { draft.name = e.target.value; });
+$('routine-days').addEventListener('click', e => {
+  const b = e.target.closest('[data-day]'); if (!b) return;
+  const i = +b.dataset.day, on = !draft.days.includes(i);
+  draft.days = on ? [...draft.days, i].sort((a, c) => a - c) : draft.days.filter(d => d !== i);
+  b.setAttribute('aria-pressed', String(on)); vibrate(6);
+});
 $('add-exercise').onclick = () => {
   if (typeof openPicker === 'function') {
     openPicker(({ name, image, id }) => { draft.exercises.push({ name, image: image || '', ejId: id || '', sets: [blankSet(), blankSet(), blankSet()] }); renderEditor(); vibrate(8); });
@@ -932,7 +958,8 @@ $('routine-save').onclick = () => {
     .filter(ex => ex.name);
   if (!name || !exercises.length) { shake($('routine-save')); return toast('Nombre y ejercicios. Completa la rutina.'); }
   const mine = db.routines.find(r => r.id === draft.id);
-  if (mine) { mine.name = name; mine.exercises = exercises; } else db.routines.push({ id: uid(), name, exercises });
+  const days = [...draft.days];
+  if (mine) { mine.name = name; mine.exercises = exercises; mine.days = days; } else db.routines.push({ id: uid(), name, exercises, days });
   const edited = !!mine;
   draft = newDraft(); creating = false;
   renderEditor();
@@ -974,7 +1001,7 @@ function borrarRutinaDelMenu(b) {
 function editRoutine(id) {
   const r = db.routines.find(x => x.id === id);
   if (!r) return;
-  draft = { id: r.id, name: r.name, exercises: r.exercises.map(ex => ({ name: ex.name, image: ex.image || '', ejId: ex.ejId || '', sets: (ex.sets.length ? ex.sets : [blankSet(), blankSet(), blankSet()]).map(s => ({ w: !!s.w, kg: s.kg === '' ? '' : String(s.kg), reps: s.reps === '' ? '' : String(s.reps) })) })) };
+  draft = { id: r.id, name: r.name, days: [...(r.days || [])], exercises: r.exercises.map(ex => ({ name: ex.name, image: ex.image || '', ejId: ex.ejId || '', sets: (ex.sets.length ? ex.sets : [blankSet(), blankSet(), blankSet()]).map(s => ({ w: !!s.w, kg: s.kg === '' ? '' : String(s.kg), reps: s.reps === '' ? '' : String(s.reps) })) })) };
   renderEditor();
   window.scrollTo(0, 0);
 }

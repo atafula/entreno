@@ -13,7 +13,9 @@ function cleanRoutine(r) {
     if (isStr(e.ejId, 80)) out.ejId = e.ejId;
     return out;
   });
-  return { id: r.id, name: r.name, exercises };
+  // Días de la semana en que toca (0 = lunes … 6 = domingo), sin repetir y ordenados
+  const days = (Array.isArray(r.days) ? r.days : []).filter(d => Number.isInteger(d) && d >= 0 && d <= 6);
+  return { id: r.id, name: r.name, exercises, days: [...new Set(days)].sort((a, b) => a - b) };
 }
 function cleanSession(s) {
   if (!s || !isStr(s.id, 80) || !s.id || !isDate(s.date) || !isStr(s.routine, 100) || !Array.isArray(s.sets)) return null;
