@@ -2948,6 +2948,84 @@ def picker_ejercicios_seleccionar_anade_a_la_rutina(pg):
     assert pg.locator("#routine-exercises .exblock").count() == n_inicial + 1, "se añadió el ejercicio"
     assert "Sentadilla" in pg.evaluate("[...document.querySelectorAll('.exname')].map(e => e.value)").pop()
 
+# ---------- App de iOS (ios/): envoltorio Swift para xtool con la app dentro ----------
+IOS = os.path.join(ROOT, "ios")
+IOS_WEB = os.path.join(IOS, "Sources", "Forjado", "web")
+_PUENTE_FALSO = "window.__msgs = []; window.webkit = {messageHandlers: {forjado: {postMessage: m => window.__msgs.push(m)}}};"
+def _puente(pg):
+    pg.add_init_script(_PUENTE_FALSO)
+    pg.add_init_script(open(os.path.join(IOS, "Sources", "Forjado", "puente.js"), encoding="utf-8").read())
+def _msgs(pg, t): return pg.evaluate("t => window.__msgs.filter(m => m.t === t)", t)
+
+@test
+def ios_la_copia_de_la_web_es_identica_a_la_app(pg):
+    import re
+    copia = [os.path.relpath(os.path.join(d, n), IOS_WEB) for d, _, ns in os.walk(IOS_WEB) for n in ns]
+    assert "index.html" in copia and "app.js" in copia and "styles.css" in copia, copia
+    for rel in copia:
+        a, b = open(os.path.join(IOS_WEB, rel), "rb").read(), open(os.path.join(ROOT, rel), "rb").read()
+        assert a == b, f"{rel} está desfasado: ejecuta python3 ios/sync_web.py"
+    html = open(os.path.join(ROOT, "index.html"), encoding="utf-8").read()
+    for ref in re.findall(r'(?:src|href)="(?!https?:)([^"#]+)"', html):
+        if ref != "manifest.webmanifest": assert ref in copia, f"falta {ref} en la copia de iOS"
+    for ref in ["traducciones.json", "ejercicios_local.json", "fonts/Fraunces-600.woff2", "fonts/Manrope-500.woff2"]:
+        assert ref in copia, f"falta {ref}"
+    assert "sw.js" not in copia, "el service worker no hace falta: los archivos van dentro de la app"
+
+@test
+def ios_proyecto_xtool_completo(pg):
+    from PIL import Image
+    import plistlib
+    for f in ["Package.swift", "xtool.yml", "Info.plist", "AppIcon.png", "Sources/Forjado/ForjadoApp.swift", "Sources/Forjado/puente.js"]:
+        assert os.path.exists(os.path.join(IOS, f)), f"falta ios/{f}"
+    y = open(os.path.join(IOS, "xtool.yml"), encoding="utf-8").read()
+    assert "bundleID:" in y and "infoPath: Info.plist" in y and "iconPath: AppIcon.png" in y, y
+    p = open(os.path.join(IOS, "Package.swift"), encoding="utf-8").read()
+    assert '.copy("web")' in p and '.copy("puente.js")' in p and ".library(" in p, "los recursos van en el paquete"
+    info = plistlib.load(open(os.path.join(IOS, "Info.plist"), "rb"))
+    assert info["CFBundleDisplayName"] == "Forjado" and info.get("NSLocationWhenInUseUsageDescription"), info
+    assert "location" in info["UIBackgroundModes"], "las caminatas siguen contando con la pantalla apagada"
+    im = Image.open(os.path.join(IOS, "AppIcon.png"))
+    assert im.size == (1024, 1024) and im.mode == "RGB", f"icono 1024 sin transparencia: {im.size} {im.mode}"
+    assert all(abs(a - b) <= 14 for a, b in zip(im.getpixel((5, 5)), (14, 11, 20))), "el icono lleva el fondo de la app"
+
+@test
+def ios_puente_vibracion_y_pantalla_encendida_van_a_lo_nativo(pg):
+    _puente(pg); seed(pg)
+    pg.evaluate("vibrate(15); vibrate([30, 40, 30])")
+    assert [m["p"] for m in _msgs(pg, "vibrar")] == [[15], [30, 40, 30]], _msgs(pg, "vibrar")
+    pg.evaluate("navigator.wakeLock.request('screen').then(l => window.__lock = l)"); pg.wait_for_timeout(50)
+    pg.evaluate("window.__lock.release()"); pg.wait_for_timeout(50)
+    assert [m["on"] for m in _msgs(pg, "pantalla")] == [True, False]
+
+@test
+def ios_puente_la_caminata_usa_el_gps_nativo(pg):
+    _puente(pg); seed(pg)
+    pg.click("#walk-start"); pg.wait_for_timeout(150)
+    assert [m["on"] for m in _msgs(pg, "gps")] == [True], "al empezar se enciende el GPS nativo"
+    pg.evaluate("__forjadoGps(40.0, -3.0, 5, Date.now()); __forjadoGps(40.0003, -3.0, 5, Date.now())"); pg.wait_for_timeout(1200)
+    assert pg.inner_text("#walk-dist") == "0.03", pg.inner_text("#walk-dist")
+    pg.evaluate("__forjadoGps(40.0009, -3.0, 80, Date.now())"); pg.wait_for_timeout(1200)
+    assert pg.inner_text("#walk-dist") == "0.03", "una posición imprecisa no cuenta"
+    pg.evaluate("__forjadoGpsError(1, 'denegado')"); pg.wait_for_timeout(100)
+    assert "Sin GPS" in pg.inner_text("#walk-hint")
+    pg.evaluate("stopWalk()"); pg.wait_for_timeout(100)
+    assert [m["on"] for m in _msgs(pg, "gps")] == [True, False], "al terminar se apaga"
+
+@test
+def ios_puente_descargar_copia_abre_compartir_nativo(pg):
+    _puente(pg); seed(pg)
+    pg.click("#settings-btn"); pg.wait_for_timeout(300)
+    pg.click("#backup-export"); pg.wait_for_timeout(300)
+    m = _msgs(pg, "guardar")
+    assert len(m) == 1 and m[0]["name"].endswith(".json") and "PUSH" in m[0]["text"], m
+    assert json.loads(m[0]["text"])["routines"][0]["name"] == "PUSH"
+
+@test
+def ios_puente_no_estorba_en_la_web(pg):
+    seed(pg)
+    assert pg.evaluate("typeof window.__forjadoGps") == "undefined", "la web normal no carga el puente"
+
 def main():
     srv = subprocess.Popen([sys.executable, "-m", "http.server", str(PORT), "--bind", "127.0.0.1"], cwd=ROOT,
                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

@@ -59,3 +59,26 @@ Todo sale de los tokens de `:root` en `styles.css`: espaciado en escala de 4 px 
 ## Cuenta y nube
 
 Igual que la app de finanzas: inicio de sesión con Google y Firestore (proyecto `entreno-31153`). Si faltan las claves en `sync.js` la app funciona solo en local. Las reglas están en `firestore.rules`.
+
+## App de iOS (carpeta `ios/`)
+
+La misma app, empaquetada como app nativa en Swift para compilarla con [xtool](https://xtool.sh) (sin proyecto de Xcode). La web va dentro, en `ios/Sources/Forjado/web`, y se ve idéntica; Swift añade lo que Safari no deja hacer a una web:
+
+- **Vibración** real (háptica) en los mismos sitios donde la web llama a `vibrate()`.
+- **GPS con la pantalla apagada** en las caminatas (CoreLocation en segundo plano).
+- **Pantalla encendida** durante el entreno y las caminatas.
+- **Descargar copia / CSV** abre la hoja de compartir de iOS (Guardar en Archivos, AirDrop…).
+
+Compilar e instalar en el iPhone conectado:
+
+```
+python3 ios/sync_web.py   # copia la web actual dentro de la app (hazlo tras cada cambio en la web)
+cd ios && xtool dev
+```
+
+- `puente.js` sustituye `navigator.vibrate`, `navigator.geolocation`, `navigator.wakeLock` y `downloadFile` por mensajes a Swift (`Puente.swift`). La web no cambia: fuera de la app el puente no se carga.
+- Los archivos se sirven en `forjado://app/` (`Archivos.swift`), sin service worker: ya van dentro de la app y funcionan sin conexión.
+- Los datos de la app nativa son nuevos (no comparte almacenamiento con la web instalada desde Safari). Para traerlos: en la web, Ajustes → Descargar copia; en la app, Ajustes → Restaurar copia.
+- El inicio de sesión con Google para sincronizar no funciona dentro de la app (Google no lo permite en vistas web incrustadas).
+- El identificador es `com.atafula.forjado` (`ios/xtool.yml`); el icono, `ios/AppIcon.png`, sale de `icons/icon.svg` a 1024 px sin transparencia.
+- Los tests `ios_*` comprueban que la copia de la web está al día y que el puente funciona.
