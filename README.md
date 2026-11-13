@@ -80,6 +80,9 @@ cd ios && xtool dev
 - `puente.js` sustituye `navigator.vibrate`, `navigator.geolocation`, `navigator.wakeLock` y `downloadFile` por mensajes a Swift (`Puente.swift`). La web no cambia: fuera de la app el puente no se carga.
 - Los archivos se sirven en `forjado://app/` (`Archivos.swift`), sin service worker: ya van dentro de la app y funcionan sin conexión.
 - Los datos de la app nativa son nuevos (no comparte almacenamiento con la web instalada desde Safari). Para traerlos: en la web, Ajustes → Descargar copia; en la app, Ajustes → Restaurar copia.
-- El inicio de sesión con Google para sincronizar no funciona dentro de la app (Google no lo permite en vistas web incrustadas).
+- **Sincronizar con Google** usa tu mismo Firebase (`entreno-31153`) y los mismos datos que la web. Google no deja iniciar sesión dentro de una vista web, así que lo hace iOS (`GoogleLogin.swift`, OAuth con PKCE en la hoja segura de iOS) y la web entra con `signInWithCredential`. Hay que configurarlo una vez:
+  1. Firebase → Configuración del proyecto → Añadir app → **iOS**, con el ID de paquete `com.atafula.forjado`.
+  2. Descarga `GoogleService-Info.plist` y ejecuta `python3 ios/configurar_google.py ruta/al/GoogleService-Info.plist` (pone el cliente en `ios/Info.plist`).
+  3. Si Google da error al entrar, revisa en Google Cloud → Credenciales que la clave de API no esté limitada a ciertos sitios web.
 - El identificador es `com.atafula.forjado` (`ios/xtool.yml`); el icono, `ios/AppIcon.png`, sale de `icons/icon.svg` a 1024 px sin transparencia.
 - Los tests `ios_*` comprueban que la copia de la web está al día y que el puente funciona.

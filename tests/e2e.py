@@ -3052,6 +3052,46 @@ def ios_salud_rendirse_o_editar_el_historial_no_manda_nada(pg):
     assert _msgs(pg, "salud") == [], _msgs(pg, "salud")
 
 @test
+def ios_google_el_login_lo_hace_ios_y_entra_en_tu_firebase(pg):
+    _puente(pg); seed(pg, fb={"uid": "U1"})
+    abrir_ajustes(pg)
+    assert pg.is_visible("#login-btn"), "en la app también se ofrece sincronizar con Google"
+    pg.click("#login-btn"); pg.wait_for_timeout(200)
+    assert len(_msgs(pg, "google")) == 1, "el botón pide el login nativo, no la ventana de Google"
+    assert pg.evaluate("sessionStorage.getItem('fake-user')") is None, "sin popup: aún no hay sesión"
+    pg.evaluate("__forjadoGoogle('ID-TOKEN', 'ACCESS-TOKEN')"); pg.wait_for_timeout(700)
+    assert pg.evaluate("window.__cred") == {"providerId": "google.com", "idToken": "ID-TOKEN", "accessToken": "ACCESS-TOKEN"}
+    assert pg.is_visible("#logout-btn") and "yo@ejemplo.com" in pg.inner_text("#account-note"), "dentro de tu Firebase con esa cuenta"
+    pg.click("#logout-btn"); pg.wait_for_timeout(200)
+    assert len(_msgs(pg, "google")) == 2, "cambiar de cuenta vuelve a abrir el login nativo"
+
+@test
+def ios_google_un_error_o_cancelar_se_avisa_sin_romper(pg):
+    _puente(pg); seed(pg, fb={"uid": "U1"})
+    abrir_ajustes(pg); pg.click("#login-btn"); pg.wait_for_timeout(100)
+    pg.evaluate("__forjadoGoogleError('cancelado')"); pg.wait_for_timeout(200)
+    assert pg.is_visible("#login-btn") and not pg.is_visible("#toast.show, .toast.show"), "cancelar no molesta con avisos"
+    pg.evaluate("__forjadoGoogleError('Sin conexión')"); pg.wait_for_timeout(200)
+    assert "Sin conexión" in pg.inner_text("body"), "un error de verdad sí se avisa"
+
+@test
+def ios_google_configurar_con_el_plist_de_firebase(pg):
+    import plistlib, shutil, subprocess, tempfile
+    tmp = tempfile.mkdtemp()
+    shutil.copy(os.path.join(IOS, "Info.plist"), os.path.join(tmp, "Info.plist"))
+    g = os.path.join(tmp, "GoogleService-Info.plist")
+    plistlib.dump({"CLIENT_ID": "229443527410-abc.apps.googleusercontent.com", "REVERSED_CLIENT_ID": "com.googleusercontent.apps.229443527410-abc",
+                   "BUNDLE_ID": "com.atafula.forjado", "PROJECT_ID": "entreno-31153"}, open(g, "wb"))
+    r = subprocess.run([sys.executable, os.path.join(IOS, "configurar_google.py"), g, os.path.join(tmp, "Info.plist")], capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr
+    info = plistlib.load(open(os.path.join(tmp, "Info.plist"), "rb"))
+    assert info["GoogleClientID"] == "229443527410-abc.apps.googleusercontent.com"
+    assert info["CFBundleURLTypes"][0]["CFBundleURLSchemes"] == ["com.googleusercontent.apps.229443527410-abc"]
+    plistlib.dump({"CLIENT_ID": "x", "REVERSED_CLIENT_ID": "y", "BUNDLE_ID": "otra.app", "PROJECT_ID": "otro"}, open(g, "wb"))
+    r = subprocess.run([sys.executable, os.path.join(IOS, "configurar_google.py"), g, os.path.join(tmp, "Info.plist")], capture_output=True, text=True)
+    assert r.returncode != 0 and "entreno-31153" in r.stderr, "avisa si el plist es de otro proyecto"
+
+@test
 def ios_puente_no_estorba_en_la_web(pg):
     seed(pg)
     assert pg.evaluate("typeof window.__forjadoGps") == "undefined", "la web normal no carga el puente"

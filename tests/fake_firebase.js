@@ -40,9 +40,11 @@
     onAuthStateChanged(cb) { authCbs.push(cb); setTimeout(() => cb(user), 0); return () => {}; },
     signInWithPopup() { user = { uid: window.__fakeUid || 'U1', email: 'yo@ejemplo.com' }; sessionStorage.setItem(UKEY, JSON.stringify(user)); authCbs.forEach(cb => cb(user)); return Promise.resolve({ user }); },
     signInWithRedirect() { return this.signInWithPopup(); },
+    signInWithCredential(c) { window.__cred = c; return this.signInWithPopup(); },
     getRedirectResult: () => Promise.resolve(null),
     signOut() { user = null; sessionStorage.removeItem(UKEY); authCbs.forEach(cb => cb(null)); return Promise.resolve(); }
   };
   const authFn = () => auth; authFn.GoogleAuthProvider = function () { this.setCustomParameters = () => {}; };
+  authFn.GoogleAuthProvider.credential = (idToken, accessToken) => ({ providerId: 'google.com', idToken, accessToken });
   window.firebase = { initializeApp() {}, firestore: () => fs, auth: authFn };
 })();

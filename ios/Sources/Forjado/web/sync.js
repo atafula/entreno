@@ -109,9 +109,19 @@ function stopListen() { unsubs.forEach(u => { try { u(); } catch { /* nada */ } 
     if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-cancelled') return fauth.signInWithRedirect(provider);
     if (err.code !== 'auth/popup-closed-by-user') toast(err.message);
   });
-  $('login-btn').onclick = signIn;
-  $('logout-btn').onclick = signIn;                       // "cambiar de cuenta": vuelve a elegir
-  fauth.getRedirectResult().catch(err => { if (err.code && !err.code.includes('cancelled')) toast(err.message); });
+  // En la app de iOS Google no deja iniciar sesión dentro de la vista web: lo hace iOS (GoogleLogin.swift)
+  // y devuelve los tokens de Google, que entran en este mismo Firebase con signInWithCredential
+  const nativo = window.webkit?.messageHandlers?.forjado;
+  const entrar = nativo ? () => nativo.postMessage({ t: 'google' }) : signIn;
+  if (nativo) {
+    window.__forjadoGoogle = (idToken, accessToken) => fauth.signInWithCredential(firebase.auth.GoogleAuthProvider.credential(idToken, accessToken))
+      .catch(err => toast(err.message || 'No se pudo iniciar sesión.'));
+    window.__forjadoGoogleError = msg => { if (msg && msg !== 'cancelado') toast(msg); };
+  }
+  $('login-btn').onclick = entrar;
+  $('logout-btn').onclick = entrar;                       // "cambiar de cuenta": vuelve a elegir
+  // getRedirectResult prepara la ventana de Google, que en la app no existe (y puede dejar Auth colgado)
+  if (!nativo) fauth.getRedirectResult().catch(err => { if (err.code && !err.code.includes('cancelled')) toast(err.message); });
   setAccountUI();
   fauth.onAuthStateChanged(user => {
     fuser = user;

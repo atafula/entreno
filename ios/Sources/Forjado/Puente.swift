@@ -35,6 +35,8 @@ final class Puente: NSObject, WKScriptMessageHandler, CLLocationManagerDelegate 
             if let tipo = m["kind"] as? String, let ini = (m["start"] as? NSNumber)?.doubleValue, let fin = (m["end"] as? NSNumber)?.doubleValue {
                 Salud.guardar(caminata: tipo == "caminata", desde: Date(timeIntervalSince1970: ini / 1000), hasta: Date(timeIntervalSince1970: fin / 1000), metros: (m["meters"] as? NSNumber)?.doubleValue ?? 0)
             }
+        case "google":
+            iniciarGoogle()
         case "guardar":
             if let nombre = m["name"] as? String, let texto = m["text"] as? String { compartir(nombre: nombre, texto: texto) }
         default:
@@ -120,6 +122,32 @@ final class Puente: NSObject, WKScriptMessageHandler, CLLocationManagerDelegate 
         DispatchQueue.main.async { [weak self] in
             self?.webView?.evaluateJavaScript(js, completionHandler: nil)
         }
+    }
+
+    // MARK: Google
+
+    private var google: GoogleLogin?
+
+    private func iniciarGoogle() {
+        guard google == nil else { return }   // ya hay una hoja abierta
+        let login = GoogleLogin(ventana: pantalla?.view.window)
+        google = login
+        login.entrar { [weak self] resultado in
+            guard let self = self else { return }
+            self.google = nil
+            switch resultado {
+            case .success(let tokens):
+                self.ejecutar("window.__forjadoGoogle && window.__forjadoGoogle(\(Puente.texto(tokens.idToken)), \(Puente.texto(tokens.accessToken)))")
+            case .failure(let error):
+                self.ejecutar("window.__forjadoGoogleError && window.__forjadoGoogleError(\(Puente.texto(error.localizedDescription)))")
+            }
+        }
+    }
+
+    /// Un texto de Swift como literal de JavaScript, bien escapado
+    private static func texto(_ s: String) -> String {
+        guard let datos = try? JSONSerialization.data(withJSONObject: [s]), let json = String(data: datos, encoding: .utf8) else { return "''" }
+        return String(json.dropFirst().dropLast())
     }
 
     // MARK: Compartir (copia de seguridad, CSV)
