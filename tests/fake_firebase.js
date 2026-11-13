@@ -38,7 +38,7 @@
   const auth = {
     get currentUser() { return user; },
     onAuthStateChanged(cb) { authCbs.push(cb); setTimeout(() => cb(user), 0); return () => {}; },
-    signInWithPopup() { user = { uid: window.__fakeUid || 'U1', email: 'yo@ejemplo.com' }; sessionStorage.setItem(UKEY, JSON.stringify(user)); authCbs.forEach(cb => cb(user)); return Promise.resolve({ user }); },
+    signInWithPopup() { user = { uid: window.__fakeUid || 'U1', email: 'yo@ejemplo.com', displayName: 'Adrián Prueba', photoURL: 'data:image/gif;base64,R0lGODlhAQABAAAAACw=' }; sessionStorage.setItem(UKEY, JSON.stringify(user)); authCbs.forEach(cb => cb(user)); return Promise.resolve({ user }); },
     signInWithRedirect() { return this.signInWithPopup(); },
     signInWithCredential(c) { window.__cred = c; return this.signInWithPopup(); },
     getRedirectResult: () => Promise.resolve(null),

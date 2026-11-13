@@ -126,6 +126,38 @@
 
     <!-- HISTORIAL -->
     <section id="tab-historial" class="tab">
+      <div class="perfil">
+        <div class="pf-foto" id="perfil-foto" aria-hidden="true"></div>
+        <div class="pf-txt"><b id="perfil-name">Tu perfil</b><span id="perfil-sub"></span></div>
+        <button type="button" class="btn small" id="perfil-login" hidden>Entrar con Google</button>
+      </div>
+      <p class="pf-meta" id="perfil-meta"></p>
+      <div class="pf-views" role="tablist" aria-label="Perfil">
+        <button type="button" role="tab" data-pview="entrenos" aria-selected="true">Entrenos</button>
+        <button type="button" role="tab" data-pview="stats" aria-selected="false">Estadísticas</button>
+      </div>
+      <div id="perfil-stats" hidden>
+        <div class="pf-chips" id="pstats-periodos" role="group" aria-label="Periodo">
+          <button type="button" data-periodo="7" aria-pressed="true">7 días</button>
+          <button type="button" data-periodo="30" aria-pressed="false">30 días</button>
+          <button type="button" data-periodo="90" aria-pressed="false">90 días</button>
+          <button type="button" data-periodo="365" aria-pressed="false">1 año</button>
+          <button type="button" data-periodo="0" aria-pressed="false">Siempre</button>
+        </div>
+        <div class="card pf-card"><p class="pf-rango" id="pstats-rango"></p><div class="pf-sum" id="pstats-sum"></div></div>
+        <div class="card pf-card" id="pstats-dias-card"><p class="pf-h" id="pstats-dias-h"></p><div class="pf-days" id="pstats-days"></div></div>
+        <div class="card pf-card">
+          <p class="pf-h">Tus ejercicios</p>
+          <div class="pf-chips sm" role="group" aria-label="Filtrar por tendencia">
+            <button type="button" data-trend="all" aria-pressed="true">Todos</button>
+            <button type="button" data-trend="up" aria-pressed="false">Subiendo</button>
+            <button type="button" data-trend="flat" aria-pressed="false">Estancados</button>
+            <button type="button" data-trend="down" aria-pressed="false">Bajando</button>
+          </div>
+          <div id="pstats-ex"></div>
+        </div>
+      </div>
+      <div id="perfil-entrenos">
       <div class="seg hfilter" id="hist-filter" role="group" aria-label="Filtrar historial">
         <button type="button" data-hfilter="todo" aria-pressed="true">Todo</button>
         <button type="button" data-hfilter="fuerza" aria-pressed="false">Fuerza</button>
@@ -138,6 +170,7 @@
       </div>
       <div class="stats" id="stats"></div>
       <div id="history-list"></div>
+      </div>
     </section>
   </main>
 </div>
@@ -151,7 +184,7 @@
     <svg viewBox="0 0 24 24" class="ico"><path d="M3 9v6M6 6v12M18 6v12M21 9v6M6 12h12"/></svg><span>Rutinas</span>
   </button>
   <button data-tab="tab-historial">
-    <svg viewBox="0 0 24 24" class="ico"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg><span>Historial</span>
+    <svg viewBox="0 0 24 24" class="ico"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>Perfil</span>
   </button>
 </nav>
 

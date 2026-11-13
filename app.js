@@ -243,6 +243,7 @@ function render() {
   renderWeekSum();
   renderNext();
   renderHistory();
+  renderPerfil();
   if (typeof rsRefresh === 'function') rsRefresh();
 }
 
@@ -885,6 +886,72 @@ $('history-list').addEventListener('click', e => {
   clearTimeout(b._t);
   b.dataset.delSession ? deleteEntry('session', b.dataset.delSession) : deleteEntry('walk', b.dataset.delWalk);
 });
+// ---------- Perfil: cuenta de Google arriba; debajo, los entrenos o las estadísticas ----------
+let perfilVista = 'entrenos', periodo = 7, tendencia = 'all';
+const durCorta = sec => { const m = Math.round(sec / 60); return m >= 60 ? `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ''}` : `${m} min`; };
+const fuerza = x => e1rm(x.kg || 0, x.reps || 0) || (x.reps || 0) / 1000;   // sin peso: manda el número de reps
+function renderPerfil() {
+  const u = window.cuentaActual || null, hayCuenta = typeof firebase !== 'undefined' && !$('account-sec').hidden;
+  const nombre = u ? (u.displayName || (u.email || '').split('@')[0] || 'Tu perfil') : 'Tu perfil';
+  $('perfil-name').textContent = nombre;
+  $('perfil-sub').textContent = u ? (u.email || 'Cuenta de Google') : hayCuenta ? 'Entra con Google para guardar tus datos en la nube' : 'Tus datos se guardan en este móvil';
+  $('perfil-login').hidden = !!u || !hayCuenta;
+  const foto = $('perfil-foto');
+  foto.innerHTML = u && u.photoURL ? `<img src="${esc(u.photoURL)}" alt="" referrerpolicy="no-referrer">` : `<span>${esc((u ? nombre : 'F')[0].toUpperCase())}</span>`;
+  const primero = db.sessions.map(s => s.date).sort()[0];
+  const d = primero && new Date(primero + 'T12:00:00');
+  $('perfil-meta').textContent = primero ? `Entrenando desde ${MESES[d.getMonth()]} de ${d.getFullYear()} · ${plural(db.sessions.length, 'entreno', 'entrenos')}` : '';
+  document.querySelectorAll('[data-pview]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.pview === perfilVista)));
+  $('perfil-stats').hidden = perfilVista !== 'stats';
+  $('perfil-entrenos').hidden = perfilVista !== 'entrenos';
+  if (perfilVista === 'stats') renderPerfilStats();
+}
+function renderPerfilStats() {
+  document.querySelectorAll('[data-periodo]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.periodo === periodo)));
+  document.querySelectorAll('[data-trend]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.trend === tendencia)));
+  const hoy = localDate(), N = periodo;
+  const ini = N ? localDate(masDias(new Date(), -(N - 1))) : '0000-00-00';
+  const prevIni = N ? localDate(masDias(new Date(), -(2 * N - 1))) : '';
+  const en = (s, a, b) => s.date >= a && s.date <= b;
+  const act = db.sessions.filter(s => en(s, ini, hoy)), ant = N ? db.sessions.filter(s => s.date >= prevIni && s.date < ini) : null;
+  const medir = l => ({ n: l.length, series: l.reduce((a, s) => a + s.sets.filter(x => !x.w).length, 0), seg: l.reduce((a, s) => a + (s.seconds || 0), 0) });
+  const A = medir(act), P = ant && medir(ant);
+  const dif = (a, b, fmt = v => v) => { if (!P) return ''; const d = a - b; return `<em class="${d > 0 ? 'up' : d < 0 ? 'down' : ''}">${d > 0 ? '+' : d < 0 ? '−' : '='}${d ? fmt(Math.abs(d)) : ''}</em>`; };
+  const et = iso => { const d = new Date(iso + 'T12:00:00'); return `${d.getDate()} ${MESES[d.getMonth()].slice(0, 3)}`; };
+  $('pstats-rango').textContent = N ? `${et(ini)} – ${et(hoy)}${P ? ` · frente a los ${N} días anteriores` : ''}` : 'Desde el primer entreno';
+  const card = (v, lab, d) => `<div class="pf-n"><b>${v}</b><span>${lab}</span>${d}</div>`;
+  $('pstats-sum').innerHTML = card(A.n, A.n === 1 ? 'entreno' : 'entrenos', dif(A.n, P && P.n))
+    + card(A.series, A.series === 1 ? 'serie' : 'series', dif(A.series, P && P.series))
+    + card(durCorta(A.seg), 'tiempo', dif(Math.round(A.seg / 60), P && Math.round(P.seg / 60), v => `${v} min`));
+  // Días entrenados: una casilla por día (hasta 90); en periodos largos, solo la cuenta
+  const dias = new Set(act.map(s => s.date));
+  $('pstats-dias-h').textContent = plural(dias.size, 'día entrenado', 'días entrenados');
+  const casillas = N && N <= 90 ? [...Array(N)].map((_, k) => localDate(masDias(new Date(), k - N + 1))) : [];
+  $('pstats-days').className = `pf-days${N === 7 ? ' wk' : ''}`;
+  $('pstats-days').innerHTML = casillas.map(f => `<span class="d${dias.has(f) ? ' on' : ''}${f === hoy ? ' hoy' : ''}" title="${f}">${N === 7 ? `<i>${DIAS_LETRA[diaSemana(new Date(f + 'T12:00:00'))]}</i>` : ''}</span>`).join('');
+  $('pstats-days').hidden = !casillas.length;
+  // Tendencia por ejercicio: su mejor serie del periodo frente a su mejor de antes
+  const ex = new Map();
+  [...act].sort((a, b) => b.date.localeCompare(a.date)).forEach(s => s.sets.forEach(x => { if (!x.w && !ex.has(x.exercise)) ex.set(x.exercise, s.date); }));
+  const filas = [...ex.entries()].map(([nombre, ultima]) => {
+    const corte = N ? ini : ultima;            // «Siempre»: el último día que se hizo frente a todo lo anterior
+    const sets = (l, f) => l.filter(f).flatMap(s => s.sets.filter(x => !x.w && x.exercise === nombre));
+    const ahora = sets(db.sessions, s => N ? en(s, ini, hoy) : s.date === ultima), antes = sets(db.sessions, s => s.date < corte);
+    const mejor = ahora.reduce((a, x) => (fuerza(x) > fuerza(a) ? x : a));
+    const base = antes.length ? Math.max(...antes.map(fuerza)) : null, v = fuerza(mejor);
+    const t = base === null ? 'new' : v > base * 1.005 ? 'up' : v < base * 0.995 ? 'down' : 'flat';
+    return { nombre, mejor, t };
+  });
+  const LAB = { up: 'Subiendo', down: 'Bajando', flat: 'Estancado', new: 'Nuevo' }, ICO = { up: '↑', down: '↓', flat: '–', new: '•' };
+  const vistas = filas.filter(f => tendencia === 'all' || f.t === tendencia);
+  $('pstats-ex').innerHTML = vistas.map(f => `<div class="pex"><div><b>${esc(f.nombre)}</b><span class="pt ${f.t}">${ICO[f.t]} ${LAB[f.t]}</span></div><em>${f.mejor.kg ? `${String(f.mejor.kg).replace(".", ",")} kg × ${f.mejor.reps}` : `${f.mejor.reps} reps`}</em></div>`).join('')
+    || `<p class="pf-vacio">${filas.length ? 'Ningún ejercicio con esa tendencia.' : 'Sin entrenos en este periodo.'}</p>`;
+}
+document.querySelectorAll('[data-pview]').forEach(b => b.onclick = () => { if (perfilVista === b.dataset.pview) return; perfilVista = b.dataset.pview; vibrate(6); renderPerfil(); });
+document.querySelectorAll('[data-periodo]').forEach(b => b.onclick = () => { periodo = +b.dataset.periodo; vibrate(6); renderPerfilStats(); });
+document.querySelectorAll('[data-trend]').forEach(b => b.onclick = () => { tendencia = b.dataset.trend; vibrate(6); renderPerfilStats(); });
+$('perfil-login').onclick = () => $('login-btn').click();
+
 // Filtro del historial y gráfico de las últimas 8 semanas (volumen; con «Caminatas», km)
 let histFiltro = 'todo';
 document.querySelectorAll('[data-hfilter]').forEach(b => b.onclick = () => {

@@ -22,6 +22,8 @@ const renderSiCambio = antes => { if (firma() !== antes) renderSilencioso(); };
 
 function setAccountUI() {
   const on = !!fuser;
+  window.cuentaActual = fuser;           // el Perfil enseña su foto y su nombre
+  if (typeof renderPerfil === 'function') renderPerfil();
   $('account-sec').hidden = !fauth;
   $('login-btn').hidden = on;
   $('logout-btn').hidden = !on;

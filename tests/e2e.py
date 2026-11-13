@@ -30,7 +30,7 @@ def seed(pg, routines=ROUTINES, sessions=HISTORY, walks=None, fb=None, prev_uid=
             window.ENTRENO_FIREBASE_CONFIG = {apiKey: 'test', projectId: 'entreno-test'};
             window.__fakeUid = o.uid;
             if (!sessionStorage.getItem('fake-cloud')) sessionStorage.setItem('fake-cloud', JSON.stringify(o.cloud));
-            if (o.logged && !sessionStorage.getItem('fake-user-set')) { sessionStorage.setItem('fake-user', JSON.stringify({uid: o.uid, email: 'yo@ejemplo.com'})); sessionStorage.setItem('fake-user-set', '1'); }
+            if (o.logged && !sessionStorage.getItem('fake-user-set')) { sessionStorage.setItem('fake-user', JSON.stringify({uid: o.uid, email: 'yo@ejemplo.com', displayName: 'Adrián Prueba', photoURL: 'data:image/gif;base64,R0lGODlhAQABAAAAACw='})); sessionStorage.setItem('fake-user-set', '1'); }
         })(%s)""" % json.dumps(init))
     # Los ejercicios de las rutinas de prueba llevan ejId, como los elegidos en el buscador con foto
     routines = [dict(r, exercises=[dict(e, ejId=e.get("ejId") or "t-" + e["name"]) if isinstance(e, dict) else e for e in r.get("exercises", [])]) for r in routines]
@@ -3285,6 +3285,78 @@ def plan_editor_avisa_si_otra_rutina_toca_el_mismo_dia(pg):
     assert pg.is_visible("#days-note") and "PUSH" in pg.inner_text("#days-note"), "avisa de que ese día ya toca PUSH"
     pg.click('#routine-days [data-day="2"]'); pg.click('#routine-days [data-day="4"]'); pg.wait_for_timeout(100)
     assert not pg.is_visible("#days-note")
+
+# ---------- Perfil (sustituye a Historial) ----------
+def _ps(fecha, id, sets, seconds=0, rutina="PUSH"):
+    return {"id": id, "date": fecha, "routine": rutina, "seconds": seconds, "sets": [pset(*x) for x in sets]}
+def _stats(pg): pg.click('[data-pview="stats"]'); pg.wait_for_timeout(200)
+
+@test
+def perfil_la_pestaña_se_llama_perfil(pg):
+    seed(pg)
+    assert pg.inner_text('#tabbar [data-tab="tab-historial"]').strip() == "Perfil"
+
+@test
+def perfil_sin_sesion_invita_a_entrar_con_google(pg):
+    seed(pg, fb={}); tab(pg, "historial")
+    assert pg.inner_text("#perfil-name") == "Tu perfil"
+    assert pg.is_visible("#perfil-login")
+    pg.click("#perfil-login"); pg.wait_for_timeout(600)
+    assert "Adrián" in pg.inner_text("#perfil-name"), "el botón inicia sesión con Google"
+
+@test
+def perfil_con_sesion_muestra_foto_y_nombre_de_google(pg):
+    seed(pg, fb={"logged": True}); tab(pg, "historial"); pg.wait_for_timeout(300)
+    assert "Adrián" in pg.inner_text("#perfil-name") and "yo@ejemplo.com" in pg.inner_text("#perfil-sub")
+    assert pg.get_attribute("#perfil-foto img", "src").startswith("data:image")
+    assert not pg.is_visible("#perfil-login")
+
+@test
+def perfil_por_defecto_enseña_los_entrenos(pg):
+    seed(pg); tab(pg, "historial")
+    assert pg.is_visible("#history-list") and not pg.is_visible("#perfil-stats")
+    _stats(pg)
+    assert pg.is_visible("#perfil-stats") and not pg.is_visible("#history-list")
+
+@test
+def perfil_resumen_de_7_dias_con_diferencia_con_los_7_anteriores(pg):
+    pg.goto(URL)
+    ss = [_ps(off(pg, 0), "a1", [("Press", 40, 10), ("Press", 40, 8), ("Press", 20, 10, True)], 1800),
+          _ps(off(pg, -2), "a2", [("Remo", 30, 10)], 1200),
+          _ps(off(pg, -9), "b1", [("Remo", 30, 10)], 600)]
+    seed(pg, sessions=ss); tab(pg, "historial"); _stats(pg)
+    t = pg.inner_text("#pstats-sum")
+    assert "2\nentrenos" in t and "+1" in t, t
+    assert "3\nseries" in t, "el calentamiento no cuenta como serie: " + t
+    assert "50 min" in t, t
+    assert pg.locator("#pstats-days .d").count() == 7 and pg.locator("#pstats-days .d.on").count() == 2
+
+@test
+def perfil_cambiar_de_periodo(pg):
+    pg.goto(URL)
+    ss = [_ps(off(pg, 0), "a1", [("Press", 40, 10)]), _ps(off(pg, -20), "a2", [("Press", 40, 10)])]
+    seed(pg, sessions=ss); tab(pg, "historial"); _stats(pg)
+    assert "1\nentreno" in pg.inner_text("#pstats-sum")
+    pg.click('[data-periodo="30"]'); pg.wait_for_timeout(150)
+    assert "2\nentrenos" in pg.inner_text("#pstats-sum")
+    assert pg.get_attribute('[data-periodo="30"]', "aria-pressed") == "true"
+
+@test
+def perfil_tendencia_de_cada_ejercicio(pg):
+    pg.goto(URL)
+    ss = [_ps(off(pg, -20), "v1", [("Press", 40, 10), ("Remo", 50, 10), ("Curl", 15, 10)]),
+          _ps(off(pg, -1), "n1", [("Press", 45, 10), ("Remo", 50, 10), ("Curl", 12, 10), ("Sentadilla", 60, 5)])]
+    seed(pg, sessions=ss); tab(pg, "historial"); _stats(pg)
+    fila = lambda ex: pg.locator(f'#pstats-ex .pex:has-text("{ex}")').inner_text()
+    assert "Subiendo" in fila("Press") and "45 kg" in fila("Press")
+    assert "Estancado" in fila("Remo") and "Bajando" in fila("Curl") and "Nuevo" in fila("Sentadilla")
+    pg.click('[data-trend="up"]'); pg.wait_for_timeout(100)
+    assert pg.locator("#pstats-ex .pex").count() == 1
+
+@test
+def perfil_sin_entrenos_en_el_periodo(pg):
+    seed(pg, sessions=[]); tab(pg, "historial"); _stats(pg)
+    assert "0\nentrenos" in pg.inner_text("#pstats-sum") and pg.locator("#pstats-ex .pex").count() == 0
 
 @test
 def ios_puente_no_estorba_en_la_web(pg):
