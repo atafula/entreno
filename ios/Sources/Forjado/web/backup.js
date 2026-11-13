@@ -41,12 +41,25 @@ function cleanWalk(w) {
   return out;
 }
 
+// Perfil: solo los campos conocidos, con su tipo; la foto solo si es una imagen incrustada
+function cleanPerfil(p) {
+  if (!p || typeof p !== 'object' || Array.isArray(p)) return null;
+  const out = {};
+  [['nombre', 40], ['usuario', 24], ['bio', 160]].forEach(([k, n]) => { if (isStr(p[k], n) && p[k]) out[k] = p[k]; });
+  if (['m', 'f', 'o'].includes(p.sexo)) out.sexo = p.sexo;
+  if (isNum(p.altura) && p.altura >= 100 && p.altura <= 250) out.altura = p.altura;
+  if (typeof p.foto === 'string' && /^data:image\/(jpeg|png|webp);base64,/.test(p.foto) && p.foto.length < 400000) out.foto = p.foto;
+  return Object.keys(out).length ? out : null;
+}
+
 function parseBackup(text) {
   let d;
   try { d = JSON.parse(text); } catch { throw new Error('json'); }
   if (!d || typeof d !== 'object' || Array.isArray(d) || !BACKUP_APPS.includes(d.app)) throw new Error('formato');
   const list = (v, f) => (Array.isArray(v) ? v : []).map(f).filter(Boolean);
-  return { routines: list(d.routines, cleanRoutine), sessions: list(d.sessions, cleanSession), walks: list(d.walks, cleanWalk) };
+  const out = { routines: list(d.routines, cleanRoutine), sessions: list(d.sessions, cleanSession), walks: list(d.walks, cleanWalk) };
+  const perfil = cleanPerfil(d.perfil); if (perfil) out.perfil = perfil;
+  return out;
 }
 
 // Se mezcla con lo que hay (no se borra nada); si un id ya existe, se sustituye por el de la copia.
@@ -58,6 +71,7 @@ function mergeBackup(c) {
     const ids = new Set(l.map(x => x.id)); db.deleted[n] = db.deleted[n].filter(id => !ids.has(id));
   });
   db.routines = merge(db.routines, c.routines);
+  if (c.perfil) db.perfil = { ...(db.perfil || {}), ...c.perfil };
   db.sessions = merge(db.sessions, c.sessions).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : (a.ts || 0) - (b.ts || 0)));
   db.walks = merge(db.walks, c.walks).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : (a.ts || 0) - (b.ts || 0)));
 }
@@ -104,7 +118,7 @@ function downloadFile(name, blob) {
 }
 
 $('backup-export').onclick = () => {
-  const data = { app: BACKUP_APP, version: 1, exported: new Date().toISOString(), routines: db.routines, sessions: db.sessions, walks: db.walks };
+  const data = { app: BACKUP_APP, version: 1, exported: new Date().toISOString(), routines: db.routines, sessions: db.sessions, walks: db.walks, ...(db.perfil ? { perfil: db.perfil } : {}) };
   downloadFile(`forja-${localDate()}.json`, new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' }));
 };
 

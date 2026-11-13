@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Forjado">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#0e0b14">
+<meta name="theme-color" content="#0a0a0a">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icons/favicon.png">
@@ -130,8 +130,9 @@
         <div class="pf-foto" id="perfil-foto" aria-hidden="true"></div>
         <div class="pf-txt"><b id="perfil-name">Tu perfil</b><span id="perfil-sub"></span></div>
         <button type="button" class="btn small" id="perfil-login" hidden>Entrar con Google</button>
+        <button type="button" class="icon-btn" id="perfil-edit" aria-label="Editar perfil"><svg viewBox="0 0 24 24" class="ico"><path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4"/></svg></button>
       </div>
-      <p class="pf-meta" id="perfil-meta"></p>
+      <p class="pf-bio" id="perfil-bio" hidden></p>
       <div class="pf-views" role="tablist" aria-label="Perfil">
         <button type="button" role="tab" data-pview="entrenos" aria-selected="true">Entrenos</button>
         <button type="button" role="tab" data-pview="stats" aria-selected="false">Estadísticas</button>
@@ -189,6 +190,30 @@
 </nav>
 
 <div id="scrim" class="scrim"></div>
+<section id="perfil-editor" class="pe" role="dialog" aria-modal="true" aria-labelledby="pe-title" aria-hidden="true">
+  <div class="pe-head">
+    <button type="button" class="icon-btn" id="pe-back" aria-label="Volver sin guardar"><svg viewBox="0 0 24 24" class="ico"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>
+    <h3 id="pe-title">Editar perfil</h3>
+    <span class="pe-gap"></span>
+  </div>
+  <div class="pe-foto-box">
+    <label class="pe-foto" id="pe-foto" for="pe-foto-file" aria-label="Cambiar foto"></label>
+    <label class="pe-cambiar" for="pe-foto-file">Cambiar foto</label>
+    <input id="pe-foto-file" type="file" accept="image/*" hidden>
+  </div>
+  <div class="pe-card">
+    <label class="pe-row"><span>Nombre</span><input id="pe-nombre" maxlength="40" autocomplete="name" placeholder="Tu nombre"></label>
+    <label class="pe-row"><span>Usuario</span><input id="pe-usuario" maxlength="24" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="@usuario"></label>
+    <label class="pe-row col"><span>Bio</span><textarea id="pe-bio" rows="3" maxlength="160" placeholder="Añadir bio…"></textarea></label>
+  </div>
+  <p class="pe-note">Se ven en tu perfil.</p>
+  <div class="pe-card">
+    <label class="pe-row"><span>Sexo</span><select id="pe-sexo"><option value="">Sin indicar</option><option value="m">Masculino</option><option value="f">Femenino</option><option value="o">Otro</option></select></label>
+    <label class="pe-row"><span>Altura</span><span class="pe-u"><input id="pe-altura" type="number" inputmode="numeric" min="100" max="250" placeholder="170"> cm</span></label>
+  </div>
+  <p class="pe-note">Solo se usan para tus cálculos y recomendaciones. Se quedan en tu móvil y en tus copias de seguridad.</p>
+  <button type="button" class="btn primary wide" id="pe-guardar">Guardar</button>
+</section>
 <div id="cal-sheet" class="sheet" role="dialog" aria-modal="true" aria-labelledby="cal-month" aria-hidden="true">
   <div class="hazard" aria-hidden="true"></div>
   <div class="sheet-head">

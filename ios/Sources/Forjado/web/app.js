@@ -891,16 +891,14 @@ let perfilVista = 'entrenos', periodo = 7, tendencia = 'all';
 const durCorta = sec => { const m = Math.round(sec / 60); return m >= 60 ? `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ''}` : `${m} min`; };
 const fuerza = x => e1rm(x.kg || 0, x.reps || 0) || (x.reps || 0) / 1000;   // sin peso: manda el número de reps
 function renderPerfil() {
-  const u = window.cuentaActual || null, hayCuenta = typeof firebase !== 'undefined' && !$('account-sec').hidden;
-  const nombre = u ? (u.displayName || (u.email || '').split('@')[0] || 'Tu perfil') : 'Tu perfil';
+  // Lo que pones en «Editar perfil» manda; si falta algo, se usa lo de la cuenta de Google
+  const u = window.cuentaActual || null, p = db.perfil || {}, hayCuenta = typeof firebase !== 'undefined' && !$('account-sec').hidden;
+  const nombre = p.nombre || (u && (u.displayName || (u.email || '').split('@')[0])) || 'Tu perfil';
   $('perfil-name').textContent = nombre;
-  $('perfil-sub').textContent = u ? (u.email || 'Cuenta de Google') : hayCuenta ? 'Entra con Google para guardar tus datos en la nube' : 'Tus datos se guardan en este móvil';
+  $('perfil-sub').textContent = p.usuario ? `@${p.usuario}` : u ? (u.email || 'Cuenta de Google') : hayCuenta ? 'Entra con Google para guardar tus datos en la nube' : 'Tus datos se guardan en este móvil';
   $('perfil-login').hidden = !!u || !hayCuenta;
-  const foto = $('perfil-foto');
-  foto.innerHTML = u && u.photoURL ? `<img src="${esc(u.photoURL)}" alt="" referrerpolicy="no-referrer">` : `<span>${esc((u ? nombre : 'F')[0].toUpperCase())}</span>`;
-  const primero = db.sessions.map(s => s.date).sort()[0];
-  const d = primero && new Date(primero + 'T12:00:00');
-  $('perfil-meta').textContent = primero ? `Entrenando desde ${MESES[d.getMonth()]} de ${d.getFullYear()} · ${plural(db.sessions.length, 'entreno', 'entrenos')}` : '';
+  $('perfil-bio').textContent = p.bio || ''; $('perfil-bio').hidden = !p.bio;
+  $('perfil-foto').innerHTML = fotoHtml(p.foto || (u && u.photoURL), nombre !== 'Tu perfil' ? nombre : '');
   document.querySelectorAll('[data-pview]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.pview === perfilVista)));
   $('perfil-stats').hidden = perfilVista !== 'stats';
   $('perfil-entrenos').hidden = perfilVista !== 'entrenos';
@@ -951,6 +949,49 @@ document.querySelectorAll('[data-pview]').forEach(b => b.onclick = () => { if (p
 document.querySelectorAll('[data-periodo]').forEach(b => b.onclick = () => { periodo = +b.dataset.periodo; vibrate(6); renderPerfilStats(); });
 document.querySelectorAll('[data-trend]').forEach(b => b.onclick = () => { tendencia = b.dataset.trend; vibrate(6); renderPerfilStats(); });
 $('perfil-login').onclick = () => $('login-btn').click();
+const ICONO_PERSONA = '<svg viewBox="0 0 24 24" class="ico"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>';
+const fotoHtml = (src, nombre) => src ? `<img src="${esc(src)}" alt="" referrerpolicy="no-referrer">` : nombre ? `<span>${esc(nombre[0].toUpperCase())}</span>` : ICONO_PERSONA;
+
+// Editar perfil: pantalla entera; nada se guarda hasta pulsar «Guardar»
+let peFoto = null;
+const limpiarUsuario = v => String(v).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9._]/g, '').slice(0, 24);
+function abrirEditorPerfil() {
+  const p = db.perfil || {}, u = window.cuentaActual;
+  peFoto = p.foto || null;
+  $('pe-nombre').value = p.nombre || (u && u.displayName) || '';
+  $('pe-usuario').value = p.usuario ? `@${p.usuario}` : '';
+  $('pe-bio').value = p.bio || '';
+  $('pe-sexo').value = p.sexo || '';
+  $('pe-altura').value = p.altura || '';
+  $('pe-foto').innerHTML = fotoHtml(peFoto || (u && u.photoURL), '');
+  const ed = $('perfil-editor'); ed.classList.add('show'); ed.setAttribute('aria-hidden', 'false'); vibrate(6);
+}
+function cerrarEditorPerfil() { const ed = $('perfil-editor'); ed.classList.remove('show'); ed.setAttribute('aria-hidden', 'true'); $('pe-foto-file').value = ''; }
+$('perfil-edit').onclick = abrirEditorPerfil;
+$('pe-back').onclick = cerrarEditorPerfil;
+$('pe-usuario').addEventListener('blur', e => { const v = limpiarUsuario(e.target.value); e.target.value = v ? `@${v}` : ''; });
+// La foto se recorta en cuadrado y se reduce a 256 px (JPEG) para que ocupe poco
+$('pe-foto-file').onchange = e => {
+  const f = e.target.files && e.target.files[0]; if (!f) return;
+  const url = URL.createObjectURL(f), img = new Image();
+  img.onload = () => {
+    const lado = Math.min(img.naturalWidth, img.naturalHeight), c = document.createElement('canvas'); c.width = c.height = 256;
+    c.getContext('2d').drawImage(img, (img.naturalWidth - lado) / 2, (img.naturalHeight - lado) / 2, lado, lado, 0, 0, 256, 256);
+    peFoto = c.toDataURL('image/jpeg', .85); URL.revokeObjectURL(url);
+    $('pe-foto').innerHTML = fotoHtml(peFoto, '');
+  };
+  img.onerror = () => { URL.revokeObjectURL(url); toast('No se pudo leer esa imagen.'); };
+  img.src = url;
+};
+$('pe-guardar').onclick = () => {
+  const alt = parseInt($('pe-altura').value, 10);
+  const p = { nombre: $('pe-nombre').value.trim().slice(0, 40), usuario: limpiarUsuario($('pe-usuario').value), bio: $('pe-bio').value.trim().slice(0, 160), sexo: $('pe-sexo').value };
+  if (alt >= 100 && alt <= 250) p.altura = alt;
+  if (peFoto) p.foto = peFoto;
+  Object.keys(p).forEach(k => { if (p[k] === '') delete p[k]; });
+  db.perfil = p;
+  cerrarEditorPerfil(); persist(); toast('Perfil guardado');
+};
 
 // Filtro del historial y gráfico de las últimas 8 semanas (volumen; con «Caminatas», km)
 let histFiltro = 'todo';
