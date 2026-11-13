@@ -2985,6 +2985,9 @@ def ios_proyecto_xtool_completo(pg):
     info = plistlib.load(open(os.path.join(IOS, "Info.plist"), "rb"))
     assert info["CFBundleDisplayName"] == "Forjado" and info.get("NSLocationWhenInUseUsageDescription"), info
     assert "location" in info["UIBackgroundModes"], "las caminatas siguen contando con la pantalla apagada"
+    assert info.get("NSHealthUpdateUsageDescription") and info.get("NSHealthShareUsageDescription"), "textos de permiso de Salud"
+    ent = plistlib.load(open(os.path.join(IOS, "Forjado.entitlements"), "rb"))
+    assert ent["com.apple.developer.healthkit"] is True and "entitlementsPath: Forjado.entitlements" in y, ent
     im = Image.open(os.path.join(IOS, "AppIcon.png"))
     assert im.size == (1024, 1024) and im.mode == "RGB", f"icono 1024 sin transparencia: {im.size} {im.mode}"
     assert all(abs(a - b) <= 14 for a, b in zip(im.getpixel((5, 5)), (14, 11, 20))), "el icono lleva el fondo de la app"
@@ -3020,6 +3023,33 @@ def ios_puente_descargar_copia_abre_compartir_nativo(pg):
     m = _msgs(pg, "guardar")
     assert len(m) == 1 and m[0]["name"].endswith(".json") and "PUSH" in m[0]["text"], m
     assert json.loads(m[0]["text"])["routines"][0]["name"] == "PUSH"
+
+@test
+def ios_salud_un_entreno_terminado_se_manda_a_salud(pg):
+    _puente(pg); seed(pg); tab(pg, "rutinas"); empezar(pg, "a"); pg.wait_for_timeout(1200)
+    pg.locator(".wrow .chk").first.click(); pg.wait_for_timeout(100)
+    assert _msgs(pg, "salud") == [], "mientras entrenas no se manda nada"
+    pg.click("#wk-finish"); pg.click("#finish-save"); pg.wait_for_timeout(400)
+    m = _msgs(pg, "salud")
+    assert len(m) == 1 and m[0]["kind"] == "fuerza" and m[0]["meters"] == 0, m
+    assert m[0]["end"] - m[0]["start"] >= 1000 and abs(m[0]["end"] - pg.evaluate("Date.now()")) < 5000, m
+
+@test
+def ios_salud_una_caminata_terminada_manda_distancia(pg):
+    _puente(pg); seed(pg)
+    pg.click("#walk-start"); pg.wait_for_timeout(150)
+    pg.evaluate("__forjadoGps(40.0, -3.0, 5, Date.now()); __forjadoGps(40.0003, -3.0, 5, Date.now())"); pg.wait_for_timeout(1200)
+    pg.evaluate("walk.goal = 5; walk.start -= 10000"); pg.click("#walk-finish"); pg.wait_for_timeout(300)   # cumplida la meta
+    m = _msgs(pg, "salud")
+    assert len(m) == 1 and m[0]["kind"] == "caminata" and 25 <= m[0]["meters"] <= 40, m
+
+@test
+def ios_salud_rendirse_o_editar_el_historial_no_manda_nada(pg):
+    _puente(pg); seed(pg)
+    pg.click("#walk-start"); pg.wait_for_timeout(150)
+    pg.click("#walk-finish"); pg.click("#walk-finish"); pg.wait_for_timeout(300)     # rendirse
+    tab(pg, "historial"); pg.wait_for_timeout(300)
+    assert _msgs(pg, "salud") == [], _msgs(pg, "salud")
 
 @test
 def ios_puente_no_estorba_en_la_web(pg):

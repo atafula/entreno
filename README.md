@@ -67,6 +67,7 @@ La misma app, empaquetada como app nativa en Swift para compilarla con [xtool](h
 - **Vibración** real (háptica) en los mismos sitios donde la web llama a `vibrate()`.
 - **GPS con la pantalla apagada** en las caminatas (CoreLocation en segundo plano).
 - **Pantalla encendida** durante el entreno y las caminatas.
+- **Apple Salud:** cada entreno de fuerza y cada caminata terminada (no las rendidas) se guardan en Salud como entreno, la caminata con su distancia. Solo escribe, no lee nada. Necesita el permiso `healthkit` (`ios/Forjado.entitlements`).
 - **Descargar copia / CSV** abre la hoja de compartir de iOS (Guardar en Archivos, AirDrop…).
 
 Compilar e instalar en el iPhone conectado:

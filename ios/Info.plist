@@ -12,6 +12,10 @@
 	<string>1</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Forjado usa tu ubicación para medir la distancia de tus caminatas.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>Forjado guarda tus entrenos y caminatas en Salud.</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Forjado usa Salud para guardar tus entrenos y caminatas.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>

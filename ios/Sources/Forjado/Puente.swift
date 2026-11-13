@@ -1,4 +1,5 @@
 import CoreLocation
+import HealthKit
 import UIKit
 import WebKit
 
@@ -30,6 +31,10 @@ final class Puente: NSObject, WKScriptMessageHandler, CLLocationManagerDelegate 
             if m["on"] as? Bool ?? false { encenderGps() } else { apagarGps() }
         case "pantalla":
             UIApplication.shared.isIdleTimerDisabled = m["on"] as? Bool ?? false
+        case "salud":
+            if let tipo = m["kind"] as? String, let ini = (m["start"] as? NSNumber)?.doubleValue, let fin = (m["end"] as? NSNumber)?.doubleValue {
+                Salud.guardar(caminata: tipo == "caminata", desde: Date(timeIntervalSince1970: ini / 1000), hasta: Date(timeIntervalSince1970: fin / 1000), metros: (m["meters"] as? NSNumber)?.doubleValue ?? 0)
+            }
         case "guardar":
             if let nombre = m["name"] as? String, let texto = m["text"] as? String { compartir(nombre: nombre, texto: texto) }
         default:

@@ -145,6 +145,8 @@ const localDate = (d = new Date()) =>
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const fmt = s => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 const activeDays = () => new Set([...db.sessions, ...db.walks].map(x => x.date));
+// En la app de iOS, un entreno o caminata terminado se guarda también en Apple Salud (en la web normal no hace nada)
+const salud = (kind, seconds, meters = 0) => { try { window.webkit?.messageHandlers?.forjado?.postMessage({ t: 'salud', kind, start: Date.now() - seconds * 1000, end: Date.now(), meters: Math.round(meters) }); } catch { /* fuera de la app */ } };
 const vibrate = p => { try { navigator.vibrate?.(p); } catch { /* iOS no lo soporta */ } };
 
 // ---------- Feedback visual ----------
@@ -1155,6 +1157,7 @@ $('walk-finish').onclick = () => {
   }
   const w = stopWalk();
   db.walks.push({ id: uid(), date: localDate(), seconds, meters: Math.round(w.meters), ts: Date.now() });
+  salud('caminata', seconds, w.meters);
   persist();
   celebrate('Caminata hecha');
 };

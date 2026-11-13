@@ -3,3 +3,4 @@ bundleID: com.atafula.forjado
 product: Forjado
 infoPath: Info.plist
 iconPath: AppIcon.png
+entitlementsPath: Forjado.entitlements
