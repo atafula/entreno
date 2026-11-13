@@ -208,7 +208,7 @@
   </div>
   <p class="pe-note">Se ven en tu perfil.</p>
   <div class="pe-card">
-    <label class="pe-row"><span>Sexo</span><select id="pe-sexo"><option value="">Sin indicar</option><option value="m">Masculino</option><option value="f">Femenino</option><option value="o">Otro</option></select></label>
+    <label class="pe-row"><span>Sexo</span><select id="pe-sexo"><option value="" disabled hidden>Elegir</option><option value="m">Masculino</option><option value="f">Femenino</option><option value="o">Otro</option></select></label>
     <label class="pe-row"><span>Altura</span><span class="pe-u"><input id="pe-altura" type="number" inputmode="numeric" min="100" max="250" placeholder="170"> cm</span></label>
   </div>
   <p class="pe-note">Solo se usan para tus cálculos y recomendaciones. Se quedan en tu móvil y en tus copias de seguridad.</p>
@@ -303,11 +303,42 @@
   <div id="summary-list"></div>
   <button type="button" class="btn primary wide" id="summary-done">Listo</button>
 </div>
-<div id="finish-sheet" class="sheet" role="dialog" aria-modal="true" aria-labelledby="finish-title" aria-hidden="true">
-  <div class="sheet-head"><h3 id="finish-title">Terminar entreno</h3><button type="button" class="link" id="finish-cancel">Cancelar</button></div>
-  <p class="sum-sub" id="finish-sub"></p>
-  <button type="button" class="btn primary wide" id="finish-save">Guardar entreno</button>
-  <button type="button" class="link" id="finish-discard">Descartar</button>
+<section id="finish-sheet" class="pe fin" role="dialog" aria-modal="true" aria-labelledby="finish-title" aria-hidden="true">
+  <div class="pe-head">
+    <button type="button" class="icon-btn" id="finish-cancel" aria-label="Volver al entreno"><svg viewBox="0 0 24 24" class="ico"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>
+    <h3 id="finish-title">¡Entreno completado!</h3>
+    <span class="pe-gap"></span>
+  </div>
+  <label class="fin-f"><span>Nombre</span><input id="finish-name" maxlength="100" autocomplete="off"></label>
+  <div class="fin-f fin-stats"><div><span>Duración</span><b id="finish-dur"></b></div><div><span>Series</span><b id="finish-sets"></b></div><div><span>Volumen</span><b id="finish-vol"></b></div></div>
+  <label class="fin-f"><span>Fecha</span><input id="finish-date" type="datetime-local"></label>
+  <div class="fin-f fin-photo-row">
+    <label class="fin-photo" id="finish-photo" for="finish-photo-file" aria-label="Añadir foto"></label>
+    <p>Añade una foto para ver tu progreso con el tiempo.</p>
+    <input id="finish-photo-file" type="file" accept="image/*" hidden>
+  </div>
+  <label class="fin-f"><span>Descripción</span><textarea id="finish-note" rows="3" maxlength="1000" placeholder="¿Cómo ha ido el entreno?"></textarea></label>
+  <label class="fin-f fin-toggle" id="finish-update-row">
+    <span><b>Actualizar valores de la rutina</b><small>Los pesos y repeticiones de hoy sustituyen a los de la rutina.</small></span>
+    <input type="checkbox" id="finish-update" class="switch" checked>
+  </label>
+  <div class="fin-actions">
+    <button type="button" class="btn primary wide" id="finish-save">Terminar entreno</button>
+    <button type="button" class="link danger-link" id="finish-discard">Descartar entreno</button>
+  </div>
+</section>
+<div id="discard-modal" class="modal" role="alertdialog" aria-modal="true" aria-labelledby="discard-t" hidden>
+  <div class="modal-box">
+    <p id="discard-t"><b>Esta acción no se puede deshacer.</b><br>Si descartas el entreno, se pierde todo lo que has apuntado. Es irreversible.</p>
+    <div class="modal-btns"><button type="button" class="btn" id="discard-cancel">Cancelar</button><button type="button" class="btn danger-txt" id="discard-ok">Descartar</button></div>
+  </div>
+</div>
+<div id="rest-sheet" class="sheet" role="dialog" aria-modal="true" aria-labelledby="rest-sheet-title" aria-hidden="true">
+  <div class="sheet-grab" aria-hidden="true"></div>
+  <h3 id="rest-sheet-title" class="rest-sheet-title"></h3>
+  <p class="rest-sheet-sub">Descanso entre series</p>
+  <div class="rest-wheel-box"><div id="rest-wheel" class="rest-wheel" role="listbox" aria-label="Tiempo de descanso"></div></div>
+  <button type="button" class="btn primary wide" id="rest-ok">Continuar</button>
 </div>
 <div id="picker-sheet" class="sheet sheet-page" role="dialog" aria-modal="true" aria-labelledby="picker-title" aria-hidden="true">
   <div class="hazard" aria-hidden="true"></div>

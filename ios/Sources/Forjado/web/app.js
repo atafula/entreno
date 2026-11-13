@@ -749,6 +749,7 @@ function sessionHtml(s) {
   return `<div class="entry-head">${fechaBloque(s.date)}<div class="htit"><span class="tag">${esc(s.routine)}</span><span class="hsub"><small title="${esc(s.date)}">${whenText(s.date)}</small>${horaDe(s.ts)}</span></div>${menuBtn('session', s.id)}</div>${entryMenu('session', s.id)}
     <div class="hstats">${s.seconds ? stat('Tiempo', durText(s.seconds)) : ''}${vol ? stat('Volumen', `${fmtMiles(vol)} kg`) : ''}${stat('Series', work)}</div>
     ${recordHtml(s, prs)}
+    ${s.nota ? `<p class="hnota">${esc(s.nota)}</p>` : ''}${s.foto && /^data:image\//.test(s.foto) ? `<img class="hfoto" src="${esc(s.foto)}" alt="Foto del entreno" loading="lazy">` : ''}
     <div class="hsums"${open ? ' hidden' : ''}>${groups.slice(0, 3).map(g => { const n = g.sets.length; return `<div class="hsum"><b>${n}</b> ${n === 1 ? 'serie' : 'series'} · ${esc(g.name)}</div>`; }).join('')}</div>
     <div class="hdetail"${open ? '' : ' hidden'}>${groups.map(g => { let n = 0; return `<div class="hex"><b>${esc(g.name)}</b>${g.sets.map((x, j) =>
       `<div class="hset"><span class="hn${x.w ? ' w' : ''}">${x.w ? 'W' : ++n}</span><span>${x.kg ? x.kg + ' kg' : '—'}${prs.includes(g.idx[j]) ? '<i class="pr">PR</i>' : ''}</span><span>${x.reps} reps</span></div>`).join('')}</div>`; }).join('')}</div>
@@ -969,6 +970,7 @@ function abrirEditorPerfil() {
 function cerrarEditorPerfil() { const ed = $('perfil-editor'); ed.classList.remove('show'); ed.setAttribute('aria-hidden', 'true'); $('pe-foto-file').value = ''; }
 $('perfil-edit').onclick = abrirEditorPerfil;
 $('pe-back').onclick = cerrarEditorPerfil;
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('perfil-editor').classList.contains('show')) { cerrarEditorPerfil(); e.stopImmediatePropagation(); } }, true);
 $('pe-usuario').addEventListener('blur', e => { const v = limpiarUsuario(e.target.value); e.target.value = v ? `@${v}` : ''; });
 // La foto se recorta en cuadrado y se reduce a 256 px (JPEG) para que ocupe poco
 $('pe-foto-file').onchange = e => {

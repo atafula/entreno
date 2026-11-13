@@ -2,7 +2,8 @@
 // Estado guardado con marcas de tiempo: si iOS cierra la app, al volver el reloj sigue donde debe.
 const LIVE_KEY = 'entreno-live';
 const REST_KEY = 'entreno-descansos';
-const REST_OPTS = [0, 60, 90, 120, 150, 180, 240];
+// Rueda de descanso: sin descanso, de 10 en 10 s hasta 5 min y de 30 en 30 s hasta 10 min
+const REST_OPTS = [0, ...Array.from({ length: 30 }, (_, i) => (i + 1) * 10), ...Array.from({ length: 10 }, (_, i) => 330 + i * 30)];
 let wk = null;
 let wkTimer = null, wkLock = null, wkAudio = null, wkMini = false;
 
@@ -20,7 +21,8 @@ function avisarDescanso() {
 }
 const saveLive = () => { lsSet(LIVE_KEY, wk ? JSON.stringify(wk) : ''); avisarDescanso(); };
 const clockLong = s => { const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60; return h ? `${h}:${String(m).padStart(2, '0')}:${String(x).padStart(2, '0')}` : `${m}:${String(x).padStart(2, '0')}`; };
-const restLabel = s => s ? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}` : 'NO';
+const restTxt = s => { const m = Math.floor(s / 60), x = s % 60; return m ? `${m}min${x ? ` ${x}s` : ''}` : `${x}s`; };
+const restLabel = s => s ? restTxt(s) : 'no';
 const wkVolume = () => Math.round(wk.exercises.reduce((a, ex) => a + ex.sets.reduce((b, s) => b + (s.done ? num(s.reps) * num(s.kg) : 0), 0), 0));
 const wkDone = () => wk.exercises.reduce((a, ex) => a + ex.sets.filter(s => s.done).length, 0);
 
@@ -218,12 +220,16 @@ function addWkExercise(name, image, ejId) {
   $('wk-pos')?.scrollIntoView({ block: 'center' });
 }
 
-function finishWorkout() {
+function finishWorkout(o = {}) {
   const sets = [];
   wk.exercises.forEach(ex => ex.sets.forEach(s => { if (s.done && num(s.reps) > 0) sets.push({ exercise: ex.name, reps: num(s.reps), kg: num(s.kg), w: !!s.w }); }));
   if (!sets.length) return discardWorkout();          // sin series completas no hay entreno: se descarta
   const segundos = Math.floor((Date.now() - wk.start) / 1000);
-  db.sessions.push({ id: uid(), date: localDate(), routine: wk.name, ...(wk.routineId ? { routineId: wk.routineId } : {}), sets, seconds: segundos, ts: Date.now() });
+  const ts = o.ts || Date.now();
+  db.sessions.push({ id: uid(), date: o.date || localDate(), routine: o.nombre || wk.name, ...(wk.routineId ? { routineId: wk.routineId } : {}), sets, seconds: segundos, ts,
+    ...(o.nota ? { nota: o.nota } : {}), ...(o.foto ? { foto: o.foto } : {}) });
+  db.sessions.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : (a.ts || 0) - (b.ts || 0)));
+  if (o.actualizar) actualizarRutina();
   salud('fuerza', segundos);
   const prs = wk.exercises.reduce((a, ex) => a + ex.sets.filter(s => s.done && s.pr).length, 0);
   wk = null; saveLive();
@@ -233,7 +239,7 @@ function finishWorkout() {
   persist();
   // Primero la animación de entreno terminado y, cuando acaba, el resumen
   celebrate('Entreno terminado');
-  const last = db.sessions[db.sessions.length - 1];
+  const last = db.sessions.find(s => s.ts === ts && s.sets === sets);
   setTimeout(() => showSummary(last, prs), 2100);
 }
 
@@ -244,34 +250,109 @@ function discardWorkout() {
   toast('Entrenamiento descartado.');
 }
 
-// Pregunta al terminar con series hechas: guardar, descartar o volver
-let finishArmed = null;                              // temporizador del "¿Seguro?" de Descartar
-function resetFinishDiscard() {
-  clearTimeout(finishArmed); finishArmed = null;
-  $('finish-discard').textContent = 'Descartar';
+// Los pesos y repeticiones de las series hechas pasan a la rutina (las no hechas se quedan como estaban)
+function actualizarRutina() {
+  const r = db.routines.find(x => x.id === wk.routineId); if (!r) return;
+  wk.exercises.forEach(ex => {
+    const re = r.exercises.find(e => e.name === ex.name); if (!re) return;
+    ex.sets.forEach((s, i) => {
+      if (!s.done || !(num(s.reps) > 0)) return;
+      const nuevo = { w: !!s.w, kg: num(s.kg) || '', reps: num(s.reps) };
+      if (i < re.sets.length) re.sets[i] = nuevo; else re.sets.push(nuevo);
+    });
+  });
 }
+
+// «¡Entreno completado!»: nombre, fecha, foto y descripción antes de guardar
+let finFoto = null;
+const isoLocal = t => { const d = new Date(t), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; };
+const FOTO_ICO = '<svg viewBox="0 0 24 24" class="ico"><path d="M4 6h10M4 6v13h16v-8M8 15l3-3 3 3 2-2 4 4M17 3v6M14 6h6"/><circle cx="8.5" cy="9.5" r="1.2"/></svg>';
 function openFinish() {
-  resetFinishDiscard();
-  const n = wkDone();
-  $('finish-sub').textContent = `${n} ${n === 1 ? 'serie hecha' : 'series hechas'}. ¿Guardas el entreno o lo descartas?`;
+  finFoto = null;
+  $('finish-name').value = wk.name;
+  $('finish-dur').textContent = durCorta(Math.floor((Date.now() - wk.start) / 1000));
+  $('finish-sets').textContent = wkDone();
+  $('finish-vol').textContent = `${wkVolume().toLocaleString('es-ES')} kg`;
+  $('finish-date').value = isoLocal(Date.now());
+  $('finish-note').value = '';
+  $('finish-photo').innerHTML = FOTO_ICO;
+  $('finish-update-row').hidden = !(wk.routineId && db.routines.some(r => r.id === wk.routineId));
+  $('finish-update').checked = true;
   $('finish-sheet').classList.add('show'); $('finish-sheet').setAttribute('aria-hidden', 'false');
-  $('scrim').classList.add('show');
 }
 function closeFinish() {
-  resetFinishDiscard();
+  $('discard-modal').hidden = true;
   $('finish-sheet').classList.remove('show'); $('finish-sheet').setAttribute('aria-hidden', 'true');
-  $('scrim').classList.remove('show');
+  $('finish-photo-file').value = '';
 }
-$('finish-save').onclick = () => { closeFinish(); finishWorkout(); };
-$('finish-discard').onclick = () => {
-  if (finishArmed === null) {                        // primer toque: pide confirmación
-    $('finish-discard').textContent = '¿Seguro? se pierde todo'; vibrate([30, 40, 30]);
-    finishArmed = setTimeout(resetFinishDiscard, 3000);
-    return;
-  }
-  closeFinish(); discardWorkout();
+$('finish-photo-file').onchange = e => {
+  const f = e.target.files && e.target.files[0]; if (!f) return;
+  const url = URL.createObjectURL(f), img = new Image();
+  img.onload = () => {        // como mucho 720 px de lado, en JPEG: cabe de sobra en la nube
+    const k = Math.min(1, 720 / Math.max(img.naturalWidth, img.naturalHeight)), c = document.createElement('canvas');
+    c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    finFoto = c.toDataURL('image/jpeg', .8); URL.revokeObjectURL(url);
+    $('finish-photo').innerHTML = `<img src="${finFoto}" alt="">`;
+  };
+  img.onerror = () => { URL.revokeObjectURL(url); toast('No se pudo leer esa imagen.'); };
+  img.src = url;
 };
+$('finish-save').onclick = () => {
+  const v = $('finish-date').value, t = v ? new Date(v).getTime() : NaN;
+  const o = { nombre: $('finish-name').value.trim().slice(0, 100), nota: $('finish-note').value.trim().slice(0, 1000), foto: finFoto,
+    actualizar: !$('finish-update-row').hidden && $('finish-update').checked };
+  if (Number.isFinite(t)) { o.ts = t; o.date = v.slice(0, 10); }
+  closeFinish(); finishWorkout(o);
+};
+$('finish-discard').onclick = () => { $('discard-modal').hidden = false; vibrate([30, 40, 30]); };
+$('discard-cancel').onclick = () => { $('discard-modal').hidden = true; };
+$('discard-ok').onclick = () => { closeFinish(); discardWorkout(); };
 $('finish-cancel').onclick = closeFinish;
+// Escape: cierra el aviso de descartar, la pantalla de terminar o la rueda (el entreno sigue)
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if (!$('discard-modal').hidden) { $('discard-modal').hidden = true; e.stopImmediatePropagation(); }
+  else if ($('finish-sheet').classList.contains('show')) { closeFinish(); e.stopImmediatePropagation(); }
+}, true);
+
+// Rueda para elegir el descanso de un ejercicio: queda elegido el que está en el centro
+let ruedaEx = null, ruedaSel = 120, ruedaT = null;
+function marcarRueda(s) {
+  ruedaSel = s;
+  $('rest-wheel').querySelectorAll('[data-s]').forEach(b => b.setAttribute('aria-selected', String(+b.dataset.s === s)));
+}
+function centrarRueda(s, suave) {
+  const w = $('rest-wheel'), o = w.querySelector(`[data-s="${s}"]`); if (!o) return;
+  w.scrollTo({ top: o.offsetTop - (w.clientHeight - o.offsetHeight) / 2, behavior: suave ? 'smooth' : 'auto' });
+}
+function abrirRueda(ei) {
+  const ex = wk.exercises[ei]; ruedaEx = ei;
+  const actual = REST_OPTS.includes(ex.rest) ? ex.rest : REST_OPTS.reduce((a, s) => (Math.abs(s - ex.rest) < Math.abs(a - ex.rest) ? s : a));
+  $('rest-sheet-title').textContent = ex.name;
+  $('rest-wheel').innerHTML = REST_OPTS.map(s => `<button type="button" role="option" data-s="${s}" aria-selected="false">${s ? restTxt(s) : 'Sin descanso'}</button>`).join('');
+  marcarRueda(actual);
+  $('rest-sheet').classList.add('show'); $('rest-sheet').setAttribute('aria-hidden', 'false'); $('scrim').classList.add('show');
+  requestAnimationFrame(() => centrarRueda(actual, false));
+}
+function cerrarRueda() { $('rest-sheet').classList.remove('show'); $('rest-sheet').setAttribute('aria-hidden', 'true'); $('scrim').classList.remove('show'); ruedaEx = null; }
+$('rest-wheel').addEventListener('scroll', () => {
+  clearTimeout(ruedaT);
+  ruedaT = setTimeout(() => {
+    const w = $('rest-wheel'), mid = w.scrollTop + w.clientHeight / 2;
+    let mejor = null, d = Infinity;
+    w.querySelectorAll('[data-s]').forEach(b => { const c = b.offsetTop + b.offsetHeight / 2, x = Math.abs(c - mid); if (x < d) { d = x; mejor = b; } });
+    if (mejor && +mejor.dataset.s !== ruedaSel) { marcarRueda(+mejor.dataset.s); vibrate(4); }
+  }, 60);
+}, { passive: true });
+$('rest-wheel').addEventListener('click', e => { const b = e.target.closest('[data-s]'); if (!b) return; marcarRueda(+b.dataset.s); centrarRueda(+b.dataset.s, true); });
+$('rest-ok').onclick = () => {
+  if (wk && ruedaEx !== null && wk.exercises[ruedaEx]) {
+    const ex = wk.exercises[ruedaEx]; ex.rest = ruedaSel; saveRest(ex.name, ruedaSel); saveLive(); wkRender();
+  }
+  cerrarRueda();
+};
+$('scrim').addEventListener('click', () => { if ($('rest-sheet').classList.contains('show')) cerrarRueda(); });
 
 // Resumen al terminar: duración, volumen, series y mejor serie de cada ejercicio
 function showSummary(session, prs) {
@@ -421,7 +502,7 @@ function bindWorkout() {
       wk.exercises.splice(ei, 1);
     }
     else if (act === 'togw') ex.sets[si].w = !ex.sets[si].w;
-    else if (act === 'rest') { ex.rest = REST_OPTS[(REST_OPTS.indexOf(ex.rest) + 1) % REST_OPTS.length] ?? 120; saveRest(ex.name, ex.rest); }
+    else if (act === 'rest') { abrirRueda(ei); return; }
     else if (act === 'done') {
       const s = ex.sets[si], p = (ex.prev && ex.prev[si]) || {};
       if (!s.done) {

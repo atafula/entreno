@@ -27,12 +27,14 @@ service cloud.firestore {
     }
 
     function validSesion(d) {
-      return d.keys().hasOnly(['date', 'routine', 'routineId', 'sets', 'seconds', 'ts', 'rev', 'upd'])
+      return d.keys().hasOnly(['date', 'routine', 'routineId', 'sets', 'seconds', 'ts', 'rev', 'upd', 'nota', 'foto'])
         && d.date is string && d.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
         && d.routine is string && d.routine.size() <= 100
         && d.sets is list && d.sets.size() <= 500
         && (!('seconds' in d) || d.seconds is number)
         && (!('routineId' in d) || (d.routineId is string && d.routineId.size() <= 80))
+        && (!('nota' in d) || (d.nota is string && d.nota.size() <= 1000))
+        && (!('foto' in d) || (d.foto is string && d.foto.size() <= 600000))
         && (!('ts' in d) || d.ts is number)
         && (!('rev' in d) || d.rev is number)
         && (!('upd' in d) || d.upd is number);

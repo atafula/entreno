@@ -184,76 +184,128 @@ def banner_entreno_en_curso_no_se_solapa_con_crear_rutina(pg):
     a = pg.locator("#wk-resume").bounding_box(); b = pg.locator("#new-routine").bounding_box()
     assert b["y"] - (a["y"] + a["height"]) >= 8, f"separación {b['y'] - (a['y'] + a['height'])}px entre el banner y CREAR RUTINA"
 
-@test
-def entreno_terminar_pregunta_guardar_o_descartar(pg):
-    seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
+def _terminar(pg):
     pg.locator(".wrow .chk").nth(1).click()
-    pg.click("#wk-finish"); pg.wait_for_timeout(400)
-    assert pg.is_visible("#finish-sheet"), "con series hechas, Terminar pregunta"
+    pg.click("#wk-finish"); pg.wait_for_selector("#finish-sheet.show", timeout=2000); pg.wait_for_timeout(300)
+
+@test
+def entreno_terminar_abre_entreno_completado(pg):
+    seed(pg); tab(pg, "rutinas"); empezar(pg, "a"); _terminar(pg)
+    assert pg.inner_text("#finish-title").strip() == "¡Entreno completado!"
     assert pg.is_visible("#workout") and len(db(pg)["sessions"]) == 1, "no guarda ni cierra hasta elegir"
-    assert pg.inner_text("#finish-save").strip() == "Guardar entreno"
-    assert pg.inner_text("#finish-discard").strip() == "Descartar"
-    assert "1 serie hecha" in pg.inner_text("#finish-sheet"), pg.inner_text("#finish-sheet")
-    assert pg.locator("#wk-discard").count() == 0, "ya no hay botón Descartar entreno abajo"
+    assert pg.input_value("#finish-name") == "PUSH"
+    assert pg.inner_text("#finish-sets").strip() == "1" and "min" in pg.inner_text("#finish-dur")
+    assert pg.input_value("#finish-date")[:10] == pg.evaluate("localDate()")
+    assert pg.inner_text("#finish-save").strip() == "Terminar entreno"
+    assert pg.inner_text("#finish-discard").strip() == "Descartar entreno"
+    assert pg.is_visible("#finish-update-row") and pg.is_checked("#finish-update"), "de una rutina: actualizar valores, activado"
+    assert pg.locator("#wk-discard").count() == 0
 
 @test
-def entreno_descartar_en_la_pregunta_es_solo_texto(pg):
-    seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
-    pg.locator(".wrow .chk").nth(1).click()
-    pg.click("#wk-finish"); pg.wait_for_timeout(400)
-    st = pg.evaluate("""() => { const s = getComputedStyle(document.getElementById('finish-discard'));
-        return { border: s.borderTopWidth, shadow: s.boxShadow, bg: s.backgroundColor }; }""")
-    assert st["border"] == "0px" and st["shadow"] == "none" and st["bg"] in ("rgba(0, 0, 0, 0)", "transparent"), f"Descartar debe ser solo texto: {st}"
-
-@test
-def entreno_pregunta_cancelar_arriba_sin_volver_abajo(pg):
-    seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
-    pg.locator(".wrow .chk").nth(1).click()
-    pg.click("#wk-finish"); pg.wait_for_timeout(400)
-    assert pg.inner_text("#finish-cancel").strip() == "Cancelar", pg.inner_text("#finish-cancel")
-    assert pg.evaluate("document.getElementById('finish-cancel').closest('.sheet-head') !== null"), "Cancelar va en la cabecera"
-    assert pg.locator("#finish-sheet button", has_text="Volver").count() == 0, "ya no hay Volver abajo"
-    assert pg.evaluate("document.getElementById('finish-discard').className.includes('link')"), "Descartar es solo texto"
-
-@test
-def entreno_descartar_pide_confirmacion_en_la_pregunta(pg):
-    seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
-    pg.locator(".wrow .chk").nth(1).click()
-    pg.click("#wk-finish"); pg.click("#finish-discard"); pg.wait_for_timeout(300)
-    assert "¿Seguro?" in pg.inner_text("#finish-discard"), pg.inner_text("#finish-discard")
-    assert pg.is_visible("#finish-sheet") and pg.is_visible("#workout"), "no descarta con el primer toque"
-    pg.click("#finish-cancel"); pg.wait_for_timeout(700)
-    pg.click("#wk-finish"); pg.wait_for_timeout(300)
-    assert pg.inner_text("#finish-discard").strip() == "Descartar", "al reabrir vuelve el texto normal"
-
-@test
-def entreno_guardar_desde_la_pregunta(pg):
-    seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
-    pg.locator(".wrow .chk").nth(1).click()
-    pg.click("#wk-finish"); pg.click("#finish-save"); pg.wait_for_timeout(500)
-    assert len(db(pg)["sessions"]) == 2 and not pg.is_visible("#workout")
-    assert not pg.is_visible("#finish-sheet")
-    pg.wait_for_selector("#summary-sheet.show", timeout=5000)
-    assert pg.is_visible("#summary-sheet"), "tras guardar se ve el resumen"
-
-@test
-def entreno_descartar_desde_la_pregunta(pg):
-    seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
-    pg.locator(".wrow .chk").nth(1).click()
-    pg.click("#wk-finish"); pg.click("#finish-discard"); pg.wait_for_timeout(300)
-    assert pg.is_visible("#finish-sheet") and len(db(pg)["sessions"]) == 1, "el primer toque sólo pide confirmación"
-    pg.click("#finish-discard"); pg.wait_for_timeout(700)
-    assert len(db(pg)["sessions"]) == 1, "descartar no guarda nada"
+def entreno_terminar_guarda_nombre_fecha_y_descripcion(pg):
+    seed(pg); tab(pg, "rutinas"); empezar(pg, "a"); _terminar(pg)
+    pg.fill("#finish-name", "Pecho pesado"); pg.fill("#finish-date", "2026-11-10T19:30")
+    pg.fill("#finish-note", "Muy bien, subí peso."); pg.uncheck("#finish-update")
+    pg.click("#finish-save"); pg.wait_for_timeout(500)
+    s = db(pg)["sessions"][-1]
+    assert s["routine"] == "Pecho pesado" and s["routineId"] == "a" and s["date"] == "2026-11-10" and s["nota"] == "Muy bien, subí peso.", s
     assert not pg.is_visible("#workout") and not pg.is_visible("#finish-sheet")
+    pg.wait_for_selector("#summary-sheet.show", timeout=5000)
+
+@test
+def entreno_terminar_actualiza_los_valores_de_la_rutina(pg):
+    seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
+    row = pg.locator("#wk-in .exblock:not([hidden])").first.locator(".wrow:not(.whead)").nth(1)
+    row.locator('input[data-f="kg"]').fill("45"); row.locator('input[data-f="reps"]').fill("8")
+    row.locator('[data-act="done"]').click()
+    pg.click("#wk-finish"); pg.wait_for_selector("#finish-sheet.show"); pg.wait_for_timeout(300)
+    pg.click("#finish-save"); pg.wait_for_timeout(500)
+    sets = db(pg)["routines"][0]["exercises"][0]["sets"]
+    assert sets[1]["kg"] == 45 and sets[1]["reps"] == 8, sets
+    assert sets[0]["w"] is True and len(sets) == 3, "las series no hechas se quedan como estaban"
+
+@test
+def entreno_terminar_sin_actualizar_no_toca_la_rutina(pg):
+    seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
+    row = pg.locator("#wk-in .exblock:not([hidden])").first.locator(".wrow:not(.whead)").nth(1)
+    row.locator('input[data-f="kg"]').fill("45"); row.locator('[data-act="done"]').click()
+    pg.click("#wk-finish"); pg.wait_for_selector("#finish-sheet.show"); pg.wait_for_timeout(300)
+    pg.uncheck("#finish-update"); pg.click("#finish-save"); pg.wait_for_timeout(500)
+    assert db(pg)["routines"][0]["exercises"][0]["sets"][1]["kg"] == 39
+
+@test
+def entreno_libre_no_ofrece_actualizar_rutina(pg):
+    seed(pg); tab(pg, "rutinas"); pg.click("#free-workout"); pg.wait_for_timeout(300)
+    anadir_del_selector(pg, "Press")
+    pg.locator('#workout input[data-f="reps"]').first.fill("6"); pg.locator("#workout .chk").first.click()
+    pg.click("#wk-finish"); pg.wait_for_selector("#finish-sheet.show"); pg.wait_for_timeout(300)
+    assert not pg.is_visible("#finish-update-row")
+
+@test
+def entreno_terminar_con_foto(pg):
+    import base64, tempfile
+    png = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGP4z8DAwMDAxMDAwMDAAAANHQEDasKb6QAAAABJRU5ErkJggg==")
+    ruta = os.path.join(tempfile.gettempdir(), "foto-entreno.png"); open(ruta, "wb").write(png)
+    seed(pg); tab(pg, "rutinas"); empezar(pg, "a"); _terminar(pg)
+    pg.set_input_files("#finish-photo-file", ruta); pg.wait_for_timeout(500)
+    assert pg.locator("#finish-photo img").count() == 1, "se ve la foto"
+    pg.click("#finish-save"); pg.wait_for_timeout(500)
+    assert db(pg)["sessions"][-1]["foto"].startswith("data:image/jpeg")
+
+@test
+def entreno_descartar_pide_confirmacion(pg):
+    seed(pg); tab(pg, "rutinas"); empezar(pg, "a"); _terminar(pg)
+    pg.click("#finish-discard"); pg.wait_for_timeout(300)
+    assert pg.is_visible("#discard-modal") and "irreversible" in pg.inner_text("#discard-modal").lower()
+    pg.click("#discard-cancel"); pg.wait_for_timeout(300)
+    assert not pg.is_visible("#discard-modal") and pg.is_visible("#finish-sheet")
+    pg.click("#finish-discard"); pg.wait_for_timeout(300); pg.click("#discard-ok"); pg.wait_for_timeout(700)
+    assert len(db(pg)["sessions"]) == 1, "descartar no guarda nada"
+    assert not pg.is_visible("#workout") and not pg.is_visible("#finish-sheet") and not pg.is_visible("#discard-modal")
     assert "Entrenamiento descartado." in pg.content()
 
 @test
-def entreno_volver_desde_la_pregunta_sigue_el_entreno(pg):
-    seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
-    pg.locator(".wrow .chk").nth(1).click()
-    pg.click("#wk-finish"); pg.click("#finish-cancel"); pg.wait_for_timeout(700)
+def entreno_volver_desde_completado_sigue_el_entreno(pg):
+    seed(pg); tab(pg, "rutinas"); empezar(pg, "a"); _terminar(pg)
+    pg.click("#finish-cancel"); pg.wait_for_timeout(700)
     assert not pg.is_visible("#finish-sheet") and pg.is_visible("#workout")
     assert len(db(pg)["sessions"]) == 1
+
+@test
+def historial_enseña_la_descripcion_del_entreno(pg):
+    seed(pg, sessions=[dict(HISTORY[0], nota="Sesión muy buena")]); tab(pg, "historial")
+    assert "Sesión muy buena" in pg.inner_text("#history-list")
+
+@test
+def descanso_se_elige_en_una_rueda(pg):
+    seed(pg, sessions=[]); tab(pg, "rutinas"); empezar(pg, "a")
+    pg.click('#wk-in .exblock:not([hidden]) [data-act="rest"]'); pg.wait_for_selector("#rest-sheet.show", timeout=2000)
+    assert "Press de pecho" in pg.inner_text("#rest-sheet-title")
+    assert pg.locator('#rest-wheel [data-s="110"]').inner_text().strip() == "1min 50s"
+    assert pg.get_attribute('#rest-wheel [data-s="120"]', "aria-selected") == "true", "empieza en el actual (2 min)"
+    pg.click('#rest-wheel [data-s="110"]'); pg.wait_for_timeout(500)
+    pg.click("#rest-ok"); pg.wait_for_timeout(400)
+    assert not pg.is_visible("#rest-sheet")
+    assert pg.inner_text('#wk-in .exblock:not([hidden]) [data-act="rest"]').strip() == "Descanso: 1min 50s"
+    assert pg.evaluate("JSON.parse(localStorage.getItem('entreno-descansos'))")["Press de pecho"] == 110, "se recuerda para la próxima vez"
+    assert pg.evaluate("wk.exercises[0].rest") == 110
+
+@test
+def descanso_rueda_al_desplazar_elige_el_centrado(pg):
+    seed(pg, sessions=[]); tab(pg, "rutinas"); empezar(pg, "a")
+    pg.click('#wk-in .exblock:not([hidden]) [data-act="rest"]'); pg.wait_for_selector("#rest-sheet.show", timeout=2000); pg.wait_for_timeout(400)
+    pg.evaluate("(() => { const w = document.getElementById('rest-wheel'), o = w.querySelector('[data-s=\"60\"]'); w.scrollTop = o.offsetTop - (w.clientHeight - o.offsetHeight) / 2; })()")
+    pg.wait_for_timeout(500)
+    assert pg.get_attribute('#rest-wheel [data-s="60"]', "aria-selected") == "true"
+    pg.click("#rest-ok"); pg.wait_for_timeout(300)
+    assert pg.evaluate("wk.exercises[0].rest") == 60
+
+@test
+def descanso_sin_descanso(pg):
+    seed(pg, sessions=[]); tab(pg, "rutinas"); empezar(pg, "a")
+    pg.click('#wk-in .exblock:not([hidden]) [data-act="rest"]'); pg.wait_for_selector("#rest-sheet.show", timeout=2000)
+    pg.click('#rest-wheel [data-s="0"]'); pg.wait_for_timeout(400); pg.click("#rest-ok"); pg.wait_for_timeout(300)
+    assert pg.inner_text('#wk-in .exblock:not([hidden]) [data-act="rest"]').strip() == "Descanso: no"
 
 @test
 def rscreen_cabecera_a_todo_el_ancho(pg):
@@ -2048,7 +2100,7 @@ def rutina_editor_barra_con_volver_y_guardar_arriba(pg):
 @test
 def rutina_editor_nombre_grande_y_resumen(pg):
     seed(pg); tab(pg, "rutinas"); editar_rutina(pg, "a"); pg.wait_for_timeout(450)
-    assert "Fraunces" in _rgb(pg, "#routine-name", "fontFamily") and float(_rgb(pg, "#routine-name", "fontSize").replace("px", "")) >= 28
+    assert "Inter Tight" in _rgb(pg, "#routine-name", "fontFamily") and float(_rgb(pg, "#routine-name", "fontSize").replace("px", "")) >= 28
     assert pg.inner_text("#editor-hint").startswith("2 ejercicios · 4 series"), pg.inner_text("#editor-hint")
     pg.click('#routine-exercises [data-act="addset"] >> nth=0'); pg.wait_for_timeout(150)
     assert pg.inner_text("#editor-hint").startswith("2 ejercicios · 5 series"), pg.inner_text("#editor-hint")
@@ -2764,11 +2816,11 @@ def diseno_areas_tactiles_de_44_px(pg):
 def papel_fuentes_serif_y_manrope_cargadas(pg):
     seed(pg); pg.wait_for_timeout(400)
     assert "Manrope" in _rgb(pg, "body", "fontFamily")
-    assert "Fraunces" in _rgb(pg, "h1", "fontFamily")
-    ok = pg.evaluate("Promise.all([document.fonts.load('700 20px Fraunces'), document.fonts.load('700 20px Manrope')]).then(r => r.every(x => x.length > 0))")
-    assert ok, "las fuentes Fraunces y Manrope deben cargarse desde la app"
+    assert "Inter Tight" in _rgb(pg, "h1", "fontFamily")
+    ok = pg.evaluate("Promise.all([document.fonts.load('700 20px \"Inter Tight\"'), document.fonts.load('700 20px Manrope')]).then(r => r.every(x => x.length > 0))")
+    assert ok, "las fuentes Inter Tight y Manrope deben cargarse desde la app"
     sw = open(os.path.join(ROOT, "sw.js")).read()
-    for fn in ["Fraunces-600.woff2", "Fraunces-700.woff2", "Manrope-500.woff2", "Manrope-800.woff2"]:
+    for fn in ["InterTight-600.woff2", "InterTight-700.woff2", "Manrope-500.woff2", "Manrope-800.woff2"]:
         assert fn in sw, f"{fn} falta en ASSETS"
 
 @test
@@ -2812,7 +2864,7 @@ def papel_tema_oscuro_sigue_siendo_legible(pg):
     a, b = sorted([lum(bg), lum(tx)])
     assert (b + .05) / (a + .05) >= 7, f"contraste {bg} / {tx}"
     assert lum(bg) < .1, "el oscuro debe ser oscuro"
-    assert "Fraunces" in _rgb(pg, "h1", "fontFamily")
+    assert "Inter Tight" in _rgb(pg, "h1", "fontFamily")
 
 
 @test
@@ -3026,7 +3078,7 @@ def ios_la_copia_de_la_web_es_identica_a_la_app(pg):
     html = open(os.path.join(ROOT, "index.html"), encoding="utf-8").read()
     for ref in re.findall(r'(?:src|href)="(?!https?:)([^"#]+)"', html):
         if ref != "manifest.webmanifest": assert ref in copia, f"falta {ref} en la copia de iOS"
-    for ref in ["traducciones.json", "ejercicios_local.json", "fonts/Fraunces-600.woff2", "fonts/Manrope-500.woff2"]:
+    for ref in ["traducciones.json", "ejercicios_local.json", "fonts/InterTight-600.woff2", "fonts/Manrope-500.woff2"]:
         assert ref in copia, f"falta {ref}"
     assert "sw.js" not in copia, "el service worker no hace falta: los archivos van dentro de la app"
 

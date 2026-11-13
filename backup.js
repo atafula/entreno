@@ -30,6 +30,8 @@ function cleanSession(s) {
   if (isStr(s.routineId, 80) && s.routineId) out.routineId = s.routineId;     // la rutina a la que pertenece el entreno
   if (isNum(s.rev)) out.rev = s.rev;
   if (isNum(s.upd)) out.upd = s.upd;
+  if (isStr(s.nota, 1000) && s.nota) out.nota = s.nota;
+  if (typeof s.foto === 'string' && /^data:image\/(jpeg|png|webp);base64,/.test(s.foto) && s.foto.length < 600000) out.foto = s.foto;
   return out;
 }
 function cleanWalk(w) {

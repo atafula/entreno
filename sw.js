@@ -1,12 +1,12 @@
 // Sube la versión cuando cambies archivos para que el móvil descargue la nueva copia.
-const CACHE = 'entreno-v150';
+const CACHE = 'entreno-v152';
 const IMG_CACHE = 'entreno-img';   // fotos de ejercicios: no se borra al subir de versión
 const IMG_MAX = 250;               // máximo de fotos guardadas (se van borrando las más antiguas)
 const IMG_HOSTS = ['pump-app.s3.eu-west-2.amazonaws.com'];
 const ASSETS = [
   './', 'index.html', 'styles.css', 'app.js', 'ejercicios.js', 'workout.js', 'detalle.js', 'backup.js', 'sync.js', 'manifest.webmanifest', 'traducciones.json', 'ejercicios_local.json',
   'icons/apple-touch-icon.png', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/favicon.png',
-  'fonts/fonts.css', 'fonts/Fraunces-600.woff2', 'fonts/Fraunces-700.woff2', 'fonts/Manrope-500.woff2', 'fonts/Manrope-600.woff2', 'fonts/Manrope-700.woff2', 'fonts/Manrope-800.woff2'
+  'fonts/fonts.css', 'fonts/InterTight-600.woff2', 'fonts/InterTight-700.woff2', 'fonts/InterTight-800.woff2', 'fonts/Manrope-500.woff2', 'fonts/Manrope-600.woff2', 'fonts/Manrope-700.woff2', 'fonts/Manrope-800.woff2'
 ];
 // Externos: se guardan si se puede, pero si fallan no impiden instalar la app
 const EXTERNOS = [
