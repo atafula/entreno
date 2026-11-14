@@ -1130,7 +1130,7 @@ $('pe-guardar').onclick = () => {
   if (alt >= 100 && alt <= 250) p.altura = alt;
   if (peFoto) p.foto = peFoto;
   Object.keys(p).forEach(k => { if (p[k] === '') delete p[k]; });
-  db.perfil = p;
+  tocar(p, (db.perfil || {}).rev || 0); db.perfil = p;
   cerrarEditorPerfil(); persist(); toast('Perfil guardado');
 };
 

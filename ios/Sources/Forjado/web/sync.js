@@ -13,6 +13,7 @@ const FIREBASE_CONFIG = {
 const UID_KEY = 'entreno-uid';
 const cfg = window.ENTRENO_FIREBASE_CONFIG || FIREBASE_CONFIG;   // los tests inyectan su propia config
 let fdb = null, fauth = null, fuser = null, cloudIds = { sesiones: new Map(), caminatas: new Map(), rutinas: new Map() };   // id -> {rev, upd} que hay en la nube
+let cloudPerfil = { rev: 0, upd: 0 };   // versión del perfil que hay en la nube
 let unsubs = [], pushT = null, rootLeido = false, nubeV2 = false, leidas = new Set();
 
 const saveLocal = () => guardarLocal();
@@ -56,6 +57,12 @@ function pushNow() {
   const b = fdb.batch();
   let tocado = false;
   if (!nubeV2) { b.set(root, { rutinasV2: true }, { merge: true }); nubeV2 = true; }
+  const pf = db.perfil;
+  if (pf && Object.keys(pf).length && (!pf.rev || newer(pf, cloudPerfil))) {
+    if (!pf.rev) { tocar(pf); tocado = true; }
+    b.set(root, { perfil: JSON.parse(JSON.stringify(pf)) }, { merge: true });
+    cloudPerfil = { rev: pf.rev, upd: pf.upd || 0 };
+  }
   COLS.forEach(([name, key]) => {
     db.deleted[name].forEach(id => b.delete(root.collection(name).doc(id)));
     db[key].forEach(item => {
@@ -84,6 +91,11 @@ function listenCloud(user) {
     const antes = firma();
     const d = snap.exists ? snap.data() : null;
     rootLeido = true; nubeV2 = !!(d && d.rutinasV2);
+    // Cada cuenta tiene su propio perfil: el de la nube gana si es más nuevo que el de este móvil
+    if (d && d.perfil) {
+      cloudPerfil = { rev: d.perfil.rev || 0, upd: d.perfil.upd || 0 };
+      if (!db.perfil || !Object.keys(db.perfil).length || newer(d.perfil, db.perfil)) { db.perfil = d.perfil; saveLocal(); renderSiCambio(antes); renderPerfil(); }
+    }
     if (!nubeV2) {
       // Nube antigua: las rutinas iban juntas en un bloque. Se juntan con las locales y pasan a un documento cada una
       const tengo = new Set(db.routines.map(r => r.id));
@@ -155,7 +167,7 @@ function stopListen() { rootLeido = false; leidas = new Set(); unsubs.forEach(u 
     if (!user) { stopListen(); rootLeido = false; return; }                  // al cerrar sesión se sigue en local
     const prev = lsGet(UID_KEY);
     if (prev && prev !== user.uid) {                      // otra cuenta: no mezclar datos
-      db.routines = []; db.sessions = []; db.walks = []; db.routineSigs = {}; db.perfil = {};
+      db.routines = []; db.sessions = []; db.walks = []; db.routineSigs = {}; db.perfil = {}; cloudPerfil = { rev: 0, upd: 0 };
       db.deleted = { sesiones: [], caminatas: [], rutinas: [] }; db.syncedIds = { sesiones: [], caminatas: [], rutinas: [] };
       cloudIds = { sesiones: new Map(), caminatas: new Map(), rutinas: new Map() }; rootLeido = false; nubeV2 = false; leidas = new Set();
       saveLocal(); render();

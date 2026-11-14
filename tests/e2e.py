@@ -387,6 +387,22 @@ def sync_cambio_de_cuenta_cambia_el_perfil(pg):
     assert not p.get("nombre") and not p.get("usuario") and not p.get("bio") and not p.get("foto"), p
 
 @test
+def sync_cada_cuenta_tiene_su_perfil_en_la_nube(pg):
+    cl = {"users/U2": {"rutinasV2": True, "perfil": {"nombre": "Otra Persona", "usuario": "otra", "bio": "hola", "rev": 3, "upd": 5}}}
+    seed(pg, fb={"uid": "U2", "cloud": cl}, prev_uid="U1", meta={"perfil": {"nombre": "Tafula", "usuario": "tafula"}})
+    iniciar_sesion(pg); pg.wait_for_timeout(500)
+    tab(pg, "historial")
+    assert pg.inner_text("#perfil-name") == "Otra Persona", pg.inner_text("#perfil-name")
+    assert pg.inner_text("#perfil-sub") == "@otra"
+
+@test
+def sync_el_perfil_editado_sube_a_la_nube(pg):
+    seed(pg, fb={"logged": True}); tab(pg, "historial"); pg.wait_for_timeout(600)
+    pg.evaluate("db.perfil = {nombre: 'Nuevo Yo', usuario: 'nuevoyo'}; persist()"); pg.wait_for_timeout(900)
+    pf = (cloud(pg).get("users/U1") or {}).get("perfil") or {}
+    assert pf.get("nombre") == "Nuevo Yo" and pf.get("rev"), pf
+
+@test
 def sync_rutina_nueva_sube_a_la_nube(pg):
     seed(pg, fb={"logged": True}); tab(pg, "rutinas")
     pg.click("#new-routine"); pg.fill("#routine-name", "LEG")
