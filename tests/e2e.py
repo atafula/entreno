@@ -903,9 +903,10 @@ def historial_editar_caminata(pg):
 
 @test
 def sync_editar_entreno_actualiza_la_nube(pg):
-    seed(pg, sessions=SESIONES, fb={"logged": True}); pg.wait_for_timeout(900)
+    seed(pg, sessions=SESIONES, fb={"logged": True}); pg.wait_for_function("'users/U1/sesiones/s2' in JSON.parse(sessionStorage.getItem('fake-cloud') || '{}')", timeout=4000)
     editar(pg, "session", "s2")
-    pg.locator('.entry-editor input[data-f="kg"]').first.fill("50"); pg.click("#entry-save"); pg.wait_for_timeout(900)
+    pg.locator('.entry-editor input[data-f="kg"]').first.fill("50"); pg.click("#entry-save")
+    pg.wait_for_function("(JSON.parse(sessionStorage.getItem('fake-cloud') || '{}')['users/U1/sesiones/s2'] || {sets: [{}]}).sets[0].kg === 50", timeout=4000)
     assert cloud(pg)["users/U1/sesiones/s2"]["sets"][0]["kg"] == 50
 
 @test
@@ -3619,7 +3620,7 @@ def perfil_estadisticas_volumen_compara_con_el_periodo_anterior(pg):
 @test
 def perfil_los_selectores_de_estadisticas_van_sin_caja(pg):
     pg.goto(URL); seed(pg, sessions=_ss_pro(pg)); tab(pg, "historial"); _stats(pg)
-    for sel in ("#pstats-vol-sel", "#pstats-ex-sel"):
+    for sel in ("#pstats-vol-sel",):
         r = pg.locator(sel).evaluate("""e => { const c = getComputedStyle(e); return {borde: c.borderTopWidth, fondo: c.backgroundColor, sombra: c.boxShadow, radio: c.borderTopLeftRadius}; }""")
         assert r["borde"] == "0px" and r["sombra"] == "none" and r["fondo"] in ("rgba(0, 0, 0, 0)", "transparent"), (sel, r)
 
@@ -3687,36 +3688,37 @@ def perfil_pro_en_que_reps_entrenas(pg):
     assert filas.locator(".rr-p").all_text_contents() == ["38%", "25%", "25%", "13%"], "el calentamiento no cuenta"
 
 @test
-def perfil_pro_tus_mejores_series(pg):
+def perfil_pro_ya_no_tiene_mejores_series_ni_curva_ni_reps_por_ejercicio(pg):
     pg.goto(URL); seed(pg, sessions=_ss_pro(pg)); tab(pg, "historial"); _stats(pg)
-    filas = pg.locator("#pstats-top .tp")
-    assert 1 <= filas.count() <= 5
-    t = pg.inner_text("#pstats-top")
-    assert "62,5 kg × 5" in t, "la mejor serie de Press"
-    assert t.count("Press") == 1, "cada ejercicio una vez"
-    assert "80 kg × 3" in t and "Sentadilla" in t
+    assert pg.locator("#pstats-top, #pstats-curva, #pstats-ex-sel, #pstats-reps-ex").count() == 0
+    t = pg.inner_text("#perfil-stats")
+    for fuera in ("Tus mejores series", "Curva carga", "En qué reps haces"):
+        assert fuera not in t, fuera
 
 @test
-def perfil_pro_curva_carga_y_reps_de_un_ejercicio(pg):
-    pg.goto(URL); seed(pg, sessions=_ss_pro(pg)); tab(pg, "historial"); _stats(pg)
-    assert pg.input_value("#pstats-ex-sel") == "Press", "por defecto el más entrenado"
-    assert pg.locator("#pstats-curva svg .cv-p").count() == 3, "una marca por cada número de reps (5, 8 y 12)"
-    assert pg.locator("#pstats-curva svg .cv-l").count() == 1
-    pg.select_option("#pstats-ex-sel", "Curl"); pg.wait_for_timeout(150)
-    assert pg.locator("#pstats-curva svg .cv-p").count() == 2
-
-@test
-def perfil_pro_en_que_reps_lo_haces_sigue_al_ejercicio(pg):
-    pg.goto(URL); seed(pg, sessions=_ss_pro(pg)); tab(pg, "historial"); _stats(pg)
-    assert "Press" in pg.inner_text("#pstats-reps-ex-card")
-    assert pg.locator("#pstats-reps-ex .rr-p").all_text_contents() == ["50%", "25%", "25%", "0%"]
-    pg.select_option("#pstats-ex-sel", "Curl"); pg.wait_for_timeout(150)
-    assert pg.locator("#pstats-reps-ex .rr-p").all_text_contents() == ["0%", "0%", "50%", "50%"]
+def perfil_pro_radar_de_series_por_musculo(pg):
+    seed(pg); pg.wait_for_function("typeof ejCache !== 'undefined' && ejCache")
+    pg.evaluate("""() => { const s = () => [{w: false, kg: '', reps: ''}], w = e => ({exercise: e, reps: 10, kg: 20, w: false});
+        db.routines = [{id: 'rp', name: 'Mix', exercises: [{name: 'Aperturas', ejId: 'chest-fly-machine', image: '', sets: s()}, {name: 'Remo', ejId: 'bent-over-row-band', image: '', sets: s()}, {name: 'Press militar', ejId: 'shoulder-press-dumbbell', image: '', sets: s()}]}];
+        const d = n => localDate(new Date(Date.now() - n * 86400000));
+        db.sessions = [{id: 'x1', date: d(0), routine: 'Mix', routineId: 'rp', seconds: 600, ts: 2, sets: [w('Aperturas'), w('Aperturas'), w('Aperturas'), w('Remo'), w('Press militar')]},
+                       {id: 'x0', date: d(9), routine: 'Mix', routineId: 'rp', seconds: 600, ts: 1, sets: [w('Remo'), w('Remo')]}];
+        render(); }""")
+    tab_perfil(pg); _stats(pg)
+    r = pg.locator("#pstats-radar svg.radar")
+    assert r.count() == 1
+    assert r.locator("polygon.rejilla").count() == 3, "tres anillos"
+    assert r.locator("text").all_text_contents() == ["Pecho", "Hombro", "Brazos", "Core", "Piernas", "Espalda"]
+    assert len(r.locator("polygon.area").get_attribute("points").split()) == 6
+    assert r.locator("circle.punto").count() == 6, "un punto por eje"
+    assert r.locator("polygon.prev").count() == 1, "el periodo anterior, más suave"
+    on = r.locator("text.on").all_text_contents()
+    assert sorted(on) == ["Espalda", "Hombro", "Pecho"], on
 
 @test
 def perfil_pro_sin_entrenos_dice_que_no_hay_datos(pg):
     seed(pg, sessions=[]); tab(pg, "historial"); _stats(pg)
-    for sel in ("#pstats-reparto", "#pstats-reps", "#pstats-top", "#pstats-curva", "#pstats-reps-ex"):
+    for sel in ("#pstats-reparto", "#pstats-reps", "#pstats-radar"):
         assert "Sin datos" in pg.inner_text(sel), sel
 
 @test
