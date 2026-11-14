@@ -3301,6 +3301,26 @@ def te_toca_quita_la_rutina_que_ya_se_hizo_hoy(pg):
     assert pg.locator("#routines-list .routine.feat").count() == 0 and "Te toca" not in pg.inner_text("#routines-list"), "si ya están hechas, no hay Te toca"
 
 @test
+def rutinas_el_menu_de_la_ultima_se_ve_entero_sobre_la_barra_de_pestanas(pg):
+    base = ROUTINES[0]
+    rs = [dict(base, id=f"r{i}", name=f"R{i}") for i in range(5)]
+    seed(pg, routines=rs, sessions=[]); tab(pg, "rutinas")
+    pg.click('[data-routine-menu="r4"]'); pg.wait_for_timeout(500)
+    borrar = pg.locator('[data-del-routine="r4"]').bounding_box()
+    barra = pg.locator("#tabbar").bounding_box()
+    assert borrar and borrar["y"] + borrar["height"] <= barra["y"] + 1, f"«Borrar» queda tapado por la barra: {borrar} {barra}"
+    pg.click('[data-del-routine="r4"]'); pg.click('[data-del-routine="r4"]'); pg.wait_for_timeout(300)
+    assert len(db(pg)["routines"]) == 4, "se puede borrar la última"
+
+@test
+def historial_el_menu_de_la_ultima_entrada_se_ve_entero_sobre_la_barra(pg):
+    ss = [dict(HISTORY[0], id=f"h{i}", date=f"2026-11-{10 - i:02d}") for i in range(6)]
+    seed(pg, sessions=ss); tab(pg, "historial")
+    pg.click('[data-menu="session:h5"]'); pg.wait_for_timeout(500)
+    borrar = pg.locator('[data-del-session="h5"]').bounding_box(); barra = pg.locator("#tabbar").bounding_box()
+    assert borrar and borrar["y"] + borrar["height"] <= barra["y"] + 1, f"«Borrar» queda tapado: {borrar} {barra}"
+
+@test
 def rutinas_los_musculos_van_en_una_sola_linea_deslizable(pg):
     seed(pg); pg.wait_for_function("typeof ejCache !== 'undefined' && ejCache")
     pg.evaluate("""() => { const s = () => [{w: false, kg: '', reps: ''}];
@@ -3597,6 +3617,19 @@ def perfil_estadisticas_volumen_compara_con_el_periodo_anterior(pg):
     assert "sin comparar" in pg.inner_text("#pstats-vol-cmp")
 
 @test
+def perfil_los_selectores_de_estadisticas_van_sin_caja(pg):
+    pg.goto(URL); seed(pg, sessions=_ss_pro(pg)); tab(pg, "historial"); _stats(pg)
+    for sel in ("#pstats-vol-sel", "#pstats-ex-sel"):
+        r = pg.locator(sel).evaluate("""e => { const c = getComputedStyle(e); return {borde: c.borderTopWidth, fondo: c.backgroundColor, sombra: c.boxShadow, radio: c.borderTopLeftRadius}; }""")
+        assert r["borde"] == "0px" and r["sombra"] == "none" and r["fondo"] in ("rgba(0, 0, 0, 0)", "transparent"), (sel, r)
+
+@test
+def perfil_series_por_musculo_no_dibuja_la_raya_del_periodo_anterior(pg):
+    pg.goto(URL); seed(pg, sessions=[_ps(off(pg, -k), f"m{k}", [("Press", 40, 10)]) for k in (0, 1, 2, 8, 9)]); pg.wait_for_function("typeof ejCache !== 'undefined' && ejCache")
+    tab(pg, "historial"); _stats(pg)
+    assert pg.locator("#pstats-musc .pm-prev").count() == 0
+
+@test
 def perfil_estadisticas_ya_no_tiene_constancia(pg):
     pg.goto(URL); seed(pg, sessions=_ss_stats(pg)); tab(pg, "historial"); _stats(pg)
     assert pg.locator("#pstats-dias-card, #pstats-days, #pstats-dias-h").count() == 0
@@ -3614,7 +3647,7 @@ def perfil_estadisticas_series_por_musculo(pg):
     mayor = filas.nth(0).locator(".pm-fill").evaluate("e => e.style.width")
     menor = filas.nth(1).locator(".pm-fill").evaluate("e => e.style.width")
     assert mayor == "100%" and menor == "50%", (mayor, menor)
-    assert "pocas sesiones" in pg.inner_text("#pstats-musc-note")
+    assert pg.locator("#pstats-musc .pm-prev, #pstats-musc-note, #pstats-musc-ley").count() == 0, "sin la raya del periodo anterior ni su aviso"
 
 def _ss_pro(pg):
     return [_ps(off(pg, 0), "p1", [("Press", 60, 5), ("Press", 50, 8), ("Press", 40, 12), ("Press", 20, 10, True), ("Remo", 30, 10), ("Sentadilla", 80, 3)], 3000),
@@ -3629,6 +3662,21 @@ def perfil_pro_reparto_muscular_en_porcentaje(pg):
     assert "Pecho" in t and "67%" in t and "Hombro" in t and "33%" in t, t
     assert pg.locator("#pstats-reparto .rp-seg").count() == 2, "un tramo por grupo trabajado"
     assert "Espalda" not in t, "los grupos sin series no salen"
+
+@test
+def perfil_pro_reparto_muscular_va_de_mayor_a_menor_porcentaje(pg):
+    seed(pg); pg.wait_for_function("typeof ejCache !== 'undefined' && ejCache")
+    pg.evaluate("""() => { const s = () => [{w: false, kg: '', reps: ''}], w = e => ({exercise: e, reps: 10, kg: 20, w: false});
+        db.routines = [{id: 'rp', name: 'Mix', exercises: [{name: 'Aperturas', ejId: 'chest-fly-machine', image: '', sets: s()}, {name: 'Remo', ejId: 'bent-over-row-band', image: '', sets: s()}, {name: 'Press militar', ejId: 'shoulder-press-dumbbell', image: '', sets: s()}]}];
+        db.sessions = [{id: 'x1', date: localDate(), routine: 'Mix', routineId: 'rp', seconds: 600, ts: 2, sets: [w('Aperturas'), w('Remo'), w('Remo'), w('Remo'), w('Press militar'), w('Press militar')]}];
+        render(); }""")
+    tab_perfil(pg); _stats(pg)
+    nombres = pg.locator("#pstats-reparto .rp-fila span").all_text_contents()
+    pct = pg.locator("#pstats-reparto .rp-fila b").all_text_contents()
+    assert nombres == ["Espalda", "Hombro", "Pecho"], nombres
+    assert pct == ["50%", "33%", "17%"], pct
+    flex = pg.locator("#pstats-reparto .rp-seg").evaluate_all("els => els.map(e => +e.style.flexGrow)")
+    assert flex == sorted(flex, reverse=True), f"la barra también va de mayor a menor: {flex}"
 
 @test
 def perfil_pro_en_que_reps_entrenas(pg):

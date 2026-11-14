@@ -688,6 +688,12 @@ function gruposRutina(r) {
 }
 
 // Menú ⋯ de cada rutina: Editar, Duplicar y Borrar (con segundo toque para confirmar)
+// Si un menú desplegable queda tapado por la barra de pestañas, la página se desplaza lo justo para verlo entero
+function verMenuAbierto(sel) {
+  const m = document.querySelector(`${sel} .entry-menu`); if (!m) return;
+  const falta = m.getBoundingClientRect().bottom + 12 - $('tabbar').getBoundingClientRect().top;
+  if (falta > 0) window.scrollBy({ top: falta, behavior: 'smooth' });
+}
 let menuRutina = null;
 const rutinaMenu = id => menuRutina === id
   ? `<div class="entry-menu" role="menu"><button type="button" role="menuitem" data-edit-routine="${id}">Editar</button><button type="button" role="menuitem" data-dup-routine="${id}">Duplicar</button><button type="button" role="menuitem" class="danger" data-del-routine="${id}">Borrar</button></div>` : '';
@@ -907,7 +913,7 @@ $('history-list').addEventListener('click', e => {
   const abre = e.target.closest('[data-open-entreno]');
   if (abre) return abrirEntreno(abre.dataset.openEntreno);
   const dots = e.target.closest('[data-menu]');
-  if (dots) { menuEntry = menuEntry === dots.dataset.menu ? null : dots.dataset.menu; vibrate(6); histQuiet = true; return renderHistory(); }
+  if (dots) { menuEntry = menuEntry === dots.dataset.menu ? null : dots.dataset.menu; vibrate(6); histQuiet = true; renderHistory(); return verMenuAbierto('#history-list'); }
   const more = e.target.closest('[data-toggle-entry]');
   if (more) { const id = more.dataset.toggleEntry; openEntries.has(id) ? openEntries.delete(id) : openEntries.add(id); vibrate(6); histQuiet = true; return renderHistory(); }
   const ed = e.target.closest('[data-edit-session], [data-edit-walk]');
@@ -1028,15 +1034,12 @@ function renderPerfilStats() {
 
   // Series por músculo: las del periodo, y una marca con las del periodo anterior
   const porGrupo = l => l.reduce((o, s) => { const m = musculosDe(s); RADAR.forEach(([k]) => { o[k] = (o[k] || 0) + (m[k] || 0); }); return o; }, {});
-  const GA = porGrupo(act), GP = P ? porGrupo(ant) : null;
+  const GA = porGrupo(act);
   const ORDEN = [['pecho', 'Pecho'], ['hombro', 'Hombro'], ['espalda', 'Espalda'], ['piernas', 'Piernas'], ['brazos', 'Brazos'], ['core', 'Core']];
-  const maxG = Math.max(1, ...ORDEN.map(([k]) => GA[k] || 0), ...(GP ? ORDEN.map(([k]) => GP[k] || 0) : []));
-  const fiable = A.n >= 3 && P && P.n >= 1;
+  const maxG = Math.max(1, ...ORDEN.map(([k]) => GA[k] || 0));
   $('pstats-musc-rango').textContent = rango;
   $('pstats-musc').innerHTML = ORDEN.map(([k, lab]) => { const v = GA[k] || 0, w = Math.round(v / maxG * 100);
-    return `<div class="pm"><div class="pm-h"><span class="pm-n">${lab}</span><b class="pm-v">${v}</b></div><div class="pm-t"><span class="pm-fill" style="width:${w}%"></span>${fiable && GP[k] ? `<span class="pm-prev" style="left:${Math.round(GP[k] / maxG * 100)}%"></span>` : ''}</div></div>`; }).join('');
-  $('pstats-musc-ley').textContent = fiable ? `Marca clara: los ${N} días anteriores` : '';
-  $('pstats-musc-note').hidden = fiable; $('pstats-musc-note').textContent = 'Con tan pocas sesiones todavía no lo marcamos. Compara en cuanto haya más.';
+    return `<div class="pm"><div class="pm-h"><span class="pm-n">${lab}</span><b class="pm-v">${v}</b></div><div class="pm-t"><span class="pm-fill" style="width:${w}%"></span></div></div>`; }).join('');
   renderGraficasPro(act, rango);
 }
 // Gráficas del detalle: reparto, rangos de repeticiones, mejores series y curva carga·reps (todo sobre el periodo elegido)
@@ -1066,7 +1069,7 @@ function renderGraficasPro(act, rango) {
   ['reparto', 'reps', 'top', 'reps-ex'].forEach(k => { $(`pstats-${k}-rango`).textContent = rango; });
   // Reparto muscular: qué parte de las series va a cada grupo
   const g = act.reduce((o, s) => { const m = musculosDe(s); RADAR.forEach(([k]) => { o[k] = (o[k] || 0) + (m[k] || 0); }); return o; }, {});
-  const grupos = [['pecho', 'Pecho'], ['hombro', 'Hombro'], ['espalda', 'Espalda'], ['piernas', 'Piernas'], ['brazos', 'Brazos'], ['core', 'Core']].filter(([k]) => g[k]);
+  const grupos = [['pecho', 'Pecho'], ['hombro', 'Hombro'], ['espalda', 'Espalda'], ['piernas', 'Piernas'], ['brazos', 'Brazos'], ['core', 'Core']].filter(([k]) => g[k]).sort((a, b) => g[b[0]] - g[a[0]]);
   const tot = grupos.reduce((a, [k]) => a + g[k], 0);
   $('pstats-reparto').innerHTML = tot ? `<div class="rp-barra">${grupos.map(([k]) => `<span class="rp-seg" style="flex:${g[k]}"></span>`).join('')}</div>`
     + `<div class="rp-ley">${grupos.map(([k, lab]) => `<div class="rp-fila"><i class="rp-dot"></i><span>${lab}</span><b>${Math.round(g[k] / tot * 100)}%</b></div>`).join('')}</div>` : SIN_DATOS;
@@ -1315,7 +1318,7 @@ document.addEventListener('pointerdown', e => {      // tocar fuera del menú �
 $('routines-list').onclick = e => {
   const start = e.target.closest('[data-start-routine]'), edit = e.target.closest('[data-edit-routine]'), open = e.target.closest('[data-open-routine]');
   const dots = e.target.closest('[data-routine-menu]'), dup = e.target.closest('[data-dup-routine]'), del = e.target.closest('[data-del-routine]');
-  if (dots) { menuRutina = menuRutina === dots.dataset.routineMenu ? null : dots.dataset.routineMenu; vibrate(6); return renderRoutines(true); }
+  if (dots) { menuRutina = menuRutina === dots.dataset.routineMenu ? null : dots.dataset.routineMenu; vibrate(6); renderRoutines(true); return verMenuAbierto('#routines-list'); }
   if (dup) return duplicarRutina(dup.dataset.dupRoutine);
   if (del) return borrarRutinaDelMenu(del);
   if (start) return startWorkout(start.dataset.startRoutine);
