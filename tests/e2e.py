@@ -3392,6 +3392,26 @@ def perfil_cada_entreno_es_una_fila_con_collage_musculos_y_volumen(pg):
     assert otro.locator(".pf-chips-m u").count() == 0, "sin músculos conocidos no hay etiquetas"
     assert "Libre" in otro.inner_text()
 
+GIF = "data:image/gif;base64,R0lGODlhAQABAAAAACw="
+@test
+def perfil_si_el_entreno_tiene_foto_la_fila_enseña_la_foto_y_no_los_ejercicios(pg):
+    seed(pg, sessions=[dict(GRANDE[0], foto=GIF, nota="Día de tirón, buenas sensaciones")]); tab_perfil(pg)
+    f = pg.locator("#pf-grid .pf-card").first
+    assert f.locator(".pf-col img.pf-ent-foto").count() == 1 and f.locator(".pf-col img.pf-ent-foto").get_attribute("src") == GIF
+    assert f.locator(".pf-col .fxi").count() == 0, "en vez del collage de ejercicios"
+    sin = pg.evaluate("(g) => { db.sessions = [Object.assign({}, db.sessions[0], {foto: ''})]; renderPerfilGrid(); return document.querySelectorAll('#pf-grid .pf-col .fxi').length; }", GIF)
+    assert sin >= 1, "sin foto vuelve el collage"
+
+@test
+def entreno_pagina_enseña_la_foto_y_la_descripcion(pg):
+    seed(pg, sessions=[dict(GRANDE[0], foto=GIF, nota="Día de tirón, buenas sensaciones")]); tab_perfil(pg)
+    pg.locator("#pf-grid .pf-card").first.click(); pg.wait_for_timeout(300)
+    assert pg.locator("#entreno-page img.pg-foto").count() == 1 and pg.locator("#entreno-page img.pg-foto").get_attribute("src") == GIF
+    assert "Día de tirón, buenas sensaciones" in pg.inner_text("#entreno-page .pg-nota")
+    seed(pg, sessions=GRANDE); tab_perfil(pg)
+    pg.locator("#pf-grid .pf-card").first.click(); pg.wait_for_timeout(300)
+    assert pg.locator("#entreno-page .pg-foto, #entreno-page .pg-nota").count() == 0, "sin foto ni nota no sale nada"
+
 @test
 def perfil_la_fila_con_menos_de_medio_minuto_no_enseña_cero_minutos(pg):
     seed(pg, sessions=[{"id": "z", "date": "2026-11-01", "routine": "LEG", "seconds": 20, "ts": 1, "sets": [pset("Hip thrust", 100, 10)]}]); tab_perfil(pg)

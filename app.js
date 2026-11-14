@@ -757,6 +757,7 @@ function sessionHtml(s) {
 }
 
 // Página completa de un entreno (como «Detalle de Entrenamiento»): rutina, fecha, stats y cada ejercicio con sus series
+const fotoOk = f => !!f && /^data:image\//.test(f);   // solo fotos guardadas en el propio entreno
 let entrenoAbierto = null;                // id del entreno que muestra la página
 function entrenoPaginaHtml(s) {
   const groups = [];
@@ -770,6 +771,7 @@ function entrenoPaginaHtml(s) {
     <p class="pg-fecha">${esc(fecha)}${s.ts > 1e12 ? `, ${new Date(s.ts).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}` : ''}</p>
     <h2 class="pg-rutina">${esc(s.routine)}</h2>
     <div class="pg-stats">${s.seconds ? stat('Tiempo', durText(s.seconds)) : ''}${stat('Series', s.sets.length)}${vol ? stat('Volumen', `${fmtMiles(vol)} kg`) : ''}</div>
+    ${fotoOk(s.foto) ? `<img class="pg-foto" src="${esc(s.foto)}" alt="Foto del entreno">` : ''}${s.nota ? `<p class="pg-nota">${esc(s.nota)}</p>` : ''}
     <p class="pg-h">Ejercicios</p>
     ${groups.map(g => { let n = 0; return `<section class="pg-ex"><div class="pg-ex-head">${fotoMini({ name: g.name })}<span>${esc(g.name)}</span></div>
       <div class="pg-cols"><span>Serie</span><span>Peso</span><span>Reps</span></div>
@@ -972,7 +974,7 @@ function renderPerfilGrid() {
       const vol = Math.round(s.sets.reduce((a, x) => a + (x.reps || 0) * (x.kg || 0), 0)), m = musculosDe(s);
       const tags = RADAR.filter(([k]) => m[k]).sort((a, b) => m[b[0]] - m[a[0]]).map(([, lab]) => `<u>${lab}</u>`).join('');
       const sub = [whenText(s.date), s.seconds >= 30 ? durCorta(s.seconds) : plural(s.sets.length, 'serie', 'series')].join(' · ');
-      return { date: s.date, ts: s.ts || 0, id: s.id, html: `<button type="button" class="pf-card" data-pf-open="${s.id}" aria-label="Abrir entreno ${esc(s.routine)}"><span class="pf-col n${nombres.length}">${nombres.map(n => fotoMini({ name: n })).join('')}</span><span class="pf-m"><b>${esc(s.routine)}</b><small>${esc(sub)}</small>${tags ? `<span class="pf-chips-m">${tags}</span>` : ''}</span>${vol ? `<span class="pf-v"><b>${fmtMiles(vol)}</b><small>kg</small></span>` : ''}</button>` };
+      return { date: s.date, ts: s.ts || 0, id: s.id, html: `<button type="button" class="pf-card" data-pf-open="${s.id}" aria-label="Abrir entreno ${esc(s.routine)}">${fotoOk(s.foto) ? `<span class="pf-col n1"><img class="pf-ent-foto" src="${esc(s.foto)}" alt="Foto del entreno" loading="lazy"></span>` : `<span class="pf-col n${nombres.length}">${nombres.map(n => fotoMini({ name: n })).join('')}</span>`}<span class="pf-m"><b>${esc(s.routine)}</b><small>${esc(sub)}</small>${tags ? `<span class="pf-chips-m">${tags}</span>` : ''}</span>${vol ? `<span class="pf-v"><b>${fmtMiles(vol)}</b><small>kg</small></span>` : ''}</button>` };
     }),
     ...db.walks.map(w => ({ date: w.date, ts: w.ts || 0, id: w.id, html: `<button type="button" class="pf-card" data-pf-open="${w.id}" aria-label="Abrir caminata"><span class="pf-col n1"><i class="fxi walk">${CAMINA_ICO}</i></span><span class="pf-m"><b>Caminata</b><small>${esc(whenText(w.date))} · ${Math.round(w.seconds / 60)} min</small></span><span class="pf-v"><b>${(w.meters / 1000).toFixed(1).replace('.', ',')}</b><small>km</small></span></button>` })),
   ].sort((a, b) => b.date.localeCompare(a.date) || b.ts - a.ts);
