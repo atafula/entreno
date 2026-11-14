@@ -3316,6 +3316,8 @@ def rutinas_los_musculos_van_en_una_sola_linea_deslizable(pg):
     assert st[0] == "nowrap" and st[1] in ("auto", "scroll"), st
     tops = r.locator("span").evaluate_all("els => [...new Set(els.map(e => e.offsetTop))]")
     assert len(tops) == 1, f"todas en la misma línea: {tops}"
+    mask = r.evaluate("e => getComputedStyle(e).maskImage || getComputedStyle(e).webkitMaskImage")
+    assert "gradient" in mask, f"el final se desvanece en vez de cortarse en seco: {mask}"
 
 @test
 def rutinas_las_tarjetas_muestran_los_dias_que_tocan(pg):
