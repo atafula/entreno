@@ -3365,17 +3365,49 @@ def perfil_el_radar_marca_los_grupos_trabajados(pg):
     assert otro.locator("svg polygon.area").count() == 0
 
 @test
-def perfil_tocar_una_tarjeta_abre_ese_entreno_en_el_historial(pg):
-    seed(pg); pg.wait_for_function("typeof ejCache !== 'undefined' && ejCache")
-    _perfil_muneco(pg)
-    pg.locator("#pf-grid .pf-card").nth(1).click(); pg.wait_for_timeout(400)
-    assert pg.is_visible("#history-list")
-    assert not pg.is_visible("#pf-grid")
-    assert pg.locator("#history-list .hdetail:not([hidden])").count() == 1, "el entreno tocado sale desplegado"
-    assert pg.locator("#history-list .entry").count() == 1 and not pg.locator("#history-list .hmes").count(), "solo ese entreno, sin el resto del historial"
-    assert "Libre" in pg.inner_text("#history-list")
-    pg.click('[data-pview="grid"]'); pg.wait_for_timeout(200)
-    assert pg.is_visible("#pf-grid") and not pg.is_visible("#history-list"), "la pestaña de entrenos vuelve a la cuadrícula"
+def perfil_tocar_una_tarjeta_abre_la_pagina_de_ese_entreno(pg):
+    seed(pg, sessions=GRANDE); pg.wait_for_function("typeof ejCache !== 'undefined' && ejCache")
+    tab_perfil(pg)
+    pg.locator("#pf-grid .pf-card").nth(0).click(); pg.wait_for_timeout(400)
+    assert pg.is_visible("#entreno-page"), "al tocar la tarjeta sale la página completa del entreno"
+    assert pg.locator(".sheet.show").count() == 0, "nada de hoja emergente"
+
+# ---------- Página de detalle de un entreno (como «Detalle de Entrenamiento») ----------
+@test
+def entreno_pagina_muestra_rutina_fecha_tiempo_series_y_ejercicios(pg):
+    seed(pg, sessions=GRANDE); tab(pg, "historial")
+    pg.click("#history-list .htit"); pg.wait_for_timeout(300)
+    assert pg.is_visible("#entreno-page")
+    assert pg.inner_text("#entreno-title").strip() == "Detalle de Entrenamiento"
+    txt = pg.inner_text("#entreno-page")
+    assert "PULL" in txt, "nombre de la rutina"
+    assert "1 de noviembre de 2026" in txt, "fecha larga"
+    assert "1h 2min" in txt and "Tiempo" in txt, "tiempo"
+    assert "Series" in txt and "6" in txt, "número de series"
+    assert "ejercicios" in txt.lower()
+    for nombre in ["Jalón", "Remo", "Curl", "Face pull"]:
+        assert nombre in txt, nombre
+    assert pg.locator("#entreno-page .pg-ex").count() == 4, "un bloque por ejercicio"
+    assert pg.locator("#entreno-page .pg-ex").nth(1).locator(".pg-set").count() == 2
+    assert pg.locator("#entreno-page .pg-set .pg-w").count() == 1, "la serie de calentamiento lleva W"
+    assert "47.3 kg" in txt and "10 reps" in txt, "peso y repeticiones de cada serie"
+    assert pg.locator("#entreno-page .pg-ex img, #entreno-page .pg-ex .fxi").count() >= 4, "miniatura de cada ejercicio"
+
+@test
+def entreno_pagina_se_cierra_con_la_flecha_y_con_escape(pg):
+    seed(pg, sessions=GRANDE); tab(pg, "historial")
+    pg.click("#history-list .htit"); pg.wait_for_timeout(300)
+    pg.click("#entreno-back"); pg.wait_for_timeout(300)
+    assert not pg.is_visible("#entreno-page") and pg.is_visible("#history-list"), "la flecha vuelve al historial"
+    pg.click("#history-list .htit"); pg.wait_for_timeout(300)
+    pg.keyboard.press("Escape"); pg.wait_for_timeout(300)
+    assert not pg.is_visible("#entreno-page"), "Escape cierra la página"
+
+@test
+def entreno_pagina_no_se_abre_al_tocar_una_caminata(pg):
+    seed(pg, sessions=[], walks=[{"id": "w1", "date": "2026-11-01", "seconds": 1800, "meters": 2500, "ts": 1}]); tab(pg, "historial")
+    pg.click("#history-list .htit"); pg.wait_for_timeout(300)
+    assert not pg.is_visible("#entreno-page")
 
 @test
 def perfil_cuadricula_vacia_invita_a_entrenar(pg):

@@ -718,6 +718,22 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; }
 .pe.show { transform: none; visibility: visible; transition: transform var(--d-slow) var(--ease-out), visibility 0s; }
 .pe-head { display: grid; grid-template-columns: var(--tap) 1fr var(--tap); align-items: center; margin-bottom: var(--s4); }
 .pe-head h3 { margin: 0; text-align: center; font: 700 var(--t-lg)/1 var(--ui); }
+/* Detalle de un entreno: rutina grande, stats y cada ejercicio con sus series */
+.htit[data-open-entreno] { cursor: pointer; }
+.pg-user { margin: 0 0 var(--s1); color: var(--muted); font: 500 var(--t-sm)/1.3 var(--ui); }
+.pg-fecha { margin: 0; color: var(--muted); font: 500 var(--t-sm)/1.3 var(--ui); }
+.pg-rutina { margin: var(--s1) 0 var(--s4); font: 700 var(--t-xl)/1.1 var(--display); }
+.pg-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s3); margin-bottom: var(--s6); }
+.pg-stats small { display: block; color: var(--muted); font: 500 var(--t-sm)/1.2 var(--ui); }
+.pg-stats b { font: 700 var(--t-lg)/1.2 var(--ui); }
+.pg-h { margin: 0 0 var(--s3); color: var(--muted); font: 600 var(--t-sm)/1 var(--ui); text-transform: uppercase; letter-spacing: .04em; }
+.pg-ex { margin-bottom: var(--s5); }
+.pg-ex-head { display: flex; align-items: center; gap: var(--s3); margin-bottom: var(--s2); font: 700 var(--t-md)/1.2 var(--ui); }
+.pg-cols, .pg-set { display: grid; grid-template-columns: 3rem 1fr 1fr; align-items: center; gap: var(--s2); padding: var(--s2) 0; font: 500 var(--t-sm)/1.2 var(--ui); }
+.pg-cols { color: var(--muted); border-bottom: 1px solid var(--line); }
+.pg-set { border-bottom: 1px solid var(--line); }
+.pg-set .pg-n { font: 700 var(--t-sm)/1 var(--ui); color: var(--muted); }
+.pg-set .pg-w { color: var(--warn-text); }
 .pe-foto-box { display: flex; flex-direction: column; align-items: center; gap: var(--s3); margin-bottom: var(--s6); }
 .pe-foto { width: 112px; height: 112px; border-radius: var(--r-full); overflow: hidden; display: grid; place-items: center; background: var(--text); color: var(--bg); cursor: pointer; }
 .pe-foto img { width: 100%; height: 100%; object-fit: cover; }

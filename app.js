@@ -746,7 +746,7 @@ function sessionHtml(s) {
   const work = s.sets.length, open = openEntries.has(s.id);
   const stat = (k, v) => `<div><small>${k}</small><b>${v}</b></div>`;
   const rest = Math.max(0, groups.length - 3);
-  return `<div class="entry-head">${fechaBloque(s.date)}<div class="htit"><span class="tag">${esc(s.routine)}</span><span class="hsub"><small title="${esc(s.date)}">${whenText(s.date)}</small>${horaDe(s.ts)}</span></div>${menuBtn('session', s.id)}</div>${entryMenu('session', s.id)}
+  return `<div class="entry-head">${fechaBloque(s.date)}<div class="htit" role="button" tabindex="0" data-open-entreno="${s.id}" aria-label="Ver detalle del entreno ${esc(s.routine)}"><span class="tag">${esc(s.routine)}</span><span class="hsub"><small title="${esc(s.date)}">${whenText(s.date)}</small>${horaDe(s.ts)}</span></div>${menuBtn('session', s.id)}</div>${entryMenu('session', s.id)}
     <div class="hstats">${s.seconds ? stat('Tiempo', durText(s.seconds)) : ''}${vol ? stat('Volumen', `${fmtMiles(vol)} kg`) : ''}${stat('Series', work)}</div>
     ${recordHtml(s, prs)}
     ${s.nota ? `<p class="hnota">${esc(s.nota)}</p>` : ''}${s.foto && /^data:image\//.test(s.foto) ? `<img class="hfoto" src="${esc(s.foto)}" alt="Foto del entreno" loading="lazy">` : ''}
@@ -755,6 +755,38 @@ function sessionHtml(s) {
       `<div class="hset"><span class="hn${x.w ? ' w' : ''}">${x.w ? 'W' : ++n}</span><span>${x.kg ? x.kg + ' kg' : '—'}${prs.includes(g.idx[j]) ? '<i class="pr">PR</i>' : ''}</span><span>${x.reps} reps</span></div>`).join('')}</div>`; }).join('')}</div>
     <button type="button" class="hmore" data-toggle-entry="${s.id}" aria-expanded="${open}">${open ? 'Ver menos' : rest ? `Ver ${rest} ${rest === 1 ? 'ejercicio más' : 'ejercicios más'}` : 'Ver detalle'}</button>`;
 }
+
+// Página completa de un entreno (como «Detalle de Entrenamiento»): rutina, fecha, stats y cada ejercicio con sus series
+let entrenoAbierto = null;                // id del entreno que muestra la página
+function entrenoPaginaHtml(s) {
+  const groups = [];
+  s.sets.forEach(x => { let g = groups.find(g => g.name === x.exercise); if (!g) groups.push(g = { name: x.exercise, sets: [] }); g.sets.push(x); });
+  const vol = Math.round(s.sets.reduce((a, x) => a + (x.reps || 0) * (x.kg || 0), 0));
+  const prs = prMap[s.id] || [];
+  const stat = (k, v) => `<div><small>${k}</small><b>${v}</b></div>`;
+  const quien = ($('perfil-name')?.textContent || '').trim();
+  const fecha = new Date(s.date + 'T12:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+  return `${quien && quien !== 'Tu perfil' ? `<p class="pg-user">${esc(quien)}</p>` : ''}
+    <p class="pg-fecha">${esc(fecha)}${s.ts > 1e12 ? `, ${new Date(s.ts).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}` : ''}</p>
+    <h2 class="pg-rutina">${esc(s.routine)}</h2>
+    <div class="pg-stats">${s.seconds ? stat('Tiempo', durText(s.seconds)) : ''}${stat('Series', s.sets.length)}${vol ? stat('Volumen', `${fmtMiles(vol)} kg`) : ''}</div>
+    <p class="pg-h">Ejercicios</p>
+    ${groups.map(g => { let n = 0; return `<section class="pg-ex"><div class="pg-ex-head">${fotoMini({ name: g.name })}<span>${esc(g.name)}</span></div>
+      <div class="pg-cols"><span>Serie</span><span>Peso</span><span>Reps</span></div>
+      ${g.sets.map(x => `<div class="pg-set"><span class="pg-n${x.w ? ' pg-w' : ''}">${x.w ? 'W' : ++n}</span><span>${x.kg ? x.kg + ' kg' : '—'}${prMap[s.id] && prs.includes(s.sets.indexOf(x)) ? '<i class="pr">PR</i>' : ''}</span><span>${x.reps} reps</span></div>`).join('')}
+    </section>`; }).join('')}`;
+}
+function abrirEntreno(id) {
+  const s = db.sessions.find(x => x.id === id);
+  if (!s) return;
+  entrenoAbierto = id;
+  $('entreno-body').innerHTML = entrenoPaginaHtml(s);
+  const pg = $('entreno-page'); pg.classList.add('show'); pg.setAttribute('aria-hidden', 'false'); vibrate(6);
+  pg.scrollTop = 0;
+}
+function cerrarEntreno() { entrenoAbierto = null; const pg = $('entreno-page'); pg.classList.remove('show'); pg.setAttribute('aria-hidden', 'true'); }
+$('entreno-back').onclick = cerrarEntreno;
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && entrenoAbierto) { cerrarEntreno(); e.stopImmediatePropagation(); } }, true);
 
 // Bloque con el día del mes y «hoy», «ayer» o el día de la semana
 function fechaBloque(iso) {
@@ -868,7 +900,10 @@ function cerrarMenus(lista, boton) {
 document.addEventListener('pointerdown', e => {
   if (menuEntry && !e.target.closest('.entry-menu, [data-menu]')) { menuEntry = null; cerrarMenus('#history-list', '[data-menu]'); }
 });
+$('history-list').addEventListener('keydown', e => { const t = e.target.closest('[data-open-entreno]'); if (t && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); abrirEntreno(t.dataset.openEntreno); } });
 $('history-list').addEventListener('click', e => {
+  const abre = e.target.closest('[data-open-entreno]');
+  if (abre) return abrirEntreno(abre.dataset.openEntreno);
   const dots = e.target.closest('[data-menu]');
   if (dots) { menuEntry = menuEntry === dots.dataset.menu ? null : dots.dataset.menu; vibrate(6); histQuiet = true; return renderHistory(); }
   const more = e.target.closest('[data-toggle-entry]');
@@ -953,6 +988,7 @@ function renderPerfilGrid() {
 }
 $('pf-grid').addEventListener('click', e => {
   const b = e.target.closest('[data-pf-open]'); if (!b) return;
+  if (db.sessions.some(s => s.id === b.dataset.pfOpen)) return abrirEntreno(b.dataset.pfOpen);
   openEntries.add(b.dataset.pfOpen); detalleId = b.dataset.pfOpen; perfilVista = 'entrenos'; vibrate(6); renderPerfil(); renderHistory();
   document.querySelector(`[data-toggle-entry="${b.dataset.pfOpen}"]`)?.closest('.entry')?.scrollIntoView({ block: 'start' });
 });
