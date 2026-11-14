@@ -2681,12 +2681,11 @@ def _marcar(pg, i, saltar=True):
     if saltar and pg.is_visible("#rest"): pg.click("#rest-skip")
 
 @test
-def entreno_serie_completa_anima_la_fila_y_el_check(pg):
+def entreno_serie_completa_rellena_el_verde_con_animacion(pg):
     seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
     pg.locator(".wrow .chk").nth(1).click(); pg.wait_for_timeout(100)
     fila = pg.locator(".wrow.done").first
-    assert fila.evaluate("e => getComputedStyle(e).animationName") == "rowdone", "la fila destella al completarse"
-    assert pg.locator(".wrow.done .chk").first.evaluate("e => getComputedStyle(e, '::after').animationName") == "checkring", "el check lanza un aro"
+    assert fila.evaluate("e => getComputedStyle(e).animationName") == "rowfill", "el verde de la fila se rellena con animación"
 
 @test
 def entreno_ultima_serie_pasa_al_siguiente_ejercicio_al_acabar_el_descanso(pg):
