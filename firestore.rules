@@ -10,10 +10,25 @@ service cloud.firestore {
 
     function validUser(d) {
       // 'rutinas' y 'rutinasTs' son del formato antiguo (todas juntas); ahora cada rutina es un documento aparte
-      return d.keys().hasOnly(['rutinas', 'rutinasTs', 'rutinasV2'])
+      return d.keys().hasOnly(['rutinas', 'rutinasTs', 'rutinasV2', 'perfil'])
         && (!('rutinas' in d) || (d.rutinas is list && d.rutinas.size() <= 100))
         && (!('rutinasTs' in d) || d.rutinasTs is number)
-        && (!('rutinasV2' in d) || d.rutinasV2 is bool);
+        && (!('rutinasV2' in d) || d.rutinasV2 is bool)
+        && (!('perfil' in d) || validPerfil(d.perfil));
+    }
+
+    // Perfil de la cuenta (nombre, @usuario, bio, foto de 256 px en base64, sexo, altura)
+    function validPerfil(p) {
+      return p is map
+        && p.keys().hasOnly(['nombre', 'usuario', 'bio', 'foto', 'sexo', 'altura', 'rev', 'upd'])
+        && (!('nombre' in p) || (p.nombre is string && p.nombre.size() <= 40))
+        && (!('usuario' in p) || (p.usuario is string && p.usuario.size() <= 40))
+        && (!('bio' in p) || (p.bio is string && p.bio.size() <= 160))
+        && (!('foto' in p) || (p.foto is string && p.foto.size() <= 200000))
+        && (!('sexo' in p) || p.sexo is string)
+        && (!('altura' in p) || p.altura is number)
+        && (!('rev' in p) || p.rev is number)
+        && (!('upd' in p) || p.upd is number);
     }
 
     function validRutina(d) {
