@@ -51,7 +51,7 @@ def doc_rutina(r, **extra):
 
 def tab(pg, name):
     pg.click(f'[data-tab="tab-{name}"]')
-    if name == "historial": pg.click('[data-pview="entrenos"]')   # la lista detallada (el Perfil abre en la cuadrícula)
+    if name == "historial": pg.evaluate("perfilVista = 'entrenos'; renderPerfil()")   # la lista detallada (se abre al tocar una tarjeta)
 def db(pg): return pg.evaluate("JSON.parse(localStorage['entreno-v1'])")
 def abrir_rutina(pg, id): pg.click(f'[data-open-routine="{id}"]'); pg.wait_for_timeout(100)
 def empezar(pg, id): pg.click(f'#routines-list [data-start-routine="{id}"]')
@@ -3341,7 +3341,8 @@ def perfil_abre_en_una_cuadricula_de_entrenos(pg):
 @test
 def perfil_las_pestañas_son_iconos_con_etiqueta(pg):
     seed(pg)
-    for v, lab in (("grid", "Entrenos"), ("entrenos", "Historial"), ("stats", "Estadísticas")):
+    assert pg.locator("[data-pview]").count() == 2, "solo dos pestañas: entrenos y estadísticas"
+    for v, lab in (("grid", "Entrenos"), ("stats", "Estadísticas")):
         b = pg.locator(f'[data-pview="{v}"]')
         assert b.get_attribute("aria-label") == lab and b.locator("svg").count() == 1, v
         assert b.inner_text().strip() == "", f"{v}: solo icono"
@@ -3358,15 +3359,18 @@ def perfil_el_muneco_marca_los_musculos_trabajados(pg):
     fill = c.locator('svg [data-m="pecho"].on').first.evaluate("e => getComputedStyle(e).fillOpacity")
     base = c.locator('svg [data-m="triceps"]').first.evaluate("e => getComputedStyle(e).fill")
     assert float(fill) > 0.3 and base, (fill, base)
+    assert c.locator("svg .sil").count() >= 2 and c.locator("svg [data-m]").count() >= 30, "muñeco con silueta y muchos músculos dibujados"
 
 @test
 def perfil_tocar_una_tarjeta_abre_ese_entreno_en_el_historial(pg):
     seed(pg); pg.wait_for_function("typeof ejCache !== 'undefined' && ejCache")
     _perfil_muneco(pg)
     pg.locator("#pf-grid .pf-card").nth(1).click(); pg.wait_for_timeout(400)
-    assert pg.get_attribute('[data-pview="entrenos"]', "aria-selected") == "true" and pg.is_visible("#history-list")
+    assert pg.is_visible("#history-list")
     assert not pg.is_visible("#pf-grid")
     assert pg.locator("#history-list .hdetail:not([hidden])").count() == 1, "el entreno tocado sale desplegado"
+    pg.click('[data-pview="grid"]'); pg.wait_for_timeout(200)
+    assert pg.is_visible("#pf-grid") and not pg.is_visible("#history-list"), "la pestaña de entrenos vuelve a la cuadrícula"
 
 @test
 def perfil_cuadricula_vacia_invita_a_entrenar(pg):
