@@ -3533,7 +3533,6 @@ def perfil_resumen_de_7_dias_con_diferencia_con_los_7_anteriores(pg):
     assert "2\nentrenos" in t and "+1" in t, t
     assert "3\nseries" in t, "el calentamiento no cuenta como serie: " + t
     assert "50 min" in t, t
-    assert pg.locator("#pstats-days .d").count() == 7 and pg.locator("#pstats-days .d.on").count() == 2
 
 @test
 def perfil_cambiar_de_periodo(pg):
@@ -3598,11 +3597,10 @@ def perfil_estadisticas_volumen_compara_con_el_periodo_anterior(pg):
     assert "sin comparar" in pg.inner_text("#pstats-vol-cmp")
 
 @test
-def perfil_estadisticas_constancia_cuenta_los_dias_entrenados(pg):
+def perfil_estadisticas_ya_no_tiene_constancia(pg):
     pg.goto(URL); seed(pg, sessions=_ss_stats(pg)); tab(pg, "historial"); _stats(pg)
-    assert "Constancia" in pg.inner_text("#pstats-dias-card")
-    t = pg.inner_text("#pstats-dias-h")
-    assert "2" in t and "días entrenados" in t and "7 días" in t, t
+    assert pg.locator("#pstats-dias-card, #pstats-days, #pstats-dias-h").count() == 0
+    assert "Constancia" not in pg.inner_text("#perfil-stats")
 
 @test
 def perfil_estadisticas_series_por_musculo(pg):
@@ -3617,6 +3615,61 @@ def perfil_estadisticas_series_por_musculo(pg):
     menor = filas.nth(1).locator(".pm-fill").evaluate("e => e.style.width")
     assert mayor == "100%" and menor == "50%", (mayor, menor)
     assert "pocas sesiones" in pg.inner_text("#pstats-musc-note")
+
+def _ss_pro(pg):
+    return [_ps(off(pg, 0), "p1", [("Press", 60, 5), ("Press", 50, 8), ("Press", 40, 12), ("Press", 20, 10, True), ("Remo", 30, 10), ("Sentadilla", 80, 3)], 3000),
+            _ps(off(pg, -2), "p2", [("Press", 62.5, 5), ("Curl", 15, 15), ("Curl", 15, 20)], 1500)]
+
+@test
+def perfil_pro_reparto_muscular_en_porcentaje(pg):
+    seed(pg); pg.wait_for_function("typeof ejCache !== 'undefined' && ejCache")
+    _perfil_muneco(pg); _stats(pg)
+    t = pg.inner_text("#pstats-reparto")
+    assert "Reparto muscular" in pg.inner_text("#pstats-reparto-card")
+    assert "Pecho" in t and "67%" in t and "Hombro" in t and "33%" in t, t
+    assert pg.locator("#pstats-reparto .rp-seg").count() == 2, "un tramo por grupo trabajado"
+    assert "Espalda" not in t, "los grupos sin series no salen"
+
+@test
+def perfil_pro_en_que_reps_entrenas(pg):
+    pg.goto(URL); seed(pg, sessions=_ss_pro(pg)); tab(pg, "historial"); _stats(pg)
+    filas = pg.locator("#pstats-reps .rr")
+    assert filas.count() == 4
+    assert filas.locator(".rr-n").all_text_contents() == ["1–5", "6–10", "11–15", "16+"]
+    assert filas.locator(".rr-p").all_text_contents() == ["38%", "25%", "25%", "13%"], "el calentamiento no cuenta"
+
+@test
+def perfil_pro_tus_mejores_series(pg):
+    pg.goto(URL); seed(pg, sessions=_ss_pro(pg)); tab(pg, "historial"); _stats(pg)
+    filas = pg.locator("#pstats-top .tp")
+    assert 1 <= filas.count() <= 5
+    t = pg.inner_text("#pstats-top")
+    assert "62,5 kg × 5" in t, "la mejor serie de Press"
+    assert t.count("Press") == 1, "cada ejercicio una vez"
+    assert "80 kg × 3" in t and "Sentadilla" in t
+
+@test
+def perfil_pro_curva_carga_y_reps_de_un_ejercicio(pg):
+    pg.goto(URL); seed(pg, sessions=_ss_pro(pg)); tab(pg, "historial"); _stats(pg)
+    assert pg.input_value("#pstats-ex-sel") == "Press", "por defecto el más entrenado"
+    assert pg.locator("#pstats-curva svg .cv-p").count() == 3, "una marca por cada número de reps (5, 8 y 12)"
+    assert pg.locator("#pstats-curva svg .cv-l").count() == 1
+    pg.select_option("#pstats-ex-sel", "Curl"); pg.wait_for_timeout(150)
+    assert pg.locator("#pstats-curva svg .cv-p").count() == 2
+
+@test
+def perfil_pro_en_que_reps_lo_haces_sigue_al_ejercicio(pg):
+    pg.goto(URL); seed(pg, sessions=_ss_pro(pg)); tab(pg, "historial"); _stats(pg)
+    assert "Press" in pg.inner_text("#pstats-reps-ex-card")
+    assert pg.locator("#pstats-reps-ex .rr-p").all_text_contents() == ["50%", "25%", "25%", "0%"]
+    pg.select_option("#pstats-ex-sel", "Curl"); pg.wait_for_timeout(150)
+    assert pg.locator("#pstats-reps-ex .rr-p").all_text_contents() == ["0%", "0%", "50%", "50%"]
+
+@test
+def perfil_pro_sin_entrenos_dice_que_no_hay_datos(pg):
+    seed(pg, sessions=[]); tab(pg, "historial"); _stats(pg)
+    for sel in ("#pstats-reparto", "#pstats-reps", "#pstats-top", "#pstats-curva", "#pstats-reps-ex"):
+        assert "Sin datos" in pg.inner_text(sel), sel
 
 @test
 def perfil_sin_entrenos_en_el_periodo(pg):

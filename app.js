@@ -926,7 +926,7 @@ $('history-list').addEventListener('click', e => {
 });
 // ---------- Perfil: cuenta de Google arriba; debajo, los entrenos o las estadísticas ----------
 let detalleId = null;                      // entreno abierto desde la cuadrícula: la lista enseña solo ese
-let perfilVista = 'grid', periodo = 7;
+let perfilVista = 'grid', periodo = 7, exSel = '';
 const durCorta = sec => { const m = Math.round(sec / 60); return m >= 60 ? `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ''}` : `${m} min`; };
 const fuerza = x => e1rm(x.kg || 0, x.reps || 0) || (x.reps || 0) / 1000;   // sin peso: manda el número de reps
 function renderPerfil() {
@@ -998,7 +998,7 @@ function renderPerfilStats() {
   const A = medir(act), P = ant && medir(ant);
   const dif = (a, b, fmt = v => v) => { if (!P) return ''; const d = a - b; return `<em class="${d > 0 ? 'up' : d < 0 ? 'down' : ''}">${d > 0 ? '+' : d < 0 ? '−' : '='}${d ? fmt(Math.abs(d)) : ''}</em>`; };
   const et = iso => { const d = new Date(iso + 'T12:00:00'); return `${d.getDate()} ${MESES[d.getMonth()].slice(0, 3)}`; };
-  const rango = N ? `${et(ini)} – ${et(hoy)}` : 'Desde el primer entreno', cuanto = N ? `en los últimos ${N} días` : 'en total';
+  const rango = N ? `${et(ini)} – ${et(hoy)}` : 'Desde el primer entreno';
   $('pstats-title').textContent = N ? `Cómo vas en los últimos ${N} días` : 'Cómo vas desde el principio';
   $('pstats-rango').textContent = rango + (P ? ` · frente a los ${N} días anteriores` : '');
   const card = (v, lab, d) => `<div class="pf-n"><b>${v}</b><span>${lab}</span>${d}</div>`;
@@ -1026,15 +1026,6 @@ function renderPerfilStats() {
   $('pstats-vol-bars').className = `pf-bars c${cubos.length}`;
   $('pstats-vol-bars').innerHTML = cubos.map((c, k) => `<span class="vb${vals[k] ? ' on' : ''}" title="${c.a}"><span class="vb-t"><span class="vb-f" style="height:${Math.round(vals[k] / max * 100)}%"></span></span>${c.lab ? `<i>${c.lab}</i>` : ''}</span>`).join('');
 
-  // Constancia: días entrenados, con una casilla por día (hasta 90)
-  const dias = new Set(act.map(s => s.date));
-  $('pstats-dias-rango').textContent = rango;
-  $('pstats-dias-h').innerHTML = `<b>${dias.size}</b> ${dias.size === 1 ? 'día entrenado' : 'días entrenados'} <small>${cuanto}</small>`;
-  const casillas = N && N <= 90 ? [...Array(N)].map((_, k) => localDate(masDias(new Date(), k - N + 1))) : [];
-  $('pstats-days').className = `pf-days${N === 7 ? ' wk' : ''}`;
-  $('pstats-days').innerHTML = casillas.map(f => `<span class="d${dias.has(f) ? ' on' : ''}${f === hoy ? ' hoy' : ''}" title="${f}">${N === 7 ? `<i>${DIAS_LETRA[diaSemana(new Date(f + 'T12:00:00'))]}</i>` : ''}</span>`).join('');
-  $('pstats-days').hidden = !casillas.length;
-
   // Series por músculo: las del periodo, y una marca con las del periodo anterior
   const porGrupo = l => l.reduce((o, s) => { const m = musculosDe(s); RADAR.forEach(([k]) => { o[k] = (o[k] || 0) + (m[k] || 0); }); return o; }, {});
   const GA = porGrupo(act), GP = P ? porGrupo(ant) : null;
@@ -1046,7 +1037,57 @@ function renderPerfilStats() {
     return `<div class="pm"><div class="pm-h"><span class="pm-n">${lab}</span><b class="pm-v">${v}</b></div><div class="pm-t"><span class="pm-fill" style="width:${w}%"></span>${fiable && GP[k] ? `<span class="pm-prev" style="left:${Math.round(GP[k] / maxG * 100)}%"></span>` : ''}</div></div>`; }).join('');
   $('pstats-musc-ley').textContent = fiable ? `Marca clara: los ${N} días anteriores` : '';
   $('pstats-musc-note').hidden = fiable; $('pstats-musc-note').textContent = 'Con tan pocas sesiones todavía no lo marcamos. Compara en cuanto haya más.';
+  renderGraficasPro(act, rango);
 }
+// Gráficas del detalle: reparto, rangos de repeticiones, mejores series y curva carga·reps (todo sobre el periodo elegido)
+const RANGOS_REPS = [['1–5', 1, 5], ['6–10', 6, 10], ['11–15', 11, 15], ['16+', 16, 999]];
+const kgTxt = x => x.kg ? `${String(x.kg).replace('.', ',')} kg × ${x.reps}` : `${x.reps} reps`;
+const SIN_DATOS = '<p class="pf-vacio">Sin datos en este periodo.</p>';
+function rangosHtml(sets) {
+  const w = sets.filter(x => !x.w && x.reps > 0), tot = w.length;
+  if (!tot) return SIN_DATOS;
+  return RANGOS_REPS.map(([lab, a, b]) => { const p = Math.round(w.filter(x => x.reps >= a && x.reps <= b).length / tot * 100);
+    return `<div class="rr"><span class="rr-n">${lab}</span><span class="rr-t"><span style="width:${p}%"></span></span><b class="rr-p">${p}%</b></div>`; }).join('');
+}
+function curvaHtml(sets) {
+  const mejor = new Map();
+  sets.forEach(x => { if (!x.w && x.reps > 0 && x.kg > 0 && (mejor.get(x.reps) || 0) < x.kg) mejor.set(x.reps, x.kg); });
+  const pts = [...mejor.entries()].sort((a, b) => a[0] - b[0]);
+  if (!pts.length) return SIN_DATOS;
+  const W = 300, H = 150, L = 34, R = 10, T = 10, B = 24, minR = pts[0][0], maxR = pts[pts.length - 1][0], maxK = Math.max(...pts.map(p => p[1]));
+  const X = r => pts.length === 1 ? (L + W - R) / 2 : L + (r - minR) / (maxR - minR) * (W - R - L), Y = k => T + (1 - k / maxK) * (H - T - B);
+  const grid = [0, .5, 1].map(f => `<line class="cv-g" x1="${L}" x2="${W - R}" y1="${Y(maxK * f).toFixed(1)}" y2="${Y(maxK * f).toFixed(1)}"/><text class="cv-t" x="${L - 4}" y="${(Y(maxK * f) + 3).toFixed(1)}" text-anchor="end">${Math.round(maxK * f)}</text>`).join('');
+  const d = pts.map(([r, k], i) => `${i ? 'L' : 'M'}${X(r).toFixed(1)} ${Y(k).toFixed(1)}`).join(' ');
+  const marcas = pts.map(([r, k]) => `<circle class="cv-p" cx="${X(r).toFixed(1)}" cy="${Y(k).toFixed(1)}" r="4"/><text class="cv-t" x="${X(r).toFixed(1)}" y="${H - 8}" text-anchor="middle">${r}</text>`).join('');
+  return `<svg class="curva" viewBox="0 0 ${W} ${H}" role="img" aria-label="Peso máximo según repeticiones">${grid}<path class="cv-l" d="${d}"/>${marcas}</svg><p class="pf-leyenda">Peso (kg) según repeticiones</p>`;
+}
+function renderGraficasPro(act, rango) {
+  const sets = act.flatMap(s => s.sets), trabajo = sets.filter(x => !x.w);
+  ['reparto', 'reps', 'top', 'reps-ex'].forEach(k => { $(`pstats-${k}-rango`).textContent = rango; });
+  // Reparto muscular: qué parte de las series va a cada grupo
+  const g = act.reduce((o, s) => { const m = musculosDe(s); RADAR.forEach(([k]) => { o[k] = (o[k] || 0) + (m[k] || 0); }); return o; }, {});
+  const grupos = [['pecho', 'Pecho'], ['hombro', 'Hombro'], ['espalda', 'Espalda'], ['piernas', 'Piernas'], ['brazos', 'Brazos'], ['core', 'Core']].filter(([k]) => g[k]);
+  const tot = grupos.reduce((a, [k]) => a + g[k], 0);
+  $('pstats-reparto').innerHTML = tot ? `<div class="rp-barra">${grupos.map(([k]) => `<span class="rp-seg" style="flex:${g[k]}"></span>`).join('')}</div>`
+    + `<div class="rp-ley">${grupos.map(([k, lab]) => `<div class="rp-fila"><i class="rp-dot"></i><span>${lab}</span><b>${Math.round(g[k] / tot * 100)}%</b></div>`).join('')}</div>` : SIN_DATOS;
+  $('pstats-reps').innerHTML = rangosHtml(sets);
+  // Mejores series: la mejor de cada ejercicio, de más a menos fuerte
+  const mejores = new Map();
+  trabajo.forEach(x => { if ((x.kg || x.reps) && (!mejores.has(x.exercise) || fuerza(x) > fuerza(mejores.get(x.exercise)))) mejores.set(x.exercise, x); });
+  const top = [...mejores.entries()].sort((a, b) => fuerza(b[1]) - fuerza(a[1])).slice(0, 5);
+  $('pstats-top').innerHTML = top.length ? top.map(([n, x]) => `<div class="tp"><b>${esc(n)}</b><em>${kgTxt(x)}</em></div>`).join('') : SIN_DATOS;
+  // Un ejercicio a elegir (por defecto el que más series tiene) para la curva y sus rangos
+  const cuenta = new Map(); trabajo.forEach(x => cuenta.set(x.exercise, (cuenta.get(x.exercise) || 0) + 1));
+  const nombres = [...cuenta.entries()].sort((a, b) => b[1] - a[1]).map(([n]) => n);
+  if (!nombres.includes(exSel)) exSel = nombres[0] || '';
+  $('pstats-ex-sel').innerHTML = nombres.map(n => `<option value="${esc(n)}"${n === exSel ? ' selected' : ''}>${esc(n)}</option>`).join('');
+  $('pstats-ex-sel').closest('.pf-sel').hidden = !nombres.length;
+  const delEj = sets.filter(x => x.exercise === exSel);
+  $('pstats-curva').innerHTML = nombres.length ? curvaHtml(delEj) : SIN_DATOS;
+  $('pstats-reps-ex-h').textContent = exSel ? `En qué reps haces ${exSel}` : 'En qué reps lo haces';
+  $('pstats-reps-ex').innerHTML = nombres.length ? rangosHtml(delEj) : SIN_DATOS;
+}
+$('pstats-ex-sel').onchange = e => { exSel = e.target.value; vibrate(6); renderPerfilStats(); };
 $('pstats-vol-sel').onchange = () => { vibrate(6); renderPerfilStats(); };
 document.querySelectorAll('[data-pview]').forEach(b => b.onclick = () => { if (perfilVista === b.dataset.pview) return; perfilVista = b.dataset.pview; detalleId = null; vibrate(6); renderPerfil(); renderHistory(); });
 document.querySelectorAll('[data-periodo]').forEach(b => b.onclick = () => { periodo = +b.dataset.periodo; vibrate(6); renderPerfilStats(); });
