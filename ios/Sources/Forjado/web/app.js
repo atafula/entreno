@@ -971,7 +971,7 @@ function renderPerfilGrid() {
       const nombres = [...new Set(s.sets.map(x => x.exercise))].slice(0, 4);
       const vol = Math.round(s.sets.reduce((a, x) => a + (x.reps || 0) * (x.kg || 0), 0)), m = musculosDe(s);
       const tags = RADAR.filter(([k]) => m[k]).sort((a, b) => m[b[0]] - m[a[0]]).map(([, lab]) => `<u>${lab}</u>`).join('');
-      const sub = [whenText(s.date), s.seconds ? durCorta(s.seconds) : plural(s.sets.length, 'serie', 'series')].join(' · ');
+      const sub = [whenText(s.date), s.seconds >= 30 ? durCorta(s.seconds) : plural(s.sets.length, 'serie', 'series')].join(' · ');
       return { date: s.date, ts: s.ts || 0, id: s.id, html: `<button type="button" class="pf-card" data-pf-open="${s.id}" aria-label="Abrir entreno ${esc(s.routine)}"><span class="pf-col n${nombres.length}">${nombres.map(n => fotoMini({ name: n })).join('')}</span><span class="pf-m"><b>${esc(s.routine)}</b><small>${esc(sub)}</small>${tags ? `<span class="pf-chips-m">${tags}</span>` : ''}</span>${vol ? `<span class="pf-v"><b>${fmtMiles(vol)}</b><small>kg</small></span>` : ''}</button>` };
     }),
     ...db.walks.map(w => ({ date: w.date, ts: w.ts || 0, id: w.id, html: `<button type="button" class="pf-card" data-pf-open="${w.id}" aria-label="Abrir caminata"><span class="pf-col n1"><i class="fxi walk">${CAMINA_ICO}</i></span><span class="pf-m"><b>Caminata</b><small>${esc(whenText(w.date))} · ${Math.round(w.seconds / 60)} min</small></span><span class="pf-v"><b>${(w.meters / 1000).toFixed(1).replace('.', ',')}</b><small>km</small></span></button>` })),

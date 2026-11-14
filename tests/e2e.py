@@ -3391,6 +3391,28 @@ def perfil_cada_entreno_es_una_fila_con_collage_musculos_y_volumen(pg):
     assert "Libre" in otro.inner_text()
 
 @test
+def perfil_la_fila_con_menos_de_medio_minuto_no_enseña_cero_minutos(pg):
+    seed(pg, sessions=[{"id": "z", "date": "2026-11-01", "routine": "LEG", "seconds": 20, "ts": 1, "sets": [pset("Hip thrust", 100, 10)]}]); tab_perfil(pg)
+    t = pg.inner_text("#pf-grid")
+    assert "0 min" not in t and "1 serie" in t, t
+
+@test
+def perfil_muchas_etiquetas_se_desvanecen_y_no_se_salen_de_la_fila(pg):
+    seed(pg); pg.wait_for_function("typeof ejCache !== 'undefined' && ejCache")
+    pg.evaluate("""() => { const s = () => [{w: false, kg: '', reps: ''}];
+        const ex = [['Aperturas','chest-fly-machine'],['Press militar','shoulder-press-dumbbell'],['Curl','bicep-curl-dumbbell'],['Sentadilla','squat-barbell'],['Remo','seated-row-cable'],['Crunch','crunch']];
+        db.routines = [{id: 'rg', name: 'Todo', exercises: ex.map(([name, ejId]) => ({name, ejId, image: '', sets: s()}))}];
+        db.sessions = [{id: 'sg', date: localDate(), routine: 'Todo', routineId: 'rg', seconds: 0, ts: 2, sets: ex.map(([exercise]) => ({exercise, reps: 10, kg: 0, w: false}))}];
+        render(); }""")
+    tab_perfil(pg)
+    c = pg.locator("#pf-grid .pf-card").first
+    assert c.locator(".pf-chips-m u").count() >= 4
+    r = c.evaluate("""e => { const ch = e.querySelector('.pf-chips-m'), b = e.getBoundingClientRect(), k = ch.getBoundingClientRect(), cs = getComputedStyle(ch);
+        return {dentro: k.right <= b.right + .5, sobra: ch.scrollWidth > ch.clientWidth, mask: cs.maskImage || cs.webkitMaskImage}; }""")
+    assert r["dentro"], "las etiquetas no salen de la tarjeta"
+    assert r["sobra"] and "gradient" in r["mask"], f"si no caben, se desvanecen por la derecha: {r}"
+
+@test
 def perfil_la_fila_sin_duracion_no_enseña_cero_minutos(pg):
     seed(pg, sessions=[{"id": "z", "date": "2026-11-01", "routine": "LEG", "seconds": 0, "ts": 1, "sets": [pset("Hip thrust", 100, 10)]}]); tab_perfil(pg)
     t = pg.inner_text("#pf-grid")
