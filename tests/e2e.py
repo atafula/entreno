@@ -376,6 +376,17 @@ def sync_cambio_de_cuenta_limpia_lo_local(pg):
     assert pg.evaluate("localStorage.getItem('entreno-uid')") == "U2"
 
 @test
+def sync_cambio_de_cuenta_cambia_el_perfil(pg):
+    seed(pg, fb={"uid": "U2"}, prev_uid="U1", meta={"perfil": {"nombre": "Tafula", "usuario": "tafula", "bio": "vieja", "foto": GIF}})
+    iniciar_sesion(pg)
+    assert pg.evaluate("localStorage.getItem('entreno-uid')") == "U2"
+    tab(pg, "historial")
+    assert pg.inner_text("#perfil-name") == "Adrián Prueba", pg.inner_text("#perfil-name")
+    assert pg.inner_text("#perfil-sub") == "yo@ejemplo.com", pg.inner_text("#perfil-sub")
+    p = db(pg).get("perfil") or {}
+    assert not p.get("nombre") and not p.get("usuario") and not p.get("bio") and not p.get("foto"), p
+
+@test
 def sync_rutina_nueva_sube_a_la_nube(pg):
     seed(pg, fb={"logged": True}); tab(pg, "rutinas")
     pg.click("#new-routine"); pg.fill("#routine-name", "LEG")

@@ -155,7 +155,7 @@ function stopListen() { rootLeido = false; leidas = new Set(); unsubs.forEach(u 
     if (!user) { stopListen(); rootLeido = false; return; }                  // al cerrar sesión se sigue en local
     const prev = lsGet(UID_KEY);
     if (prev && prev !== user.uid) {                      // otra cuenta: no mezclar datos
-      db.routines = []; db.sessions = []; db.walks = []; db.routineSigs = {};
+      db.routines = []; db.sessions = []; db.walks = []; db.routineSigs = {}; db.perfil = {};
       db.deleted = { sesiones: [], caminatas: [], rutinas: [] }; db.syncedIds = { sesiones: [], caminatas: [], rutinas: [] };
       cloudIds = { sesiones: new Map(), caminatas: new Map(), rutinas: new Map() }; rootLeido = false; nubeV2 = false; leidas = new Set();
       saveLocal(); render();
