@@ -909,20 +909,34 @@ function renderPerfil() {
   if (perfilVista === 'stats') renderPerfilStats();
 }
 // Muñeco de frente y de espalda: cada músculo es una forma con data-m; los trabajados se encienden según sus series
-// Stick man: cada segmento es un palo; los de un músculo trabajado se encienden según sus series
-const PALOS = {   // segmento → [x1, y1, x2, y2, grosor]; los pares se dibujan en espejo
-  hombro: [[50, 31, 29, 33, 6], [50, 31, 71, 33, 6]],
-  pecho: [[50, 35, 50, 50, 13]],
-  abdomen: [[50, 54, 50, 68, 10]],
-  brazo: [[29, 33, 24, 52, 6], [71, 33, 76, 52, 6]],
-  antebrazo: [[24, 52, 20, 72, 5], [76, 52, 80, 72, 5]],
-  muslo: [[48, 70, 38, 92, 8], [52, 70, 62, 92, 8]],
-  gemelo: [[38, 92, 36, 114, 6], [62, 92, 64, 114, 6]],
+// Solo se dibuja el lado izquierdo (x de 0 a 30); el derecho es su espejo
+const SILUETA = 'M26 15 L26 19 Q15 20 10 24 Q5 28 4 40 L2 58 L1 64 L6 64 L8 58 L11 46 L14 40 L15 60 Q14 72 15 86 L16 112 L25 112 L27 90 L29.5 72';
+const MUSCULOS = {
+  hombro: ['M14 21 Q8 22 6 30 L11 33 Q13 28 16 26 Z'],
+  pecho: ['M17 25 Q24 23 29.5 26 L29.5 38 Q22 41 16 36 Q15 30 17 25 Z'],
+  biceps: ['M6 31 L11 34 Q12 42 10 47 L5 47 Q4 38 6 31 Z'],
+  antebrazo: ['M4.5 49 L10 49 L9 62 L3 62 Z'],
+  abdomen: ['M23 40 L29.5 40 L29.5 63 Q25 64 24 62 Q22 52 23 40 Z'],
+  cuadriceps: ['M15.5 64 Q23 62 29 66 L28 90 Q22 94 17 89 Q14 76 15.5 64 Z'],
+  aductor: ['M29.2 68 L29.5 70 L29.5 88 L27 88 Z'],
+  gemelo: ['M17 94 L25 94 L24 111 L18.5 111 Z'],
 };
+const MUSCULOS_ESP = {
+  trapecio: ['M23 17 Q29.5 14 29.5 14 L29.5 31 Q25 29 23 25 Z'],
+  hombro: ['M14 21 Q8 22 6 30 L11 33 Q13 28 16 26 Z'],
+  espalda: ['M15 27 L26 31 L28 50 L19 47 Q14 38 15 27 Z'],
+  triceps: ['M6 31 L11 34 Q12 42 10 47 L5 47 Q4 38 6 31 Z'],
+  lumbar: ['M24 51 L29.5 51 L29.5 62 L25 62 Z'],
+  gluteo: ['M16 64 Q23 62 29.5 66 L29.5 80 Q21 83 15.5 78 Z'],
+  isquio: ['M16 82 L29 83 L26 99 Q21 101 18 97 Z'],
+  gemelo: ['M17 101 L25 101 L24 112 L18.5 112 Z'],
+};
+// Espeja un trazo (solo M, L, Q y Z con coordenadas absolutas) respecto al eje x = 30
+const espejo = d => d.replace(/(-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)/g, (_, x, y) => `${(60 - x).toFixed(1)} ${y}`);
 const MUSCULO_DE = {
-  'Chest': 'pecho', 'Shoulders': 'hombro', 'Biceps': 'brazo', 'Triceps': 'brazo', 'Forearms': 'antebrazo', 'Abdominals': 'abdomen',
-  'Quadriceps': 'muslo', 'Adductors': 'muslo', 'Abductors': 'muslo', 'Calves': 'gemelo', 'Glutes': 'muslo', 'Hamstrings': 'muslo',
-  'Lats': 'pecho', 'Upper Back': 'pecho', 'Traps': 'hombro', 'Neck': 'hombro', 'Lower Back': 'abdomen',
+  'Chest': 'pecho', 'Shoulders': 'hombro', 'Biceps': 'biceps', 'Triceps': 'triceps', 'Forearms': 'antebrazo', 'Abdominals': 'abdomen',
+  'Quadriceps': 'cuadriceps', 'Adductors': 'aductor', 'Abductors': 'gluteo', 'Calves': 'gemelo', 'Glutes': 'gluteo', 'Hamstrings': 'isquio',
+  'Lats': 'espalda', 'Upper Back': 'espalda', 'Traps': 'trapecio', 'Neck': 'trapecio', 'Lower Back': 'lumbar',
 };
 // Series por músculo de un entreno: el ejercicio se busca en la rutina del entreno (o en cualquiera) y de ahí en el catálogo
 function musculosDe(s) {
@@ -940,8 +954,12 @@ function musculosDe(s) {
 }
 function cuerpoSvg(m) {
   const max = Math.max(1, ...Object.values(m));
-  const palos = Object.entries(PALOS).map(([k, ls]) => ls.map(([x1, y1, x2, y2, w]) => `<line data-m="${k}"${m[k] ? ` class="on" style="--i:${(m[k] / max).toFixed(2)}"` : ''} x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke-width="${w}"/>`).join('')).join('');
-  return `<svg class="cuerpo" viewBox="0 0 100 120" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><circle class="sil" cx="50" cy="14" r="9"/>${palos}</svg>`;
+  const fig = (mapa, dx) => {
+    const sil = `<path class="sil" d="${SILUETA}"/><path class="sil" d="${espejo(SILUETA)}"/><circle class="sil" cx="30" cy="8.5" r="6"/>`;
+    const ms = Object.entries(mapa).map(([k, ps]) => ps.flatMap(d => [d, espejo(d)]).map(d => `<path data-m="${k}"${m[k] ? ` class="on" style="--i:${(m[k] / max).toFixed(2)}"` : ''} d="${d}"/>`).join('')).join('');
+    return `<g transform="translate(${dx} 0)">${sil}${ms}</g>`;
+  };
+  return `<svg class="cuerpo" viewBox="0 0 130 116" preserveAspectRatio="xMidYMid meet" aria-hidden="true">${fig(MUSCULOS, 0)}${fig(MUSCULOS_ESP, 70)}</svg>`;
 }
 function renderPerfilGrid() {
   const g = $('pf-grid');

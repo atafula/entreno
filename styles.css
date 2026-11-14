@@ -794,6 +794,6 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; }
 .pf-card .pf-pie { display: flex; justify-content: space-between; gap: var(--s2); color: var(--muted); font: 700 var(--t-sm)/1.2 var(--ui); }
 .pf-card .pf-pie span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pf-vacio-g { grid-column: 1 / -1; }
-.cuerpo [data-m] { stroke: var(--muted); stroke-opacity: .35; stroke-linecap: round; }
-.cuerpo [data-m].on { stroke: var(--accent); stroke-opacity: calc(.4 + .6 * var(--i, 1)); }
-.cuerpo .sil { fill: none; stroke: var(--text); stroke-opacity: .8; stroke-width: 2.4; }
+.cuerpo [data-m] { fill: var(--surface-3); stroke: var(--text); stroke-opacity: .6; stroke-width: .45; stroke-linejoin: round; }
+.cuerpo [data-m].on { fill: var(--accent); fill-opacity: calc(.35 + .65 * var(--i, 1)); stroke-opacity: .85; }
+.cuerpo .sil { fill: none; stroke: var(--text); stroke-opacity: .75; stroke-width: .7; stroke-linejoin: round; stroke-linecap: round; }
