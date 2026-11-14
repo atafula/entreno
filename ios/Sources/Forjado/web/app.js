@@ -406,7 +406,7 @@ function renderNext() {
     return `<div class="nx-row">
       <div class="nx-l">
         <b class="nx-name">${esc(r.name)}</b>
-        <p class="nx-meta">${plural(r.exercises.length, 'ejercicio', 'ejercicios')} · ${plural(sets, 'serie', 'series')} · ${last ? whenText(last) : 'Sin estrenar'}</p>
+        <p class="nx-meta">${plural(r.exercises.length, 'ejercicio', 'ejercicios')} · ${plural(sets, 'serie', 'series')} ${last ? '' : ' · Sin estrenar'}</p>
         ${grupos.length ? `<div class="rtags">${grupos.map(g => `<span>${esc(g)}</span>`).join('')}</div>` : ''}
       </div>
       <button type="button" class="play" data-start-next="${r.id}" aria-label="Comenzar ${esc(r.name)}">${PLAY_ICO}</button>
@@ -419,7 +419,7 @@ function renderNext() {
     <div class="nx-l">
       <p class="lab">${plan ? 'Toca hoy' : 'Siguiente rutina'}</p>
       <b class="nx-name">${esc(r.name)}</b>
-      <p class="nx-meta">${plural(r.exercises.length, 'ejercicio', 'ejercicios')} · ${plural(sets, 'serie', 'series')} · ${last ? whenText(last) : 'Sin estrenar'}</p>
+      <p class="nx-meta">${plural(r.exercises.length, 'ejercicio', 'ejercicios')} · ${plural(sets, 'serie', 'series')} ${last ? '' : ' · Sin estrenar'}</p>
       ${grupos.length ? `<div class="rtags">${grupos.map(g => `<span>${esc(g)}</span>`).join('')}</div>` : ''}
     </div>
     <button type="button" class="play" data-start-next="${r.id}" aria-label="Comenzar ${esc(r.name)}">${PLAY_ICO}</button>`;
@@ -694,12 +694,12 @@ const rutinaMenu = id => menuRutina === id
 const rutinaMenuBtn = id => `<button type="button" class="more-btn" data-routine-menu="${id}" aria-label="Más opciones" aria-expanded="${menuRutina === id}">${DOTS_ICO}</button>`;
 function rutinaCard(r, feat) {
   const sets = r.exercises.reduce((n, e) => n + e.sets.length, 0), last = ultimaVez(r), grupos = gruposRutina(r);
-  const cuando = last ? whenText(last) : 'Sin estrenar', dias = diasTexto(r);
+  const cuando = last ? '' : 'Sin estrenar', dias = diasTexto(r);
   const tags = grupos.length ? `<div class="rtags">${grupos.map(g => `<span>${esc(g)}</span>`).join('')}</div>` : '';
   if (!feat) return `
     <div class="card routine mini">
       <button type="button" class="rhead" data-open-routine="${r.id}" aria-label="Abrir ${esc(r.name)}">
-        <span class="rtitle"><b>${esc(r.name)}</b><small>${plural(r.exercises.length, 'ejercicio', 'ejercicios')} · ${plural(sets, 'serie', 'series')} · ${cuando}${dias ? ` · ${dias}` : ''}</small></span>
+        <span class="rtitle"><b>${esc(r.name)}</b><small>${plural(r.exercises.length, 'ejercicio', 'ejercicios')} · ${plural(sets, 'serie', 'series')}${[cuando, dias].filter(Boolean).map(x => ` · ${x}`).join('')}</small></span>
       </button>
       ${rutinaMenuBtn(r.id)}
       <button type="button" class="play" data-start-routine="${r.id}" aria-label="Comenzar ${esc(r.name)}">${PLAY_ICO}</button>
@@ -712,7 +712,7 @@ function rutinaCard(r, feat) {
     <div class="card routine feat">
       <div class="rtop"><span class="badge">Siguiente</span>${rutinaMenuBtn(r.id)}</div>
       <button type="button" class="rhead" data-open-routine="${r.id}" aria-label="Abrir ${esc(r.name)}">
-        <span class="rtitle"><b>${esc(r.name)}</b><small>${last ? `Última vez: ${cuando}` : cuando}${dias ? ` · ${dias}` : ''}</small></span>
+        <span class="rtitle"><b>${esc(r.name)}</b><small>${[cuando, dias].filter(Boolean).join(' · ')}</small></span>
       </button>
       <div class="meta"><div><b>${r.exercises.length}</b><span>${r.exercises.length === 1 ? 'ejercicio' : 'ejercicios'}</span></div><div><b>${sets}</b><span>series</span></div>${sets ? `<div><b>~${min}</b><span>min</span></div>` : ''}</div>
       ${tags}
@@ -888,7 +888,7 @@ $('history-list').addEventListener('click', e => {
   b.dataset.delSession ? deleteEntry('session', b.dataset.delSession) : deleteEntry('walk', b.dataset.delWalk);
 });
 // ---------- Perfil: cuenta de Google arriba; debajo, los entrenos o las estadísticas ----------
-let perfilVista = 'entrenos', periodo = 7, tendencia = 'all';
+let perfilVista = 'grid', periodo = 7, tendencia = 'all';
 const durCorta = sec => { const m = Math.round(sec / 60); return m >= 60 ? `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ''}` : `${m} min`; };
 const fuerza = x => e1rm(x.kg || 0, x.reps || 0) || (x.reps || 0) / 1000;   // sin peso: manda el número de reps
 function renderPerfil() {
@@ -903,8 +903,68 @@ function renderPerfil() {
   document.querySelectorAll('[data-pview]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.pview === perfilVista)));
   $('perfil-stats').hidden = perfilVista !== 'stats';
   $('perfil-entrenos').hidden = perfilVista !== 'entrenos';
+  $('pf-grid').hidden = perfilVista !== 'grid';
+  if (perfilVista === 'grid') renderPerfilGrid();
   if (perfilVista === 'stats') renderPerfilStats();
 }
+// Muñeco de frente y de espalda: cada músculo es una forma con data-m; los trabajados se encienden según sus series
+const MUSCULOS = {
+  hombro: ['M10 21 a6 5.5 0 0 0 -3 7 l6 -1 l1 -6z', 'M50 21 a6 5.5 0 0 1 3 7 l-6 -1 l-1 -6z'],
+  pecho: ['M15 24 Q22 22 29 25 L29 36 Q21 39 14 33 Z', 'M45 24 Q38 22 31 25 L31 36 Q39 39 46 33 Z'],
+  biceps: ['M6 29 Q9 28 11 29 L10 42 Q7 44 5 42 Z', 'M54 29 Q51 28 49 29 L50 42 Q53 44 55 42 Z'],
+  antebrazo: ['M4.5 44 L10 44 L8.5 60 L3.5 60 Z', 'M55.5 44 L50 44 L51.5 60 L56.5 60 Z'],
+  abdomen: ['M23 38 L37 38 L36 58 Q30 61 24 58 Z'],
+  aductor: ['M27 62 L30 62 L30 84 Q27 82 25 70 Z', 'M33 62 L30 62 L30 84 Q33 82 35 70 Z'],
+  cuadriceps: ['M16 62 Q23 59 25 64 L25 88 Q20 92 16 86 Z', 'M44 62 Q37 59 35 64 L35 88 Q40 92 44 86 Z'],
+  gemelo: ['M17 94 L25 94 L24 112 L19 112 Z', 'M43 94 L35 94 L36 112 L41 112 Z'],
+};
+const MUSCULOS_ESP = {
+  trapecio: ['M22 17 Q30 14 38 17 L36 28 Q30 33 24 28 Z'],
+  hombro: ['M10 21 a6 5.5 0 0 0 -3 7 l6 -1 l1 -6z', 'M50 21 a6 5.5 0 0 1 3 7 l-6 -1 l-1 -6z'],
+  espalda: ['M14 28 L25 30 L28 48 L18 46 Z', 'M46 28 L35 30 L32 48 L42 46 Z'],
+  triceps: ['M6 29 Q9 28 11 29 L10 42 Q7 44 5 42 Z', 'M54 29 Q51 28 49 29 L50 42 Q53 44 55 42 Z'],
+  lumbar: ['M24 50 L36 50 L35 60 L25 60 Z'],
+  gluteo: ['M17 61 Q24 58 29.5 62 L29.5 76 Q21 79 16 73 Z', 'M43 61 Q36 58 30.5 62 L30.5 76 Q39 79 44 73 Z'],
+  isquio: ['M16 78 L28 79 L25 98 Q20 100 17 96 Z', 'M44 78 L32 79 L35 98 Q40 100 43 96 Z'],
+  gemelo: ['M17 100 L25 100 L24 114 L19 114 Z', 'M43 100 L35 100 L36 114 L41 114 Z'],
+};
+const MUSCULO_DE = {
+  'Chest': 'pecho', 'Shoulders': 'hombro', 'Biceps': 'biceps', 'Triceps': 'triceps', 'Forearms': 'antebrazo', 'Abdominals': 'abdomen',
+  'Quadriceps': 'cuadriceps', 'Adductors': 'aductor', 'Abductors': 'gluteo', 'Calves': 'gemelo', 'Glutes': 'gluteo', 'Hamstrings': 'isquio',
+  'Lats': 'espalda', 'Upper Back': 'espalda', 'Traps': 'trapecio', 'Neck': 'trapecio', 'Lower Back': 'lumbar',
+};
+// Series por músculo de un entreno: el ejercicio se busca en la rutina del entreno (o en cualquiera) y de ahí en el catálogo
+function musculosDe(s) {
+  const out = {};
+  if (typeof ejCache === 'undefined' || !ejCache) return out;
+  const rut = db.routines.find(r => r.id === s.routineId);
+  const idDe = n => { for (const r of rut ? [rut, ...db.routines] : db.routines) { const e = r.exercises.find(x => x.name === n && x.ejId); if (e) return e.ejId; } return ''; };
+  s.sets.forEach(x => {
+    if (x.w) return;
+    const id = idDe(x.exercise), cat = id ? ejCache.find(c => c.id === id) : ejCache.find(c => c.name === x.exercise);
+    const m = cat && MUSCULO_DE[cat.body_part];
+    if (m) out[m] = (out[m] || 0) + 1;
+  });
+  return out;
+}
+function cuerpoSvg(m) {
+  const max = Math.max(1, ...Object.values(m));
+  const fig = (mapa, dx) => `<g transform="translate(${dx} 0)"><circle class="sil" cx="30" cy="9" r="6.5"/>${Object.entries(mapa).map(([k, ps]) => ps.map(d => `<path data-m="${k}"${m[k] ? ` class="on" style="--i:${(m[k] / max).toFixed(2)}"` : ''} d="${d}"/>`).join('')).join('')}</g>`;
+  return `<svg class="cuerpo" viewBox="0 0 130 116" preserveAspectRatio="xMidYMid meet" aria-hidden="true">${fig(MUSCULOS, 0)}${fig(MUSCULOS_ESP, 70)}</svg>`;
+}
+function renderPerfilGrid() {
+  const g = $('pf-grid');
+  const items = [
+    ...db.sessions.map(s => ({ date: s.date, ts: s.ts || 0, id: s.id, html: `<button type="button" class="pf-card" data-pf-open="${s.id}" aria-label="Abrir entreno ${esc(s.routine)}"><span class="pf-d">${esc(whenText(s.date))}</span>${cuerpoSvg(musculosDe(s))}<span class="pf-pie"><span>${s.seconds ? durCorta(s.seconds) : plural(s.sets.length, 'serie', 'series')}</span><span>${esc(s.routine)}</span></span></button>` })),
+    ...db.walks.map(w => ({ date: w.date, ts: w.ts || 0, id: w.id, html: `<button type="button" class="pf-card" data-pf-open="${w.id}" aria-label="Abrir caminata"><span class="pf-d">${esc(whenText(w.date))}</span>${cuerpoSvg({})}<span class="pf-pie"><span>${(w.meters / 1000).toFixed(1).replace('.', ',')} km</span><span>Caminata</span></span></button>` })),
+  ].sort((a, b) => b.date.localeCompare(a.date) || b.ts - a.ts);
+  g.innerHTML = items.map(i => i.html).join('') || `<div class="pf-vacio-g">${emptyHtml('historial', 'Todavía no hay entrenos', 'Empieza uno desde «Rutinas» y aparecerá aquí.')}</div>`;
+}
+$('pf-grid').addEventListener('click', e => {
+  const b = e.target.closest('[data-pf-open]'); if (!b) return;
+  openEntries.add(b.dataset.pfOpen); perfilVista = 'entrenos'; vibrate(6); renderPerfil(); renderHistory();
+  document.querySelector(`[data-toggle-entry="${b.dataset.pfOpen}"]`)?.closest('.entry')?.scrollIntoView({ block: 'start' });
+});
 function renderPerfilStats() {
   document.querySelectorAll('[data-periodo]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.periodo === periodo)));
   document.querySelectorAll('[data-trend]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.trend === tendencia)));
@@ -1530,7 +1590,7 @@ renderEditor();
 updateGoalLabel();
 render();
 // el catálogo (ejercicios.js) carga después de este script: los grupos musculares se pintan al terminar
-window.addEventListener('load', () => loadEjercicios().then(() => renderRoutines()).catch(() => { /* sin catálogo: las rutinas se ven sin grupos */ }));
+window.addEventListener('load', () => loadEjercicios().then(() => { renderRoutines(); renderPerfil(); }).catch(() => { /* sin catálogo: las rutinas se ven sin grupos */ }));
 (function resumeWalk() {
   try {
     const w = JSON.parse(lsGet(WALK_KEY) || 'null');

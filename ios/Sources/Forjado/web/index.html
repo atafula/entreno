@@ -134,9 +134,11 @@
       </div>
       <p class="pf-bio" id="perfil-bio" hidden></p>
       <div class="pf-views" role="tablist" aria-label="Perfil">
-        <button type="button" role="tab" data-pview="entrenos" aria-selected="true">Entrenos</button>
-        <button type="button" role="tab" data-pview="stats" aria-selected="false">Estadísticas</button>
+        <button type="button" role="tab" data-pview="grid" aria-selected="true" aria-label="Entrenos"><svg viewBox="0 0 24 24" class="ico"><path d="M3 9v6M6 6v12M18 6v12M21 9v6M6 12h12"/></svg></button>
+        <button type="button" role="tab" data-pview="entrenos" aria-selected="false" aria-label="Historial"><svg viewBox="0 0 24 24" class="ico"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg></button>
+        <button type="button" role="tab" data-pview="stats" aria-selected="false" aria-label="Estadísticas"><svg viewBox="0 0 24 24" class="ico"><path d="M4 4v16h16M8 15l3-4 3 3 5-7"/></svg></button>
       </div>
+      <div id="pf-grid" class="pf-grid"></div>
       <div id="perfil-stats" hidden>
         <div class="pf-chips" id="pstats-periodos" role="group" aria-label="Periodo">
           <button type="button" data-periodo="7" aria-pressed="true">7 días</button>
@@ -158,7 +160,7 @@
           <div id="pstats-ex"></div>
         </div>
       </div>
-      <div id="perfil-entrenos">
+      <div id="perfil-entrenos" hidden>
       <div class="seg hfilter" id="hist-filter" role="group" aria-label="Filtrar historial">
         <button type="button" data-hfilter="todo" aria-pressed="true">Todo</button>
         <button type="button" data-hfilter="fuerza" aria-pressed="false">Fuerza</button>

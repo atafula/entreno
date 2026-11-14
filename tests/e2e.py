@@ -49,7 +49,9 @@ def doc_rutina(r, **extra):
     d = {k: v for k, v in r.items() if k != "id"}
     return dict(d, **extra)
 
-def tab(pg, name): pg.click(f'[data-tab="tab-{name}"]')
+def tab(pg, name):
+    pg.click(f'[data-tab="tab-{name}"]')
+    if name == "historial": pg.click('[data-pview="entrenos"]')   # la lista detallada (el Perfil abre en la cuadrícula)
 def db(pg): return pg.evaluate("JSON.parse(localStorage['entreno-v1'])")
 def abrir_rutina(pg, id): pg.click(f'[data-open-routine="{id}"]'); pg.wait_for_timeout(100)
 def empezar(pg, id): pg.click(f'#routines-list [data-start-routine="{id}"]')
@@ -2639,11 +2641,11 @@ def rutinas_estado_vacio_con_titulo_icono_y_siguiente_paso(pg):
     assert "Crear rutina" in e.inner_text() and "Entreno libre" in e.inner_text(), e.inner_text()
 
 @test
-def rutinas_la_tarjeta_dice_cuando_fue_la_ultima_vez(pg):
+def rutinas_la_tarjeta_no_dice_cuando_fue_solo_si_esta_sin_estrenar(pg):
     seed(pg); pg.evaluate("db.sessions.push({id: 'hoy1', date: localDate(), routine: 'PULL', sets: [{exercise: 'Remo', reps: 10, kg: 30, w: false}]}); render()")
     tab(pg, "rutinas")
     pull = pg.locator('#routines-list .routine', has=pg.locator('[data-open-routine="b"]')).locator(".rtitle small").inner_text()
-    assert "Hoy" in pull, f"la rutina hecha hoy lo dice: {pull}"
+    assert "Hoy" not in pull and "Sin estrenar" not in pull, f"la rutina ya hecha no dice cuándo: {pull}"
     pg.evaluate("db.routines.push({id: 'z', name: 'NUEVA', exercises: []}); render()")
     z = pg.locator('#routines-list .routine', has=pg.locator('[data-open-routine="z"]')).locator(".rtitle small").inner_text()
     assert "Sin estrenar" in z, z
@@ -3301,6 +3303,75 @@ def plan_editor_avisa_si_otra_rutina_toca_el_mismo_dia(pg):
     assert pg.is_visible("#days-note") and "PUSH" in pg.inner_text("#days-note"), "avisa de que ese día ya toca PUSH"
     pg.click('#routine-days [data-day="2"]'); pg.click('#routine-days [data-day="4"]'); pg.wait_for_timeout(100)
     assert not pg.is_visible("#days-note")
+
+# ---------- Rutinas: solo los días de la semana, sin «hace X días» ----------
+@test
+def rutinas_no_dicen_cuando_fue_la_ultima_vez_solo_los_dias(pg):
+    seed(pg, routines=[dict(ROUTINES[0], days=[0, 3])])
+    tab(pg, "rutinas"); pg.wait_for_timeout(300)
+    t = pg.inner_text("#routines-list")
+    for w in ("Hace", "Ayer", "Hoy", "Última vez"): assert w not in t, f"{w!r} no debe salir: {t}"
+    assert "L·J" in t, t
+
+# ---------- Perfil: cuadrícula de entrenos con muñeco de músculos ----------
+def _perfil_muneco(pg):
+    pg.evaluate("""() => { const s = () => [{w: false, kg: '', reps: ''}];
+        db.routines = [{id: 'rp', name: 'Empuje', exercises: [
+            {name: 'Aperturas', ejId: 'chest-fly-machine', image: '', sets: s()},
+            {name: 'Press militar', ejId: 'shoulder-press-dumbbell', image: '', sets: s()}]}];
+        const hoy = localDate();
+        db.sessions = [{id: 's1', date: hoy, routine: 'Empuje', routineId: 'rp', seconds: 2700, ts: 2,
+            sets: [{exercise: 'Aperturas', reps: 10, kg: 30, w: false}, {exercise: 'Aperturas', reps: 10, kg: 30, w: false}, {exercise: 'Press militar', reps: 8, kg: 20, w: false}]},
+          {id: 's2', date: '2024-03-05', routine: 'Libre', seconds: 600, ts: 1, sets: [{exercise: 'Cosa rara', reps: 5, kg: 10, w: false}]}];
+        render(); }""")
+    tab_perfil(pg)
+def tab_perfil(pg): pg.click('[data-tab="tab-historial"]'); pg.wait_for_timeout(400)
+
+@test
+def perfil_abre_en_una_cuadricula_de_entrenos(pg):
+    seed(pg); pg.wait_for_selector("#routines-list", state="attached"); pg.wait_for_function("typeof ejCache !== 'undefined' && ejCache")
+    _perfil_muneco(pg)
+    assert pg.is_visible("#pf-grid") and pg.locator("#pf-grid .pf-card").count() == 2
+    assert pg.get_attribute('[data-pview="grid"]', "aria-selected") == "true"
+    assert not pg.is_visible("#history-list"), "la lista detallada es otra vista"
+    c = pg.locator("#pf-grid .pf-card").first
+    t = c.inner_text()
+    assert "Hoy" in t and "45 min" in t and "Empuje" in t, t
+
+@test
+def perfil_las_pestañas_son_iconos_con_etiqueta(pg):
+    seed(pg)
+    for v, lab in (("grid", "Entrenos"), ("entrenos", "Historial"), ("stats", "Estadísticas")):
+        b = pg.locator(f'[data-pview="{v}"]')
+        assert b.get_attribute("aria-label") == lab and b.locator("svg").count() == 1, v
+        assert b.inner_text().strip() == "", f"{v}: solo icono"
+
+@test
+def perfil_el_muneco_marca_los_musculos_trabajados(pg):
+    seed(pg); pg.wait_for_function("typeof ejCache !== 'undefined' && ejCache")
+    _perfil_muneco(pg)
+    c = pg.locator("#pf-grid .pf-card").first
+    on = c.locator("svg [data-m].on").evaluate_all("els => [...new Set(els.map(e => e.dataset.m))].sort()")
+    assert on == ["hombro", "pecho"], on
+    otro = pg.locator("#pf-grid .pf-card").nth(1)
+    assert otro.locator("svg").count() == 1 and otro.locator("svg [data-m].on").count() == 0, "un entreno sin músculos conocidos sale con el muñeco apagado"
+    fill = c.locator('svg [data-m="pecho"].on').first.evaluate("e => getComputedStyle(e).fillOpacity")
+    base = c.locator('svg [data-m="triceps"]').first.evaluate("e => getComputedStyle(e).fill")
+    assert float(fill) > 0.3 and base, (fill, base)
+
+@test
+def perfil_tocar_una_tarjeta_abre_ese_entreno_en_el_historial(pg):
+    seed(pg); pg.wait_for_function("typeof ejCache !== 'undefined' && ejCache")
+    _perfil_muneco(pg)
+    pg.locator("#pf-grid .pf-card").nth(1).click(); pg.wait_for_timeout(400)
+    assert pg.get_attribute('[data-pview="entrenos"]', "aria-selected") == "true" and pg.is_visible("#history-list")
+    assert not pg.is_visible("#pf-grid")
+    assert pg.locator("#history-list .hdetail:not([hidden])").count() == 1, "el entreno tocado sale desplegado"
+
+@test
+def perfil_cuadricula_vacia_invita_a_entrenar(pg):
+    seed(pg, sessions=[]); tab_perfil(pg)
+    assert pg.locator("#pf-grid .pf-card").count() == 0 and "entren" in pg.inner_text("#pf-grid").lower()
 
 # ---------- Perfil (sustituye a Historial) ----------
 def _ps(fecha, id, sets, seconds=0, rutina="PUSH"):
