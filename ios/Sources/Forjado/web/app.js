@@ -908,35 +908,12 @@ function renderPerfil() {
   if (perfilVista === 'grid') renderPerfilGrid();
   if (perfilVista === 'stats') renderPerfilStats();
 }
-// Muñeco de frente y de espalda: cada músculo es una forma con data-m; los trabajados se encienden según sus series
-// Solo se dibuja el lado izquierdo (x de 0 a 30); el derecho es su espejo
-const SILUETA = 'M26 15 L26 19 Q15 20 10 24 Q5 28 4 40 L2 58 L1 64 L6 64 L8 58 L11 46 L14 40 L15 60 Q14 72 15 86 L16 112 L25 112 L27 90 L29.5 72';
-const MUSCULOS = {
-  hombro: ['M14 21 Q8 22 6 30 L11 33 Q13 28 16 26 Z'],
-  pecho: ['M17 25 Q24 23 29.5 26 L29.5 38 Q22 41 16 36 Q15 30 17 25 Z'],
-  biceps: ['M6 31 L11 34 Q12 42 10 47 L5 47 Q4 38 6 31 Z'],
-  antebrazo: ['M4.5 49 L10 49 L9 62 L3 62 Z'],
-  abdomen: ['M23 40 L29.5 40 L29.5 63 Q25 64 24 62 Q22 52 23 40 Z'],
-  cuadriceps: ['M15.5 64 Q23 62 29 66 L28 90 Q22 94 17 89 Q14 76 15.5 64 Z'],
-  aductor: ['M29.2 68 L29.5 70 L29.5 88 L27 88 Z'],
-  gemelo: ['M17 94 L25 94 L24 111 L18.5 111 Z'],
-};
-const MUSCULOS_ESP = {
-  trapecio: ['M23 17 Q29.5 14 29.5 14 L29.5 31 Q25 29 23 25 Z'],
-  hombro: ['M14 21 Q8 22 6 30 L11 33 Q13 28 16 26 Z'],
-  espalda: ['M15 27 L26 31 L28 50 L19 47 Q14 38 15 27 Z'],
-  triceps: ['M6 31 L11 34 Q12 42 10 47 L5 47 Q4 38 6 31 Z'],
-  lumbar: ['M24 51 L29.5 51 L29.5 62 L25 62 Z'],
-  gluteo: ['M16 64 Q23 62 29.5 66 L29.5 80 Q21 83 15.5 78 Z'],
-  isquio: ['M16 82 L29 83 L26 99 Q21 101 18 97 Z'],
-  gemelo: ['M17 101 L25 101 L24 112 L18.5 112 Z'],
-};
-// Espeja un trazo (solo M, L, Q y Z con coordenadas absolutas) respecto al eje x = 30
-const espejo = d => d.replace(/(-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)/g, (_, x, y) => `${(60 - x).toFixed(1)} ${y}`);
+// Radar de seis grupos: cada entreno dibuja su forma según las series de cada grupo
+const RADAR = [['pecho', 'Pecho'], ['hombro', 'Hombro'], ['brazos', 'Brazos'], ['core', 'Core'], ['piernas', 'Piernas'], ['espalda', 'Espalda']];
 const MUSCULO_DE = {
-  'Chest': 'pecho', 'Shoulders': 'hombro', 'Biceps': 'biceps', 'Triceps': 'triceps', 'Forearms': 'antebrazo', 'Abdominals': 'abdomen',
-  'Quadriceps': 'cuadriceps', 'Adductors': 'aductor', 'Abductors': 'gluteo', 'Calves': 'gemelo', 'Glutes': 'gluteo', 'Hamstrings': 'isquio',
-  'Lats': 'espalda', 'Upper Back': 'espalda', 'Traps': 'trapecio', 'Neck': 'trapecio', 'Lower Back': 'lumbar',
+  'Chest': 'pecho', 'Shoulders': 'hombro', 'Traps': 'hombro', 'Neck': 'hombro', 'Biceps': 'brazos', 'Triceps': 'brazos', 'Forearms': 'brazos',
+  'Abdominals': 'core', 'Lower Back': 'core', 'Quadriceps': 'piernas', 'Hamstrings': 'piernas', 'Glutes': 'piernas', 'Calves': 'piernas',
+  'Adductors': 'piernas', 'Abductors': 'piernas', 'Lats': 'espalda', 'Upper Back': 'espalda',
 };
 // Series por músculo de un entreno: el ejercicio se busca en la rutina del entreno (o en cualquiera) y de ahí en el catálogo
 function musculosDe(s) {
@@ -953,13 +930,18 @@ function musculosDe(s) {
   return out;
 }
 function cuerpoSvg(m) {
-  const max = Math.max(1, ...Object.values(m));
-  const fig = (mapa, dx) => {
-    const sil = `<path class="sil" d="${SILUETA}"/><path class="sil" d="${espejo(SILUETA)}"/><circle class="sil" cx="30" cy="8.5" r="6"/>`;
-    const ms = Object.entries(mapa).map(([k, ps]) => ps.flatMap(d => [d, espejo(d)]).map(d => `<path data-m="${k}"${m[k] ? ` class="on" style="--i:${(m[k] / max).toFixed(2)}"` : ''} d="${d}"/>`).join('')).join('');
-    return `<g transform="translate(${dx} 0)">${sil}${ms}</g>`;
-  };
-  return `<svg class="cuerpo" viewBox="0 0 130 116" preserveAspectRatio="xMidYMid meet" aria-hidden="true">${fig(MUSCULOS, 0)}${fig(MUSCULOS_ESP, 70)}</svg>`;
+  const R = 40, max = Math.max(1, ...Object.values(m));
+  const pt = (i, r) => { const a = -Math.PI / 2 + i * Math.PI / 3; return [60 + R * r * Math.cos(a), 60 + R * r * Math.sin(a)]; };
+  const hex = r => RADAR.map((_, i) => pt(i, r).map(n => n.toFixed(1)).join(',')).join(' ');
+  const anillos = [1, .66, .33].map(r => `<polygon class="rejilla" points="${hex(r)}"/>`).join('');
+  const ejes = RADAR.map((_, i) => { const [x, y] = pt(i, 1); return `<line class="eje" x1="60" y1="60" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}"/>`; }).join('');
+  const hay = RADAR.some(([k]) => m[k]);
+  const area = hay ? `<polygon class="area" points="${RADAR.map(([k], i) => pt(i, m[k] ? .12 + .88 * m[k] / max : .04).map(n => n.toFixed(1)).join(',')).join(' ')}"/>` : '';
+  const textos = RADAR.map(([k, lab], i) => {
+    const [x, y] = pt(i, 1.3), anc = Math.abs(x - 60) < 5 ? 'middle' : x > 60 ? 'start' : 'end';
+    return `<text data-m="${k}"${m[k] ? ' class="on"' : ''} x="${x.toFixed(1)}" y="${(y + 2.5).toFixed(1)}" text-anchor="${anc}">${lab}</text>`;
+  }).join('');
+  return `<svg class="cuerpo radar" viewBox="-24 -2 168 124" aria-hidden="true">${anillos}${ejes}${area}${textos}</svg>`;
 }
 function renderPerfilGrid() {
   const g = $('pf-grid');

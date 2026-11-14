@@ -3348,18 +3348,21 @@ def perfil_las_pestañas_son_iconos_con_etiqueta(pg):
         assert b.inner_text().strip() == "", f"{v}: solo icono"
 
 @test
-def perfil_el_muneco_marca_los_musculos_trabajados(pg):
+def perfil_el_radar_marca_los_grupos_trabajados(pg):
     seed(pg); pg.wait_for_function("typeof ejCache !== 'undefined' && ejCache")
     _perfil_muneco(pg)
     c = pg.locator("#pf-grid .pf-card").first
-    on = c.locator("svg [data-m].on").evaluate_all("els => [...new Set(els.map(e => e.dataset.m))].sort()")
+    assert c.locator("svg.radar").count() == 1 and c.locator("svg [data-m]").count() == 6, "radar con seis ejes"
+    nombres = c.locator("svg text").all_text_contents()
+    assert nombres == ["Pecho", "Hombro", "Brazos", "Core", "Piernas", "Espalda"], nombres
+    on = c.locator("svg [data-m].on").evaluate_all("els => els.map(e => e.dataset.m).sort()")
     assert on == ["hombro", "pecho"], on
+    assert c.locator("svg polygon.rejilla").count() == 3, "tres anillos"
+    pts = c.locator("svg polygon.area").get_attribute("points").split()
+    assert len(pts) == 6, pts
     otro = pg.locator("#pf-grid .pf-card").nth(1)
-    assert otro.locator("svg").count() == 1 and otro.locator("svg [data-m].on").count() == 0, "un entreno sin músculos conocidos sale con el muñeco apagado"
-    fill = c.locator('svg [data-m="pecho"].on').first.evaluate("e => getComputedStyle(e).fillOpacity")
-    base = c.locator('svg [data-m="triceps"]').first.evaluate("e => getComputedStyle(e).fill")
-    assert float(fill) > 0.3 and base, (fill, base)
-    assert c.locator("svg .sil").count() >= 2 and c.locator("svg [data-m]").count() >= 30, "muñeco con silueta y muchos músculos dibujados"
+    assert otro.locator("svg.radar").count() == 1 and otro.locator("svg [data-m].on").count() == 0, "un entreno sin músculos conocidos sale con el radar vacío"
+    assert otro.locator("svg polygon.area").count() == 0
 
 @test
 def perfil_tocar_una_tarjeta_abre_ese_entreno_en_el_historial(pg):
