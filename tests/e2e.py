@@ -3356,10 +3356,11 @@ def perfil_el_muneco_marca_los_musculos_trabajados(pg):
     assert on == ["hombro", "pecho"], on
     otro = pg.locator("#pf-grid .pf-card").nth(1)
     assert otro.locator("svg").count() == 1 and otro.locator("svg [data-m].on").count() == 0, "un entreno sin músculos conocidos sale con el muñeco apagado"
-    fill = c.locator('svg [data-m="pecho"].on').first.evaluate("e => getComputedStyle(e).fillOpacity")
-    base = c.locator('svg [data-m="triceps"]').first.evaluate("e => getComputedStyle(e).fill")
+    fill = c.locator('svg [data-m="pecho"].on').first.evaluate("e => getComputedStyle(e).strokeOpacity")
+    base = c.locator('svg [data-m="brazo"]').first.evaluate("e => getComputedStyle(e).stroke")
     assert float(fill) > 0.3 and base, (fill, base)
-    assert c.locator("svg .sil").count() >= 2 and c.locator("svg [data-m]").count() >= 30, "muñeco con silueta y muchos músculos dibujados"
+    assert c.locator("svg .sil").count() == 1 and c.locator("svg [data-m]").count() == 12, "stick man: una cabeza y 12 palos (hombros, pecho, abdomen, brazos, antebrazos, muslos, gemelos)"
+    assert c.locator("svg path[d*=' C'], svg path[d*=' Q']").count() == 0, "sin curvas: solo palos"
 
 @test
 def perfil_tocar_una_tarjeta_abre_ese_entreno_en_el_historial(pg):
