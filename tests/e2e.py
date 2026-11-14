@@ -3290,6 +3290,17 @@ def plan_semanal_hoy_solo_enseña_las_que_faltan(pg):
     assert "hecho" in pg.inner_text("#next-routine").lower() and pg.locator("#next-routine [data-start-next]").count() == 0
 
 @test
+def te_toca_quita_la_rutina_que_ya_se_hizo_hoy(pg):
+    pg.goto(URL); d = _dow(pg)
+    hecha = dict(ses(off(pg, 0), "x", "PUSH"), routineId="a")
+    seed(pg, routines=_plan(pg, {"a": [d], "b": [d]}), sessions=[hecha]); tab(pg, "rutinas")
+    assert pg.locator("#routines-list .routine.feat").count() == 1, "en Te toca solo queda la que falta"
+    assert pg.locator('#routines-list .routine.feat [data-start-routine="b"]').count() == 1
+    assert pg.locator('#routines-list .routine.feat [data-start-routine="a"]').count() == 0, "la hecha hoy ya no aparece en Te toca"
+    seed(pg, routines=_plan(pg, {"a": [d], "b": [d]}), sessions=[hecha, dict(ses(off(pg, 0), "y", "PULL"), routineId="b")]); tab(pg, "rutinas")
+    assert pg.locator("#routines-list .routine.feat").count() == 0 and "Te toca" not in pg.inner_text("#routines-list"), "si ya están hechas, no hay Te toca"
+
+@test
 def rutinas_las_tarjetas_muestran_los_dias_que_tocan(pg):
     seed(pg, routines=_plan(pg, {"a": [0, 3], "b": [1, 2, 4]})); tab(pg, "rutinas")
     assert "L·J" in _tarjeta(pg, "a").inner_text() or "L·J" in pg.inner_text("#routines-list"), pg.inner_text("#routines-list")

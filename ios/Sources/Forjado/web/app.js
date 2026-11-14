@@ -729,7 +729,7 @@ function fotoMini(e) {
 }
 function renderRoutines(quieto = false) {
   $('routines-list').classList.toggle('quiet', quieto || silencio);   // repintar por el menú no reanima las tarjetas
-  const sig = rutinasDeHoy(), resto = db.routines.filter(r => !sig.includes(r));
+  const hoy = localDate(), sig = rutinasDeHoy().filter(r => !hechaEn(r, hoy)), resto = db.routines.filter(r => !sig.includes(r));   // lo ya hecho hoy sale de Te toca
   // Con plan semanal, «Te toca» son las de hoy (si hoy es de descanso, no hay destacada)
   $('routines-list').innerHTML = !db.routines.length
     ? emptyHtml('rutinas', 'Aún no tienes rutinas', 'Pulsa «Crear rutina» para montar la primera, o empieza un «Entreno libre» y añade ejercicios sobre la marcha.')
