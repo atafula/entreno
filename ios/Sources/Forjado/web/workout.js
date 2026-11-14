@@ -123,7 +123,9 @@ function wkTick() {
   if (wk.rest) {
     const left = Math.ceil((wk.rest.end - Date.now()) / 1000);
     if (left <= 0) {
+      const sig = wk.rest.next;
       wk.rest = null; saveLive(); beep(); vibrate([200, 100, 200, 100, 400]);
+      wkAvanzar(sig);
       $('rest-time').textContent = '¡Ya!'; restFill(1); box.classList.add('go');
       setTimeout(() => { if (!wk || wk.rest) return; box.hidden = true; box.classList.remove('go'); $('wk-in').classList.remove('resting'); }, 2200);
     } else {
@@ -156,10 +158,16 @@ function startFreeWorkout() {
   vibrate(20);
 }
 
-function wkStartRest(sec) {
+function wkStartRest(sec, next) {
   if (!sec) return;
   wk.rest = { end: Date.now() + sec * 1000, total: sec };
+  if (next != null) wk.rest.next = next;
   saveLive(); wkTick();
+}
+// Acabada la última serie de un ejercicio, al terminar el descanso se pasa al siguiente (si sigues en él)
+function wkAvanzar(ei) {
+  if (ei == null || !wk || wk.cur !== ei || wk.cur >= wk.exercises.length - 1) return;
+  $('wk-next')?.click();
 }
 
 function wkOpen(show) {
@@ -457,7 +465,7 @@ function bindWorkout() {
       }, reducir ? 0 : 150);
       return;
     }
-    if (id === 'rest-skip') { wk.rest = null; saveLive(); $('rest').hidden = true; $('wk-in').classList.remove('resting'); return; }
+    if (id === 'rest-skip') { const sig = wk.rest?.next; wk.rest = null; saveLive(); wkAvanzar(sig); $('rest').hidden = true; $('wk-in').classList.remove('resting'); return; }
     if (id === 'rest-minus' || id === 'rest-plus') {
       if (!wk.rest) return;
       const d = id === 'rest-plus' ? 15 : -15;
@@ -488,12 +496,12 @@ function bindWorkout() {
       s.done = !s.done;
       s.pr = s.done && wkIsPR(ex, si);
       if (s.pr) { toast(`Récord: ${ex.name} · ${s.kg} kg × ${s.reps}`); vibrate([30, 40, 30, 40, 80]); }
-      if (s.done) { vibrate(15); try { wkAudio = wkAudio || new (window.AudioContext || window.webkitAudioContext)(); wkAudio.resume?.(); } catch { /* nada */ } if (!s.w) wkStartRest(ex.rest); }
+      if (s.done) { vibrate(15); try { wkAudio = wkAudio || new (window.AudioContext || window.webkitAudioContext)(); wkAudio.resume?.(); } catch { /* nada */ } if (!s.w) { const ultima = ex.sets.every(o => o.done || o.w); wkStartRest(ex.rest, ultima ? ei : null); if (ultima && !ex.rest) setTimeout(() => wkAvanzar(ei), 700); } }
     }
     vibrate(6);
     saveLive(); wkRender();
     if (act === 'done' && ex.sets[si] && ex.sets[si].done)   // solo salta el check que se acaba de marcar
-      $('wk-in').querySelector(`[data-act="done"][data-ex="${ei}"][data-set="${si}"]`)?.classList.add('pop');
+      { const c = $('wk-in').querySelector(`[data-act="done"][data-ex="${ei}"][data-set="${si}"]`); c?.classList.add('pop'); c?.closest('.wrow')?.classList.add('pop'); }
   });
   $('wk-resume').addEventListener('click', () => wkOpen(true));
 }

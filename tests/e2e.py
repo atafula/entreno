@@ -2676,6 +2676,48 @@ def entreno_check_de_serie_con_animacion_y_etiqueta(pg):
     assert chk.evaluate("e => getComputedStyle(e).animationName") == "checkpop"
     assert chk.get_attribute("aria-pressed") == "true"
 
+def _marcar(pg, i, saltar=True):
+    pg.locator(".wrow .chk:visible").nth(i).click()
+    if saltar and pg.is_visible("#rest"): pg.click("#rest-skip")
+
+@test
+def entreno_serie_completa_anima_la_fila_y_el_check(pg):
+    seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
+    pg.locator(".wrow .chk").nth(1).click(); pg.wait_for_timeout(100)
+    fila = pg.locator(".wrow.done").first
+    assert fila.evaluate("e => getComputedStyle(e).animationName") == "rowdone", "la fila destella al completarse"
+    assert pg.locator(".wrow.done .chk").first.evaluate("e => getComputedStyle(e, '::after').animationName") == "checkring", "el check lanza un aro"
+
+@test
+def entreno_ultima_serie_pasa_al_siguiente_ejercicio_al_acabar_el_descanso(pg):
+    seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
+    n = pg.locator(".wrow .chk:visible").count()
+    for i in range(n - 1): _marcar(pg, i)
+    pg.wait_for_timeout(400)
+    assert pg.inner_text("#wk-pos").replace(" ", "").startswith("1/"), "con series por hacer no cambia de ejercicio"
+    _marcar(pg, n - 1, False); pg.wait_for_timeout(300)
+    assert pg.inner_text("#wk-pos").replace(" ", "").startswith("1/"), "durante el descanso sigue en el mismo"
+    pg.evaluate("wk.rest.end = Date.now() - 1"); pg.wait_for_timeout(1500)
+    assert pg.inner_text("#wk-pos").replace(" ", "").startswith("2/"), "al acabar el descanso pasa al siguiente"
+
+@test
+def entreno_ultima_serie_tambien_avanza_al_omitir_el_descanso(pg):
+    seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
+    n = pg.locator(".wrow .chk:visible").count()
+    for i in range(n): _marcar(pg, i, i < n - 1)
+    pg.click("#rest-skip"); pg.wait_for_timeout(500)
+    assert pg.inner_text("#wk-pos").replace(" ", "").startswith("2/")
+
+@test
+def entreno_ultima_serie_del_ultimo_ejercicio_no_avanza(pg):
+    seed(pg); tab(pg, "rutinas"); empezar(pg, "a")
+    while not pg.is_disabled("#wk-next"): pg.click("#wk-next"); pg.wait_for_timeout(300)
+    pos = pg.inner_text("#wk-pos")
+    n = pg.locator(".wrow .chk:visible").count()
+    for i in range(n): _marcar(pg, i, i < n - 1)
+    pg.click("#rest-skip"); pg.wait_for_timeout(500)
+    assert pg.inner_text("#wk-pos") == pos
+
 # ---------- Fase 5: Historial ----------
 _OBS = """sel => { window.__vals = []; const e = document.querySelector(sel);
   new MutationObserver(() => window.__vals.push(document.querySelector(sel)?.textContent)).observe(e.parentNode, {childList: true, characterData: true, subtree: true}); }"""
@@ -2928,6 +2970,7 @@ def papel_serie_completada_banda_verde_suave_hasta_el_borde(pg):
         d = c[c.index("(") + 1:c.index(")")].replace("/", " ").replace(",", " ").split()
         if d[0] == "srgb": return [float(x) * 255 for x in d[1:4]]
         return [float(x) for x in d[:3]]
+    pg.wait_for_timeout(900)   # que termine el destello de la serie recién completada
     hecha, otra = ex.locator(".wrow.done"), ex.locator(".wrow:not(.done):not(.whead)").first
     assert hecha.count() == 1
     b = hecha.bounding_box()
@@ -3404,7 +3447,7 @@ def main():
                 except Exception as e:
                     import traceback
                     line = [f for f in traceback.extract_tb(e.__traceback__) if f.filename.endswith("e2e.py")][-1]
-                    failed += 1; print(f"  FAIL {t.__name__} (l.{line.lineno}: {line.line}): {str(e).splitlines()[0] if str(e) else ''}")
+                    failed += 1; print(f"  FAIL {t.__name__} (l.{line.lineno}: {line.line}): {(str(e) if os.environ.get("FULL") else str(e).splitlines()[0]) if str(e) else ''}")
                 ctx.close()
             br.close()
     finally:

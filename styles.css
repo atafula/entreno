@@ -522,6 +522,9 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; }
 .wrow.done { background: var(--done-bg); }
 .wrow.done .chk { background: var(--acid); color: var(--on-acid); }
 .wrow.done .chk.pop { animation: checkpop var(--d-slow) var(--ease-spring); }
+.wrow.done.pop { animation: rowdone 650ms var(--ease-out); }
+.wrow .chk { position: relative; }
+.wrow.done .chk.pop::after { content: ""; position: absolute; inset: 0; border-radius: inherit; border: 2px solid var(--acid); pointer-events: none; animation: checkring 600ms var(--ease-out) forwards; }
 .wrow.done .chk .ico { opacity: 1; stroke-width: 3; }
 .wrow.done input { background: var(--done-field); }
 .wrow.done .sn:not(.w) { background: var(--done-field); }
@@ -649,6 +652,8 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; }
 @keyframes screenin { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
 @keyframes sheetin { from { transform: translateY(100%); } to { transform: none; } }
 @keyframes pop { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: none; } }
+@keyframes rowdone { 0% { background: var(--acid); } 100% { background: var(--done-bg); } }
+@keyframes checkring { 0% { opacity: .9; transform: scale(1); } 100% { opacity: 0; transform: scale(1.9); } }
 @keyframes checkpop { 0% { transform: scale(.8); } 60% { transform: scale(1.12); } 100% { transform: none; } }
 @keyframes bump { 0% { transform: none; } 40% { transform: scale(1.14); } 100% { transform: none; } }
 @keyframes tick { from { opacity: 0; transform: translateY(40%); } to { opacity: 1; transform: none; } }
