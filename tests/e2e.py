@@ -2005,6 +2005,46 @@ GRANDE = [{"id": "g1", "date": "2026-11-01", "routine": "PULL", "seconds": 3720,
     {"exercise": "Curl", "reps": 12, "kg": 15, "w": False}, {"exercise": "Face pull", "reps": 15, "kg": 20, "w": False}]}]
 
 @test
+def historial_tocar_un_ejercicio_abre_sus_series_con_peso_y_reps(pg):
+    seed(pg, sessions=GRANDE); tab(pg, "historial")
+    pg.click('[data-toggle-entry="g1"]')
+    pg.click('#history-list [data-ex-open="g1"][data-ex-name="Jalón"]'); pg.wait_for_timeout(350)
+    assert pg.is_visible("#ex-sheet"), "se abre la hoja del ejercicio"
+    assert pg.inner_text("#ex-title") == "Jalón"
+    cab = pg.inner_text("#ex-sheet .exs-head")
+    assert "Serie" in cab and "Peso / Reps" in cab, cab
+    filas = pg.locator("#ex-sheet .exs-row")
+    assert filas.count() == 2, "solo las series de Jalón (2), no las de las otras máquinas"
+    assert filas.nth(0).inner_text().replace("\n", " ") == "1 47.3 kg × 10 reps", filas.nth(0).inner_text()
+    assert filas.nth(1).inner_text().replace("\n", " ") == "2 52 kg × 10 reps", filas.nth(1).inner_text()
+
+@test
+def historial_detalle_de_ejercicio_marca_calentamiento_y_se_cierra(pg):
+    seed(pg, sessions=GRANDE); tab(pg, "historial")
+    pg.click('[data-toggle-entry="g1"]')
+    pg.click('#history-list [data-ex-open="g1"][data-ex-name="Remo"]'); pg.wait_for_timeout(350)
+    primera = pg.locator("#ex-sheet .exs-row").nth(0).inner_text()
+    assert primera.startswith("W"), f"el calentamiento sale como W: {primera}"
+    assert "40 kg × 10 reps" in primera, primera
+    assert pg.locator("#ex-sheet .exs-media").count() == 1, "siempre hay una imagen o las iniciales"
+    pg.click("#ex-close"); pg.wait_for_timeout(350)
+    assert not pg.is_visible("#ex-sheet"), "la X cierra la hoja"
+    pg.click('#history-list [data-ex-open="g1"][data-ex-name="Remo"]'); pg.wait_for_timeout(350)
+    pg.keyboard.press("Escape"); pg.wait_for_timeout(350)
+    assert not pg.is_visible("#ex-sheet"), "Escape la cierra"
+    pg.click('#history-list [data-ex-open="g1"][data-ex-name="Remo"]'); pg.wait_for_timeout(350)
+    pg.click("#scrim", position={"x": 5, "y": 5}); pg.wait_for_timeout(350)
+    assert not pg.is_visible("#ex-sheet"), "tocar el fondo la cierra"
+
+@test
+def historial_el_detalle_no_cambia_el_entreno_abierto(pg):
+    seed(pg, sessions=GRANDE); tab(pg, "historial")
+    pg.click('[data-toggle-entry="g1"]')
+    pg.click('#history-list [data-ex-open="g1"][data-ex-name="Curl"]'); pg.wait_for_timeout(350)
+    pg.click("#ex-close"); pg.wait_for_timeout(350)
+    assert pg.locator("#history-list .hdetail:not([hidden])").count() == 1, "sigue desplegado tras cerrar la hoja"
+
+@test
 def historial_filtro_todo_fuerza_y_caminatas(pg):
     seed(pg, sessions=SESIONES, walks=CAMINATAS); tab(pg, "historial")
     n = lambda: pg.locator("#history-list .entry").count()

@@ -687,6 +687,27 @@ function gruposRutina(r) {
   return partes.slice(0, 4);
 }
 
+// Hoja de un ejercicio dentro de un entreno: su foto y cada serie con peso y repeticiones
+function abrirEjercicioSesion(sid, nombre) {
+  const s = db.sessions.find(x => x.id === sid);
+  if (!s) return;
+  const sets = s.sets.filter(x => x.exercise === nombre);
+  $('ex-title').textContent = nombre;
+  $('ex-media').innerHTML = fotoMini({ name: nombre });
+  let n = 0;
+  $('ex-rows').innerHTML = sets.map(x => `<div class="exs-row"><span class="exs-n${x.w ? ' w' : ''}">${x.w ? 'W' : ++n}</span><span>${x.kg ? `${x.kg} kg × ${x.reps} reps` : `${x.reps} reps`}</span></div>`).join('')
+    || '<p class="picker-status">Sin series en este entreno.</p>';
+  const hoja = $('ex-sheet');
+  hoja.classList.add('show'); hoja.setAttribute('aria-hidden', 'false'); $('scrim').classList.add('show');
+}
+function cerrarEjercicioSesion() {
+  const hoja = $('ex-sheet');
+  hoja.classList.remove('show'); hoja.setAttribute('aria-hidden', 'true'); $('scrim').classList.remove('show');
+}
+$('ex-close').onclick = cerrarEjercicioSesion;
+$('history-list').addEventListener('click', e => {
+  const b = e.target.closest('[data-ex-open]'); if (b) abrirEjercicioSesion(b.dataset.exOpen, b.dataset.exName);
+});
 // Menú ⋯ de cada rutina: Editar, Duplicar y Borrar (con segundo toque para confirmar)
 let menuRutina = null;
 const rutinaMenu = id => menuRutina === id
@@ -751,7 +772,7 @@ function sessionHtml(s) {
     ${recordHtml(s, prs)}
     ${s.nota ? `<p class="hnota">${esc(s.nota)}</p>` : ''}${s.foto && /^data:image\//.test(s.foto) ? `<img class="hfoto" src="${esc(s.foto)}" alt="Foto del entreno" loading="lazy">` : ''}
     <div class="hsums"${open ? ' hidden' : ''}>${groups.slice(0, 3).map(g => { const n = g.sets.length; return `<div class="hsum"><b>${n}</b> ${n === 1 ? 'serie' : 'series'} · ${esc(g.name)}</div>`; }).join('')}</div>
-    <div class="hdetail"${open ? '' : ' hidden'}>${groups.map(g => { let n = 0; return `<div class="hex"><b>${esc(g.name)}</b>${g.sets.map((x, j) =>
+    <div class="hdetail"${open ? '' : ' hidden'}>${groups.map(g => { let n = 0; return `<div class="hex"><button type="button" class="hexname" data-ex-open="${s.id}" data-ex-name="${esc(g.name)}" aria-haspopup="dialog">${esc(g.name)}<svg viewBox="0 0 24 24" class="ico" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>${g.sets.map((x, j) =>
       `<div class="hset"><span class="hn${x.w ? ' w' : ''}">${x.w ? 'W' : ++n}</span><span>${x.kg ? x.kg + ' kg' : '—'}${prs.includes(g.idx[j]) ? '<i class="pr">PR</i>' : ''}</span><span>${x.reps} reps</span></div>`).join('')}</div>`; }).join('')}</div>
     <button type="button" class="hmore" data-toggle-entry="${s.id}" aria-expanded="${open}">${open ? 'Ver menos' : rest ? `Ver ${rest} ${rest === 1 ? 'ejercicio más' : 'ejercicios más'}` : 'Ver detalle'}</button>`;
 }
@@ -1515,7 +1536,7 @@ function setSettings(open) {
 }
 $('settings-btn').onclick = () => setSettings(true);
 $('settings-close').onclick = () => setSettings(false);
-$('scrim').onclick = () => { setSettings(false); setCal(false); closeFinish(); if (typeof closePicker === 'function') closePicker(); if (typeof closeDetail === 'function') closeDetail(); };
+$('scrim').onclick = () => { setSettings(false); setCal(false); closeFinish(); if (typeof closePicker === 'function') closePicker(); if (typeof closeDetail === 'function') closeDetail(); cerrarEjercicioSesion(); };
 // ---------- Hojas inferiores: foco, bloqueo del fondo, Escape y arrastrar para cerrar ----------
 const sheets = [...document.querySelectorAll('.sheet')];
 const openSheets = () => sheets.filter(s => s.classList.contains('show'));
