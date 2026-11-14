@@ -146,17 +146,29 @@
           <button type="button" data-periodo="365" aria-pressed="false">1 año</button>
           <button type="button" data-periodo="0" aria-pressed="false">Siempre</button>
         </div>
-        <div class="card pf-card"><p class="pf-rango" id="pstats-rango"></p><div class="pf-sum" id="pstats-sum"></div></div>
-        <div class="card pf-card" id="pstats-dias-card"><p class="pf-h" id="pstats-dias-h"></p><div class="pf-days" id="pstats-days"></div></div>
         <div class="card pf-card">
-          <p class="pf-h">Tus ejercicios</p>
-          <div class="pf-chips sm" role="group" aria-label="Filtrar por tendencia">
-            <button type="button" data-trend="all" aria-pressed="true">Todos</button>
-            <button type="button" data-trend="up" aria-pressed="false">Subiendo</button>
-            <button type="button" data-trend="flat" aria-pressed="false">Estancados</button>
-            <button type="button" data-trend="down" aria-pressed="false">Bajando</button>
-          </div>
-          <div id="pstats-ex"></div>
+          <p class="pf-h" id="pstats-title"></p><p class="pf-rango" id="pstats-rango"></p>
+          <div class="pf-sum" id="pstats-sum"></div>
+          <p class="pf-info" id="pstats-note" hidden></p>
+        </div>
+        <div class="card pf-card">
+          <label class="pf-sel"><select id="pstats-vol-sel" aria-label="Qué medir">
+            <option value="vol">Volumen</option><option value="series">Series</option><option value="tiempo">Tiempo</option>
+          </select></label>
+          <p class="pf-rango" id="pstats-vol-rango"></p>
+          <p class="pf-big"><b id="pstats-vol-num"></b><span id="pstats-vol-cmp"></span></p>
+          <div class="pf-bars" id="pstats-vol-bars"></div>
+        </div>
+        <div class="card pf-card" id="pstats-dias-card">
+          <p class="pf-h">Constancia</p><p class="pf-rango" id="pstats-dias-rango"></p>
+          <p class="pf-big" id="pstats-dias-h"></p>
+          <div class="pf-days" id="pstats-days"></div>
+        </div>
+        <div class="card pf-card">
+          <p class="pf-h">Series por músculo</p><p class="pf-rango" id="pstats-musc-rango"></p>
+          <div id="pstats-musc"></div>
+          <p class="pf-leyenda" id="pstats-musc-ley"></p>
+          <p class="pf-info" id="pstats-musc-note" hidden></p>
         </div>
       </div>
       <div id="perfil-entrenos" hidden>

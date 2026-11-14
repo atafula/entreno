@@ -3545,22 +3545,83 @@ def perfil_cambiar_de_periodo(pg):
     assert "2\nentrenos" in pg.inner_text("#pstats-sum")
     assert pg.get_attribute('[data-periodo="30"]', "aria-pressed") == "true"
 
+def _ss_stats(pg):
+    return [_ps(off(pg, 0), "a1", [("Press", 40, 10), ("Press", 40, 8), ("Press", 20, 10, True)], 1800),
+            _ps(off(pg, -2), "a2", [("Remo", 30, 10)], 1200),
+            _ps(off(pg, -9), "b1", [("Remo", 30, 10)], 600)]
+
 @test
-def perfil_tendencia_de_cada_ejercicio(pg):
-    pg.goto(URL)
-    ss = [_ps(off(pg, -20), "v1", [("Press", 40, 10), ("Remo", 50, 10), ("Curl", 15, 10)]),
-          _ps(off(pg, -1), "n1", [("Press", 45, 10), ("Remo", 50, 10), ("Curl", 12, 10), ("Sentadilla", 60, 5)])]
-    seed(pg, sessions=ss); tab(pg, "historial"); _stats(pg)
-    fila = lambda ex: pg.locator(f'#pstats-ex .pex:has-text("{ex}")').inner_text()
-    assert "Subiendo" in fila("Press") and "45 kg" in fila("Press")
-    assert "Estancado" in fila("Remo") and "Bajando" in fila("Curl") and "Nuevo" in fila("Sentadilla")
-    pg.click('[data-trend="up"]'); pg.wait_for_timeout(100)
-    assert pg.locator("#pstats-ex .pex").count() == 1
+def perfil_estadisticas_ya_no_tiene_tus_ejercicios(pg):
+    seed(pg); tab(pg, "historial"); _stats(pg)
+    assert pg.locator("#pstats-ex, [data-trend]").count() == 0
+    assert "Tus ejercicios" not in pg.inner_text("#perfil-stats")
+
+@test
+def perfil_estadisticas_titulo_del_resumen_sigue_al_periodo(pg):
+    pg.goto(URL); seed(pg, sessions=_ss_stats(pg)); tab(pg, "historial"); _stats(pg)
+    assert pg.inner_text("#pstats-title") == "Cómo vas en los últimos 7 días"
+    pg.click('[data-periodo="30"]'); pg.wait_for_timeout(120)
+    assert pg.inner_text("#pstats-title") == "Cómo vas en los últimos 30 días"
+    pg.click('[data-periodo="0"]'); pg.wait_for_timeout(120)
+    assert "desde el principio" in pg.inner_text("#pstats-title")
+
+@test
+def perfil_estadisticas_aviso_con_una_sola_sesion(pg):
+    pg.goto(URL); seed(pg, sessions=_ss_stats(pg)[:1]); tab(pg, "historial"); _stats(pg)
+    assert pg.is_visible("#pstats-note") and "tendencia" in pg.inner_text("#pstats-note")
+    seed(pg, sessions=_ss_stats(pg)); tab(pg, "historial"); _stats(pg)
+    assert not pg.is_visible("#pstats-note")
+
+@test
+def perfil_estadisticas_volumen_por_dias_con_selector(pg):
+    pg.goto(URL); seed(pg, sessions=_ss_stats(pg)); tab(pg, "historial"); _stats(pg)
+    assert pg.locator("#pstats-vol-bars .vb").count() == 7
+    assert pg.locator("#pstats-vol-bars .vb.on").count() == 2, "los dos días con entreno"
+    assert pg.locator("#pstats-vol-bars .vb:last-child").get_attribute("class").count("on") == 1, "hoy es la última barra"
+    num = pg.inner_text("#pstats-vol-num")
+    assert "1.020" in num and "kg" in num, num           # 40×10 + 40×8 + 30×10
+    assert pg.locator("#pstats-vol-bars .vb i").all_text_contents()[-1] in ("S","D","L","M","X","J","V")
+    pg.select_option("#pstats-vol-sel", "series"); pg.wait_for_timeout(120)
+    assert "3" in pg.inner_text("#pstats-vol-num") and "series" in pg.inner_text("#pstats-vol-num")
+    pg.select_option("#pstats-vol-sel", "tiempo"); pg.wait_for_timeout(120)
+    assert "50 min" in pg.inner_text("#pstats-vol-num")
+    pg.click('[data-periodo="90"]'); pg.wait_for_timeout(120)
+    assert pg.locator("#pstats-vol-bars .vb").count() == 13, "en 90 días, una barra por semana"
+    pg.click('[data-periodo="365"]'); pg.wait_for_timeout(120)
+    assert pg.locator("#pstats-vol-bars .vb").count() == 12, "en un año, una barra por mes"
+
+@test
+def perfil_estadisticas_volumen_compara_con_el_periodo_anterior(pg):
+    pg.goto(URL); seed(pg, sessions=_ss_stats(pg)); tab(pg, "historial"); _stats(pg)
+    assert "%" in pg.inner_text("#pstats-vol-cmp") and "anterior" in pg.inner_text("#pstats-vol-cmp")
+    seed(pg, sessions=_ss_stats(pg)[:2]); tab(pg, "historial"); _stats(pg)
+    assert "sin comparar" in pg.inner_text("#pstats-vol-cmp")
+
+@test
+def perfil_estadisticas_constancia_cuenta_los_dias_entrenados(pg):
+    pg.goto(URL); seed(pg, sessions=_ss_stats(pg)); tab(pg, "historial"); _stats(pg)
+    assert "Constancia" in pg.inner_text("#pstats-dias-card")
+    t = pg.inner_text("#pstats-dias-h")
+    assert "2" in t and "días entrenados" in t and "7 días" in t, t
+
+@test
+def perfil_estadisticas_series_por_musculo(pg):
+    seed(pg); pg.wait_for_function("typeof ejCache !== 'undefined' && ejCache")
+    _perfil_muneco(pg); _stats(pg)
+    filas = pg.locator("#pstats-musc .pm")
+    assert filas.count() == 6
+    assert filas.locator(".pm-n").all_text_contents() == ["Pecho", "Hombro", "Espalda", "Piernas", "Brazos", "Core"], filas.locator(".pm-n").all_text_contents()
+    v = {f.locator(".pm-n").inner_text(): f.locator(".pm-v").inner_text() for f in [filas.nth(i) for i in range(6)]}
+    assert v["Pecho"] == "2" and v["Hombro"] == "1" and v["Espalda"] == "0", v
+    mayor = filas.nth(0).locator(".pm-fill").evaluate("e => e.style.width")
+    menor = filas.nth(1).locator(".pm-fill").evaluate("e => e.style.width")
+    assert mayor == "100%" and menor == "50%", (mayor, menor)
+    assert "pocas sesiones" in pg.inner_text("#pstats-musc-note")
 
 @test
 def perfil_sin_entrenos_en_el_periodo(pg):
     seed(pg, sessions=[]); tab(pg, "historial"); _stats(pg)
-    assert "0\nentrenos" in pg.inner_text("#pstats-sum") and pg.locator("#pstats-ex .pex").count() == 0
+    assert "0\nentrenos" in pg.inner_text("#pstats-sum") and pg.locator("#pstats-vol-bars .vb.on").count() == 0
 
 def _editar_perfil(pg): pg.click("#perfil-edit"); pg.wait_for_selector("#perfil-editor.show", timeout=2000)
 

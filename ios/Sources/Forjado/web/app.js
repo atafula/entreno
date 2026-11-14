@@ -926,7 +926,7 @@ $('history-list').addEventListener('click', e => {
 });
 // ---------- Perfil: cuenta de Google arriba; debajo, los entrenos o las estadísticas ----------
 let detalleId = null;                      // entreno abierto desde la cuadrícula: la lista enseña solo ese
-let perfilVista = 'grid', periodo = 7, tendencia = 'all';
+let perfilVista = 'grid', periodo = 7;
 const durCorta = sec => { const m = Math.round(sec / 60); return m >= 60 ? `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ''}` : `${m} min`; };
 const fuerza = x => e1rm(x.kg || 0, x.reps || 0) || (x.reps || 0) / 1000;   // sin peso: manda el número de reps
 function renderPerfil() {
@@ -988,48 +988,68 @@ $('pf-grid').addEventListener('click', e => {
 });
 function renderPerfilStats() {
   document.querySelectorAll('[data-periodo]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.periodo === periodo)));
-  document.querySelectorAll('[data-trend]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.trend === tendencia)));
-  const hoy = localDate(), N = periodo;
+  const hoy = localDate(), N = periodo, medidaSel = $('pstats-vol-sel').value;
   const ini = N ? localDate(masDias(new Date(), -(N - 1))) : '0000-00-00';
   const prevIni = N ? localDate(masDias(new Date(), -(2 * N - 1))) : '';
   const en = (s, a, b) => s.date >= a && s.date <= b;
   const act = db.sessions.filter(s => en(s, ini, hoy)), ant = N ? db.sessions.filter(s => s.date >= prevIni && s.date < ini) : null;
-  const medir = l => ({ n: l.length, series: l.reduce((a, s) => a + s.sets.filter(x => !x.w).length, 0), seg: l.reduce((a, s) => a + (s.seconds || 0), 0) });
+  const medir = l => ({ n: l.length, series: l.reduce((a, s) => a + s.sets.filter(x => !x.w).length, 0), seg: l.reduce((a, s) => a + (s.seconds || 0), 0),
+    vol: Math.round(l.reduce((a, s) => a + s.sets.reduce((b, x) => b + (x.w ? 0 : (x.reps || 0) * (x.kg || 0)), 0), 0)) });
   const A = medir(act), P = ant && medir(ant);
   const dif = (a, b, fmt = v => v) => { if (!P) return ''; const d = a - b; return `<em class="${d > 0 ? 'up' : d < 0 ? 'down' : ''}">${d > 0 ? '+' : d < 0 ? '−' : '='}${d ? fmt(Math.abs(d)) : ''}</em>`; };
   const et = iso => { const d = new Date(iso + 'T12:00:00'); return `${d.getDate()} ${MESES[d.getMonth()].slice(0, 3)}`; };
-  $('pstats-rango').textContent = N ? `${et(ini)} – ${et(hoy)}${P ? ` · frente a los ${N} días anteriores` : ''}` : 'Desde el primer entreno';
+  const rango = N ? `${et(ini)} – ${et(hoy)}` : 'Desde el primer entreno', cuanto = N ? `en los últimos ${N} días` : 'en total';
+  $('pstats-title').textContent = N ? `Cómo vas en los últimos ${N} días` : 'Cómo vas desde el principio';
+  $('pstats-rango').textContent = rango + (P ? ` · frente a los ${N} días anteriores` : '');
   const card = (v, lab, d) => `<div class="pf-n"><b>${v}</b><span>${lab}</span>${d}</div>`;
   $('pstats-sum').innerHTML = card(A.n, A.n === 1 ? 'entreno' : 'entrenos', dif(A.n, P && P.n))
     + card(A.series, A.series === 1 ? 'serie' : 'series', dif(A.series, P && P.series))
     + card(durCorta(A.seg), 'tiempo', dif(Math.round(A.seg / 60), P && Math.round(P.seg / 60), v => `${v} min`));
-  // Días entrenados: una casilla por día (hasta 90); en periodos largos, solo la cuenta
+  $('pstats-note').hidden = A.n !== 1; $('pstats-note').textContent = 'Con una sola sesión aún no hay tendencia.';
+
+  // Volumen (o series, o tiempo) en barras: por día, por semana o por mes según el periodo
+  const dia = k => localDate(masDias(new Date(), k)), hoyD = new Date();
+  let cubos = [];
+  if (N && N <= 30) cubos = [...Array(N)].map((_, k) => { const f = dia(k - N + 1); return { a: f, b: f, lab: N === 7 ? DIAS_LETRA[diaSemana(new Date(f + 'T12:00:00'))] : '' }; });
+  else if (N === 90) cubos = [...Array(13)].map((_, k) => ({ a: dia(-(13 - k) * 7 + 1), b: dia(-(12 - k) * 7), lab: '' }));
+  else {
+    const meses = N ? 12 : Math.min(12, Math.max(1, db.sessions.length ? (() => { const m = db.sessions.map(s => s.date).sort()[0]; return (hoyD.getFullYear() - +m.slice(0, 4)) * 12 + hoyD.getMonth() - (+m.slice(5, 7) - 1) + 1; })() : 1));
+    cubos = [...Array(meses)].map((_, k) => { const d = new Date(hoyD.getFullYear(), hoyD.getMonth() - (meses - 1 - k), 1), p = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; return { a: `${p}-01`, b: `${p}-31`, lab: MESES[d.getMonth()][0].toUpperCase() }; });
+  }
+  const valor = (l, c) => { const m = medir(l.filter(s => en(s, c.a, c.b))); return medidaSel === 'series' ? m.series : medidaSel === 'tiempo' ? m.seg : m.vol; };
+  const vals = cubos.map(c => valor(db.sessions, c)), max = Math.max(1, ...vals);
+  const fmtV = (m, v) => medidaSel === 'series' ? `${v}<small> ${v === 1 ? 'serie' : 'series'}</small>` : medidaSel === 'tiempo' ? `${durCorta(v)}` : `${fmtMiles(v)}<small> kg</small>`;
+  const actV = medidaSel === 'series' ? A.series : medidaSel === 'tiempo' ? A.seg : A.vol, antV = P ? (medidaSel === 'series' ? P.series : medidaSel === 'tiempo' ? P.seg : P.vol) : 0;
+  $('pstats-vol-rango').textContent = rango;
+  $('pstats-vol-num').innerHTML = fmtV(medidaSel, actV);
+  $('pstats-vol-cmp').textContent = P && antV ? `${actV >= antV ? '+' : '−'}${Math.round(Math.abs(actV - antV) / antV * 100)}% vs anterior` : 'todavía sin comparar';
+  $('pstats-vol-bars').className = `pf-bars c${cubos.length}`;
+  $('pstats-vol-bars').innerHTML = cubos.map((c, k) => `<span class="vb${vals[k] ? ' on' : ''}" title="${c.a}"><span class="vb-t"><span class="vb-f" style="height:${Math.round(vals[k] / max * 100)}%"></span></span>${c.lab ? `<i>${c.lab}</i>` : ''}</span>`).join('');
+
+  // Constancia: días entrenados, con una casilla por día (hasta 90)
   const dias = new Set(act.map(s => s.date));
-  $('pstats-dias-h').textContent = plural(dias.size, 'día entrenado', 'días entrenados');
+  $('pstats-dias-rango').textContent = rango;
+  $('pstats-dias-h').innerHTML = `<b>${dias.size}</b> ${dias.size === 1 ? 'día entrenado' : 'días entrenados'} <small>${cuanto}</small>`;
   const casillas = N && N <= 90 ? [...Array(N)].map((_, k) => localDate(masDias(new Date(), k - N + 1))) : [];
   $('pstats-days').className = `pf-days${N === 7 ? ' wk' : ''}`;
   $('pstats-days').innerHTML = casillas.map(f => `<span class="d${dias.has(f) ? ' on' : ''}${f === hoy ? ' hoy' : ''}" title="${f}">${N === 7 ? `<i>${DIAS_LETRA[diaSemana(new Date(f + 'T12:00:00'))]}</i>` : ''}</span>`).join('');
   $('pstats-days').hidden = !casillas.length;
-  // Tendencia por ejercicio: su mejor serie del periodo frente a su mejor de antes
-  const ex = new Map();
-  [...act].sort((a, b) => b.date.localeCompare(a.date)).forEach(s => s.sets.forEach(x => { if (!x.w && !ex.has(x.exercise)) ex.set(x.exercise, s.date); }));
-  const filas = [...ex.entries()].map(([nombre, ultima]) => {
-    const corte = N ? ini : ultima;            // «Siempre»: el último día que se hizo frente a todo lo anterior
-    const sets = (l, f) => l.filter(f).flatMap(s => s.sets.filter(x => !x.w && x.exercise === nombre));
-    const ahora = sets(db.sessions, s => N ? en(s, ini, hoy) : s.date === ultima), antes = sets(db.sessions, s => s.date < corte);
-    const mejor = ahora.reduce((a, x) => (fuerza(x) > fuerza(a) ? x : a));
-    const base = antes.length ? Math.max(...antes.map(fuerza)) : null, v = fuerza(mejor);
-    const t = base === null ? 'new' : v > base * 1.005 ? 'up' : v < base * 0.995 ? 'down' : 'flat';
-    return { nombre, mejor, t };
-  });
-  const LAB = { up: 'Subiendo', down: 'Bajando', flat: 'Estancado', new: 'Nuevo' }, ICO = { up: '↑', down: '↓', flat: '–', new: '•' };
-  const vistas = filas.filter(f => tendencia === 'all' || f.t === tendencia);
-  $('pstats-ex').innerHTML = vistas.map(f => `<div class="pex"><div><b>${esc(f.nombre)}</b><span class="pt ${f.t}">${ICO[f.t]} ${LAB[f.t]}</span></div><em>${f.mejor.kg ? `${String(f.mejor.kg).replace(".", ",")} kg × ${f.mejor.reps}` : `${f.mejor.reps} reps`}</em></div>`).join('')
-    || `<p class="pf-vacio">${filas.length ? 'Ningún ejercicio con esa tendencia.' : 'Sin entrenos en este periodo.'}</p>`;
+
+  // Series por músculo: las del periodo, y una marca con las del periodo anterior
+  const porGrupo = l => l.reduce((o, s) => { const m = musculosDe(s); RADAR.forEach(([k]) => { o[k] = (o[k] || 0) + (m[k] || 0); }); return o; }, {});
+  const GA = porGrupo(act), GP = P ? porGrupo(ant) : null;
+  const ORDEN = [['pecho', 'Pecho'], ['hombro', 'Hombro'], ['espalda', 'Espalda'], ['piernas', 'Piernas'], ['brazos', 'Brazos'], ['core', 'Core']];
+  const maxG = Math.max(1, ...ORDEN.map(([k]) => GA[k] || 0), ...(GP ? ORDEN.map(([k]) => GP[k] || 0) : []));
+  const fiable = A.n >= 3 && P && P.n >= 1;
+  $('pstats-musc-rango').textContent = rango;
+  $('pstats-musc').innerHTML = ORDEN.map(([k, lab]) => { const v = GA[k] || 0, w = Math.round(v / maxG * 100);
+    return `<div class="pm"><div class="pm-h"><span class="pm-n">${lab}</span><b class="pm-v">${v}</b></div><div class="pm-t"><span class="pm-fill" style="width:${w}%"></span>${fiable && GP[k] ? `<span class="pm-prev" style="left:${Math.round(GP[k] / maxG * 100)}%"></span>` : ''}</div></div>`; }).join('');
+  $('pstats-musc-ley').textContent = fiable ? `Marca clara: los ${N} días anteriores` : '';
+  $('pstats-musc-note').hidden = fiable; $('pstats-musc-note').textContent = 'Con tan pocas sesiones todavía no lo marcamos. Compara en cuanto haya más.';
 }
+$('pstats-vol-sel').onchange = () => { vibrate(6); renderPerfilStats(); };
 document.querySelectorAll('[data-pview]').forEach(b => b.onclick = () => { if (perfilVista === b.dataset.pview) return; perfilVista = b.dataset.pview; detalleId = null; vibrate(6); renderPerfil(); renderHistory(); });
 document.querySelectorAll('[data-periodo]').forEach(b => b.onclick = () => { periodo = +b.dataset.periodo; vibrate(6); renderPerfilStats(); });
-document.querySelectorAll('[data-trend]').forEach(b => b.onclick = () => { tendencia = b.dataset.trend; vibrate(6); renderPerfilStats(); });
 $('perfil-login').onclick = () => $('login-btn').click();
 const ICONO_PERSONA = '<svg viewBox="0 0 24 24" class="ico"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>';
 const fotoHtml = (src, nombre) => src ? `<img src="${esc(src)}" alt="" referrerpolicy="no-referrer">` : nombre ? `<span>${esc(nombre[0].toUpperCase())}</span>` : ICONO_PERSONA;
