@@ -310,11 +310,12 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; }
 .routine.mini .rtitle b { font-size: var(--t-xl); }
 .routine.mini .play { grid-column: 3; grid-row: 1 / span 2; align-self: center; width: 48px; height: 48px; background: color-mix(in srgb, var(--fire) 16%, var(--surface)); color: var(--fire-2); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fire) 25%, var(--line)); }
 .routine.mini .play .ico { width: 18px; height: 18px; }
-.routine.mini .rtags { grid-column: 1; grid-row: 2; margin-top: var(--s2); }
+.routine.mini .rtags { grid-column: 1; grid-row: 2; min-width: 0; margin-top: var(--s2); }
 .routine.mini .more-btn { position: static; grid-column: 2; grid-row: 1 / span 2; align-self: center; }
 .routine .entry-menu { top: 52px; right: var(--s3); }
-.rtags { display: flex; flex-wrap: wrap; gap: var(--s2); margin: var(--s3) 0 0; }
-.rtags span { padding: var(--s1) var(--s3); border-radius: var(--r-full); background: var(--surface-2); color: var(--text-2); font: 700 var(--t-xs)/1.2 var(--ui); }
+.rtags { display: flex; flex-wrap: nowrap; gap: var(--s2); margin: var(--s3) 0 0; overflow-x: auto; scrollbar-width: none; }
+.rtags::-webkit-scrollbar { display: none; }
+.rtags span { flex: none; white-space: nowrap; padding: var(--s1) var(--s3); border-radius: var(--r-full); background: var(--surface-2); color: var(--text-2); font: 700 var(--t-xs)/1.2 var(--ui); }
 .rhead .chev { color: var(--muted); margin-right: var(--s1); transition: transform var(--d-fast) var(--ease-out); }
 .rhead:active .chev { transform: translateX(4px); }
 .ractions { display: grid; grid-template-columns: 1.5fr 1fr; gap: var(--s2); margin-top: var(--s3); }
@@ -801,17 +802,22 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; }
 
 /* ===== Perfil: cuadrícula de entrenos con el muñeco de músculos ===== */
 .pf-views .ico { width: 24px; height: 24px; }
-.pf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s2); }
+.pf-grid { display: flex; flex-direction: column; gap: var(--s2); }
 .pf-grid[hidden] { display: none; }
-.pf-card { position: relative; display: flex; flex-direction: column; min-height: 220px; padding: var(--s3); border: 0; border-radius: var(--r-md); background: var(--surface-2); color: var(--text); text-align: left; font: inherit; }
+.pf-card { display: flex; align-items: center; gap: var(--s3); width: 100%; margin: 0; padding: var(--s2); border: 0; border-radius: var(--r-lg); background: var(--surface-2); color: var(--text); text-align: left; font: inherit; }
 .pf-card:active { transform: scale(.98); }
-.pf-card .pf-d { font: 700 var(--t-sm)/1.2 var(--ui); }
-.pf-card svg.cuerpo { flex: 1; width: 100%; min-height: 0; margin: var(--s2) 0; }
-.pf-card .pf-pie { display: flex; justify-content: space-between; gap: var(--s2); color: var(--muted); font: 700 var(--t-sm)/1.2 var(--ui); }
-.pf-card .pf-pie span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pf-col { flex: none; display: grid; gap: 3px; width: 78px; height: 78px; border-radius: var(--r-md); overflow: hidden; }
+.pf-col.n2, .pf-col.n3, .pf-col.n4 { grid-template-columns: 1fr 1fr; }
+.pf-col.n4, .pf-col.n3 { grid-template-rows: 1fr 1fr; }
+.pf-col.n3 .fxi:first-child { grid-row: span 2; }
+.pf-col .fxi { width: 100%; height: 100%; border-radius: 0; box-shadow: none; }
+.pf-m { flex: 1; min-width: 0; }
+.pf-m b { display: block; font: 700 var(--t-lg)/1.15 var(--ui); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pf-m small { display: block; margin-top: 2px; color: var(--muted); font: 600 var(--t-sm)/1.2 var(--ui); }
+.pf-chips-m { display: flex; flex-wrap: nowrap; gap: var(--s1); margin-top: var(--s2); overflow-x: auto; scrollbar-width: none; }
+.pf-chips-m::-webkit-scrollbar { display: none; }
+.pf-chips-m u { flex: none; white-space: nowrap; text-decoration: none; padding: 2px var(--s2); border-radius: var(--r-full); background: var(--surface-3); color: var(--text-2); font: 700 var(--t-xs)/1.4 var(--ui); }
+.pf-v { flex: none; text-align: right; padding-right: var(--s2); }
+.pf-v b { display: block; font: 700 var(--t-lg)/1.1 var(--ui); font-variant-numeric: tabular-nums; }
+.pf-v small { color: var(--muted); font: 600 var(--t-sm)/1 var(--ui); }
 .pf-vacio-g { grid-column: 1 / -1; }
-.radar .rejilla { fill: none; stroke: var(--muted); stroke-opacity: .35; stroke-width: 1.2; }
-.radar .eje { stroke: var(--muted); stroke-opacity: .2; }
-.radar .area { fill: var(--accent); fill-opacity: .45; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; }
-.radar text { fill: var(--muted); font: 600 8px/1 var(--ui); }
-.radar text.on { fill: var(--text); font-weight: 800; }

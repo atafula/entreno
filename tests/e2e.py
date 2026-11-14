@@ -797,7 +797,7 @@ def historial_borrar_caminata(pg):
 
 @test
 def sync_borrar_entreno_lo_borra_de_la_nube(pg):
-    seed(pg, sessions=SESIONES, fb={"logged": True}); pg.wait_for_timeout(900)
+    seed(pg, sessions=SESIONES, fb={"logged": True}); pg.wait_for_function("'users/U1/sesiones/s2' in JSON.parse(sessionStorage.getItem('fake-cloud') || '{}')", timeout=4000)
     assert "users/U1/sesiones/s2" in cloud(pg)
     tab(pg, "historial"); menu(pg, "session", "s2"); pg.click('[data-del-session="s2"]'); pg.click('[data-del-session="s2"]'); pg.wait_for_timeout(900)
     assert "users/U1/sesiones/s2" not in cloud(pg) and "users/U1/sesiones/s" in cloud(pg)
@@ -3301,6 +3301,23 @@ def te_toca_quita_la_rutina_que_ya_se_hizo_hoy(pg):
     assert pg.locator("#routines-list .routine.feat").count() == 0 and "Te toca" not in pg.inner_text("#routines-list"), "si ya están hechas, no hay Te toca"
 
 @test
+def rutinas_los_musculos_van_en_una_sola_linea_deslizable(pg):
+    seed(pg); pg.wait_for_function("typeof ejCache !== 'undefined' && ejCache")
+    pg.evaluate("""() => { const s = () => [{w: false, kg: '', reps: ''}];
+        db.routines = [{id: 'rg', name: 'Todo', exercises: [
+            {name: 'Aperturas', ejId: 'chest-fly-machine', image: '', sets: s()}, {name: 'Press militar', ejId: 'shoulder-press-dumbbell', image: '', sets: s()},
+            {name: 'Curl', ejId: 'bicep-curl-dumbbell', image: '', sets: s()}, {name: 'Sentadilla', ejId: 'squat-barbell', image: '', sets: s()},
+            {name: 'Remo', ejId: 'seated-row-cable', image: '', sets: s()}, {name: 'Crunch', ejId: 'crunch', image: '', sets: s()}]}];
+        render(); }""")
+    tab(pg, "rutinas")
+    r = pg.locator("#routines-list .rtags").first
+    assert r.count() == 1 and r.locator("span").count() >= 3, "hay varias etiquetas"
+    st = r.evaluate("e => { const c = getComputedStyle(e); return [c.flexWrap, c.overflowX]; }")
+    assert st[0] == "nowrap" and st[1] in ("auto", "scroll"), st
+    tops = r.locator("span").evaluate_all("els => [...new Set(els.map(e => e.offsetTop))]")
+    assert len(tops) == 1, f"todas en la misma línea: {tops}"
+
+@test
 def rutinas_las_tarjetas_muestran_los_dias_que_tocan(pg):
     seed(pg, routines=_plan(pg, {"a": [0, 3], "b": [1, 2, 4]})); tab(pg, "rutinas")
     assert "L·J" in _tarjeta(pg, "a").inner_text() or "L·J" in pg.inner_text("#routines-list"), pg.inner_text("#routines-list")
@@ -3359,21 +3376,25 @@ def perfil_las_pestañas_son_iconos_con_etiqueta(pg):
         assert b.inner_text().strip() == "", f"{v}: solo icono"
 
 @test
-def perfil_el_radar_marca_los_grupos_trabajados(pg):
+def perfil_cada_entreno_es_una_fila_con_collage_musculos_y_volumen(pg):
     seed(pg); pg.wait_for_function("typeof ejCache !== 'undefined' && ejCache")
     _perfil_muneco(pg)
-    c = pg.locator("#pf-grid .pf-card").first
-    assert c.locator("svg.radar").count() == 1 and c.locator("svg [data-m]").count() == 6, "radar con seis ejes"
-    nombres = c.locator("svg text").all_text_contents()
-    assert nombres == ["Pecho", "Hombro", "Brazos", "Core", "Piernas", "Espalda"], nombres
-    on = c.locator("svg [data-m].on").evaluate_all("els => els.map(e => e.dataset.m).sort()")
-    assert on == ["hombro", "pecho"], on
-    assert c.locator("svg polygon.rejilla").count() == 3, "tres anillos"
-    pts = c.locator("svg polygon.area").get_attribute("points").split()
-    assert len(pts) == 6, pts
+    f = pg.locator("#pf-grid .pf-card").first
+    assert f.locator("svg").count() == 0, "sin radar"
+    assert f.locator(".pf-col .fxi").count() == 2, "una casilla por ejercicio distinto (hasta cuatro)"
+    assert f.locator(".pf-chips-m u").all_text_contents() == ["Pecho", "Hombro"], "etiquetas de los músculos trabajados"
+    t = f.inner_text()
+    assert "Empuje" in t and "Hoy" in t and "45 min" in t, t
+    assert "760" in t and "kg" in t, t   # 30×10 + 30×10 + 20×8
     otro = pg.locator("#pf-grid .pf-card").nth(1)
-    assert otro.locator("svg.radar").count() == 1 and otro.locator("svg [data-m].on").count() == 0, "un entreno sin músculos conocidos sale con el radar vacío"
-    assert otro.locator("svg polygon.area").count() == 0
+    assert otro.locator(".pf-chips-m u").count() == 0, "sin músculos conocidos no hay etiquetas"
+    assert "Libre" in otro.inner_text()
+
+@test
+def perfil_la_fila_sin_duracion_no_enseña_cero_minutos(pg):
+    seed(pg, sessions=[{"id": "z", "date": "2026-11-01", "routine": "LEG", "seconds": 0, "ts": 1, "sets": [pset("Hip thrust", 100, 10)]}]); tab_perfil(pg)
+    t = pg.inner_text("#pf-grid")
+    assert "0 min" not in t and "LEG" in t and "1 serie" in t, t
 
 @test
 def perfil_tocar_una_tarjeta_abre_la_pagina_de_ese_entreno(pg):

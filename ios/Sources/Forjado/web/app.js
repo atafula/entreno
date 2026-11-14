@@ -964,25 +964,17 @@ function musculosDe(s) {
   });
   return out;
 }
-function cuerpoSvg(m) {
-  const R = 40, max = Math.max(1, ...Object.values(m));
-  const pt = (i, r) => { const a = -Math.PI / 2 + i * Math.PI / 3; return [60 + R * r * Math.cos(a), 60 + R * r * Math.sin(a)]; };
-  const hex = r => RADAR.map((_, i) => pt(i, r).map(n => n.toFixed(1)).join(',')).join(' ');
-  const anillos = [1, .66, .33].map(r => `<polygon class="rejilla" points="${hex(r)}"/>`).join('');
-  const ejes = RADAR.map((_, i) => { const [x, y] = pt(i, 1); return `<line class="eje" x1="60" y1="60" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}"/>`; }).join('');
-  const hay = RADAR.some(([k]) => m[k]);
-  const area = hay ? `<polygon class="area" points="${RADAR.map(([k], i) => pt(i, m[k] ? .12 + .88 * m[k] / max : .04).map(n => n.toFixed(1)).join(',')).join(' ')}"/>` : '';
-  const textos = RADAR.map(([k, lab], i) => {
-    const [x, y] = pt(i, 1.3), anc = Math.abs(x - 60) < 5 ? 'middle' : x > 60 ? 'start' : 'end';
-    return `<text data-m="${k}"${m[k] ? ' class="on"' : ''} x="${x.toFixed(1)}" y="${(y + 2.5).toFixed(1)}" text-anchor="${anc}">${lab}</text>`;
-  }).join('');
-  return `<svg class="cuerpo radar" viewBox="-24 -2 168 124" aria-hidden="true">${anillos}${ejes}${area}${textos}</svg>`;
-}
 function renderPerfilGrid() {
   const g = $('pf-grid');
   const items = [
-    ...db.sessions.map(s => ({ date: s.date, ts: s.ts || 0, id: s.id, html: `<button type="button" class="pf-card" data-pf-open="${s.id}" aria-label="Abrir entreno ${esc(s.routine)}"><span class="pf-d">${esc(whenText(s.date))}</span>${cuerpoSvg(musculosDe(s))}<span class="pf-pie"><span>${s.seconds ? durCorta(s.seconds) : plural(s.sets.length, 'serie', 'series')}</span><span>${esc(s.routine)}</span></span></button>` })),
-    ...db.walks.map(w => ({ date: w.date, ts: w.ts || 0, id: w.id, html: `<button type="button" class="pf-card" data-pf-open="${w.id}" aria-label="Abrir caminata"><span class="pf-d">${esc(whenText(w.date))}</span>${cuerpoSvg({})}<span class="pf-pie"><span>${(w.meters / 1000).toFixed(1).replace('.', ',')} km</span><span>Caminata</span></span></button>` })),
+    ...db.sessions.map(s => {
+      const nombres = [...new Set(s.sets.map(x => x.exercise))].slice(0, 4);
+      const vol = Math.round(s.sets.reduce((a, x) => a + (x.reps || 0) * (x.kg || 0), 0)), m = musculosDe(s);
+      const tags = RADAR.filter(([k]) => m[k]).sort((a, b) => m[b[0]] - m[a[0]]).map(([, lab]) => `<u>${lab}</u>`).join('');
+      const sub = [whenText(s.date), s.seconds ? durCorta(s.seconds) : plural(s.sets.length, 'serie', 'series')].join(' · ');
+      return { date: s.date, ts: s.ts || 0, id: s.id, html: `<button type="button" class="pf-card" data-pf-open="${s.id}" aria-label="Abrir entreno ${esc(s.routine)}"><span class="pf-col n${nombres.length}">${nombres.map(n => fotoMini({ name: n })).join('')}</span><span class="pf-m"><b>${esc(s.routine)}</b><small>${esc(sub)}</small>${tags ? `<span class="pf-chips-m">${tags}</span>` : ''}</span>${vol ? `<span class="pf-v"><b>${fmtMiles(vol)}</b><small>kg</small></span>` : ''}</button>` };
+    }),
+    ...db.walks.map(w => ({ date: w.date, ts: w.ts || 0, id: w.id, html: `<button type="button" class="pf-card" data-pf-open="${w.id}" aria-label="Abrir caminata"><span class="pf-col n1"><i class="fxi walk">${CAMINA_ICO}</i></span><span class="pf-m"><b>Caminata</b><small>${esc(whenText(w.date))} · ${Math.round(w.seconds / 60)} min</small></span><span class="pf-v"><b>${(w.meters / 1000).toFixed(1).replace('.', ',')}</b><small>km</small></span></button>` })),
   ].sort((a, b) => b.date.localeCompare(a.date) || b.ts - a.ts);
   g.innerHTML = items.map(i => i.html).join('') || `<div class="pf-vacio-g">${emptyHtml('historial', 'Todavía no hay entrenos', 'Empieza uno desde «Rutinas» y aparecerá aquí.')}</div>`;
 }
