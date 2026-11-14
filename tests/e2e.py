@@ -3369,6 +3369,8 @@ def perfil_tocar_una_tarjeta_abre_ese_entreno_en_el_historial(pg):
     assert pg.is_visible("#history-list")
     assert not pg.is_visible("#pf-grid")
     assert pg.locator("#history-list .hdetail:not([hidden])").count() == 1, "el entreno tocado sale desplegado"
+    assert pg.locator("#history-list .entry").count() == 1 and not pg.locator("#history-list .hmes").count(), "solo ese entreno, sin el resto del historial"
+    assert "Libre" in pg.inner_text("#history-list")
     pg.click('[data-pview="grid"]'); pg.wait_for_timeout(200)
     assert pg.is_visible("#pf-grid") and not pg.is_visible("#history-list"), "la pestaña de entrenos vuelve a la cuadrícula"
 

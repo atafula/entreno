@@ -888,6 +888,7 @@ $('history-list').addEventListener('click', e => {
   b.dataset.delSession ? deleteEntry('session', b.dataset.delSession) : deleteEntry('walk', b.dataset.delWalk);
 });
 // ---------- Perfil: cuenta de Google arriba; debajo, los entrenos o las estadísticas ----------
+let detalleId = null;                      // entreno abierto desde la cuadrícula: la lista enseña solo ese
 let perfilVista = 'grid', periodo = 7, tendencia = 'all';
 const durCorta = sec => { const m = Math.round(sec / 60); return m >= 60 ? `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ''}` : `${m} min`; };
 const fuerza = x => e1rm(x.kg || 0, x.reps || 0) || (x.reps || 0) / 1000;   // sin peso: manda el número de reps
@@ -970,7 +971,7 @@ function renderPerfilGrid() {
 }
 $('pf-grid').addEventListener('click', e => {
   const b = e.target.closest('[data-pf-open]'); if (!b) return;
-  openEntries.add(b.dataset.pfOpen); perfilVista = 'entrenos'; vibrate(6); renderPerfil(); renderHistory();
+  openEntries.add(b.dataset.pfOpen); detalleId = b.dataset.pfOpen; perfilVista = 'entrenos'; vibrate(6); renderPerfil(); renderHistory();
   document.querySelector(`[data-toggle-entry="${b.dataset.pfOpen}"]`)?.closest('.entry')?.scrollIntoView({ block: 'start' });
 });
 function renderPerfilStats() {
@@ -1014,7 +1015,7 @@ function renderPerfilStats() {
   $('pstats-ex').innerHTML = vistas.map(f => `<div class="pex"><div><b>${esc(f.nombre)}</b><span class="pt ${f.t}">${ICO[f.t]} ${LAB[f.t]}</span></div><em>${f.mejor.kg ? `${String(f.mejor.kg).replace(".", ",")} kg × ${f.mejor.reps}` : `${f.mejor.reps} reps`}</em></div>`).join('')
     || `<p class="pf-vacio">${filas.length ? 'Ningún ejercicio con esa tendencia.' : 'Sin entrenos en este periodo.'}</p>`;
 }
-document.querySelectorAll('[data-pview]').forEach(b => b.onclick = () => { if (perfilVista === b.dataset.pview) return; perfilVista = b.dataset.pview; vibrate(6); renderPerfil(); });
+document.querySelectorAll('[data-pview]').forEach(b => b.onclick = () => { if (perfilVista === b.dataset.pview) return; perfilVista = b.dataset.pview; detalleId = null; vibrate(6); renderPerfil(); renderHistory(); });
 document.querySelectorAll('[data-periodo]').forEach(b => b.onclick = () => { periodo = +b.dataset.periodo; vibrate(6); renderPerfilStats(); });
 document.querySelectorAll('[data-trend]').forEach(b => b.onclick = () => { tendencia = b.dataset.trend; vibrate(6); renderPerfilStats(); });
 $('perfil-login').onclick = () => $('login-btn').click();
@@ -1100,29 +1101,31 @@ function renderHistory() {
 
   const items = [
     ...db.sessions.map(s => ({
-      date: s.date, ts: s.ts || 0, kind: 'session',
+      date: s.date, ts: s.ts || 0, kind: 'session', id: s.id,
       editing: !!editingEntry && editingEntry.kind === 'session' && editingEntry.id === s.id,
       html: editingEntry && editingEntry.kind === 'session' && editingEntry.id === s.id ? entryEditorHtml('session', s) : sessionHtml(s)
     })),
     ...db.walks.map(w => ({
-      date: w.date, ts: w.ts || 0, kind: 'walk',
+      date: w.date, ts: w.ts || 0, kind: 'walk', id: w.id,
       editing: !!editingEntry && editingEntry.kind === 'walk' && editingEntry.id === w.id,
       html: editingEntry && editingEntry.kind === 'walk' && editingEntry.id === w.id ? entryEditorHtml('walk', w) : walkHtml(w)
     }))
   ].sort((a, b) => b.date.localeCompare(a.date) || b.ts - a.ts);   // mismo día: el más reciente arriba
 
-  $('stats').hidden = !!editingEntry || !items.length;                 // al editar solo se ve la entrada; sin datos, ni tres ceros
+  if (detalleId && !items.some(i => i.id === detalleId)) detalleId = null;
+  const solo = !!editingEntry || !!detalleId;
+  $('stats').hidden = solo || !items.length;                 // al editar solo se ve la entrada; sin datos, ni tres ceros
   $('hist-filter').hidden = $('hist-chart').hidden = $('stats').hidden;
   document.querySelectorAll('[data-hfilter]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.hfilter === histFiltro)));
   renderHistChart();
   $('hist-chart').classList.toggle('quiet', quiet);
   const pasa = i => histFiltro === 'todo' || (histFiltro === 'fuerza') === (i.kind === 'session');
-  const shown = editingEntry ? items.filter(i => i.editing) : items.filter(pasa);
+  const shown = editingEntry ? items.filter(i => i.editing) : detalleId ? items.filter(i => i.id === detalleId) : items.filter(pasa);
   // Agrupado por meses: cabecera con el nombre y lo que hubo (sin cabeceras mientras se edita)
   let mes = null, html = '';
   shown.forEach(i => {
     const m = i.date.slice(0, 7);
-    if (!editingEntry && m !== mes) {
+    if (!solo && m !== mes) {
       mes = m;
       const del = shown.filter(x => x.date.startsWith(m)), ne = del.filter(x => x.kind === 'session').length, nc = del.length - ne;
       const [y, mm] = m.split('-').map(Number), nombre = MESES[mm - 1][0].toUpperCase() + MESES[mm - 1].slice(1);
